@@ -1,0 +1,5 @@
+class appuse {
+    constructor(parameters) {
+        
+    }
+}
