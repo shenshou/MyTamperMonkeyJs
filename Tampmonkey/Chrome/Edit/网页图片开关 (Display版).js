@@ -6,7 +6,7 @@
 // @author       ts from Gemini
 // @match        http*://moxing.chat/*
 // @match        http*://www.javbus.com/*
-// @grant        none
+// @grant        GM_addStyle
 // @run-at       document-end
 // ==/UserScript==
 
@@ -14,7 +14,16 @@
     'use strict';
 
     let isHidden = false; // 记录当前状态，初始为不隐藏
-
+    function UrlhasString(text) {//获取当前页面的hostname中是否包含某个字符串
+        const domain = window.location.hostname;        
+        return domain.includes(text);
+    }
+    //针对魔性论坛moxing.chat让他的图片不会变形和模糊   
+    if (UrlhasString('moxing')) {
+        GM_addStyle(`
+            a img { object-fit: contain; }
+        `);
+    } 
     /**
      * 执行隐藏/显示逻辑
      * @param {Document|Element} root - 起始节点
