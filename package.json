@@ -1,0 +1,13 @@
+{
+  "name": "my-tampermonkey-js",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Development checks for personal userscripts",
+  "scripts": {
+    "lint": "eslint \"scripts/**/*.user.js\""
+  },
+  "devDependencies": {
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0"
+  }
+}
