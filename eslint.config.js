@@ -16,6 +16,8 @@ export default [
       },
     },
     rules: {
+      // Empty catches are intentional where a fallback is explicitly optional.
+      "no-empty": ["error", { allowEmptyCatch: true }],
       // Existing scripts are linted without forcing a broad cleanup refactor.
       "no-unused-vars": "warn",
     },
