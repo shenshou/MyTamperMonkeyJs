@@ -1,0 +1,33 @@
+name: Validate userscripts
+
+on:
+  push:
+    paths:
+      - "scripts/**/*.user.js"
+      - ".github/workflows/validate-userscripts.yml"
+  pull_request:
+    paths:
+      - "scripts/**/*.user.js"
+      - ".github/workflows/validate-userscripts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check userscript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in scripts/*.user.js; do
+            echo "Checking $file"
+            node --check "$file"
+          done
