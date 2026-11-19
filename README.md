@@ -44,16 +44,21 @@ npm install
 
 ```bash
 node --check scripts/javdb-review-batch.user.js
-node --check scripts/ltx-batch-checker.user.js
 ```
 
-运行 ESLint：
+运行 ESLint 检查全部脚本：
 
 ```bash
 npm run lint
 ```
 
-GitHub Actions 会在相关脚本、检查配置或工作流变更时自动执行语法检查和 ESLint。当前阶段不引入构建工具或浏览器自动化；当出现适合独立测试的业务逻辑时，再按需增加单元测试。
+也可以只检查指定脚本：
+
+```bash
+npx eslint scripts/javdb-review-batch.user.js
+```
+
+GitHub Actions 只在 PR 涉及用户脚本或质量检查配置时启动。它会根据 PR 的文件差异选择检查范围：普通脚本变更只检查变更的脚本；ESLint、依赖或工作流配置变更则检查全部脚本。README、文档等无关文件变更不会触发检查。当前阶段不引入构建工具或浏览器自动化；当出现适合独立测试的业务逻辑时，再按需增加单元测试。
 
 ## 工程规范
 
