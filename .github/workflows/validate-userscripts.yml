@@ -4,17 +4,21 @@ on:
   push:
     paths:
       - "scripts/**/*.user.js"
+      - "eslint.config.js"
+      - "package.json"
       - ".github/workflows/validate-userscripts.yml"
   pull_request:
     paths:
       - "scripts/**/*.user.js"
+      - "eslint.config.js"
+      - "package.json"
       - ".github/workflows/validate-userscripts.yml"
 
 permissions:
   contents: read
 
 jobs:
-  syntax:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,11 +27,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Install development dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
       - name: Check userscript syntax
         shell: bash
         run: |
           set -euo pipefail
-          for file in scripts/*.user.js; do
-            echo "Checking $file"
+          shopt -s nullglob
+          files=(scripts/*.user.js)
+          if (( ${#files[@]} == 0 )); then
+            echo "No userscripts found."
+            exit 1
+          fi
+          for file in "${files[@]}"; do
+            echo "Checking syntax: $file"
             node --check "$file"
           done
+      - name: Run ESLint
+        run: npm run lint
