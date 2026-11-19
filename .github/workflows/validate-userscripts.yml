@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "scripts/*.user.js"
+      - "scripts/**/*.user.js"
       - "eslint.config.js"
       - "package.json"
       - ".github/workflows/validate-userscripts.yml"
@@ -21,25 +22,87 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
+
       - name: Install development dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
-      - name: Check userscript syntax
+
+      - name: Select userscripts to validate
+        id: select
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=(scripts/*.user.js)
-          if (( ${#files[@]} == 0 )); then
-            echo "No userscripts found."
-            exit 1
+
+          changed_files=()
+          while IFS= read -r -d '' file; do
+            changed_files+=("$file")
+          done < <(git diff --name-only -z "$BASE_SHA...$HEAD_SHA")
+
+          check_all=false
+          for file in "${changed_files[@]}"; do
+            case "$file" in
+              eslint.config.js|package.json|.github/workflows/validate-userscripts.yml)
+                check_all=true
+                break
+                ;;
+            esac
+          done
+
+          if [[ "$check_all" == true ]]; then
+            mapfile -d '' files < <(find scripts -type f -name '*.user.js' -print0 2>/dev/null || true)
+          else
+            files=()
+            for file in "${changed_files[@]}"; do
+              if [[ "$file" == scripts/*.user.js && -f "$file" ]]; then
+                files+=("$file")
+              fi
+            done
           fi
-          for file in "${files[@]}"; do
+
+          if (( ${#files[@]} == 0 )); then
+            echo "No existing userscript files require validation."
+            echo "has_files=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          {
+            echo "has_files=true"
+            echo "files<<EOF"
+            printf '%s\n' "${files[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Selected ${#files[@]} userscript(s) for validation:"
+          printf ' - %s\n' "${files[@]}"
+
+      - name: Check changed userscript syntax
+        if: steps.select.outputs.has_files == 'true'
+        env:
+          FILES: ${{ steps.select.outputs.files }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            [[ -n "$file" ]] || continue
             echo "Checking syntax: $file"
             node --check "$file"
-          done
-      - name: Run ESLint
-        run: npm run lint
+          done <<< "$FILES"
+
+      - name: Run ESLint on selected userscripts
+        if: steps.select.outputs.has_files == 'true'
+        env:
+          FILES: ${{ steps.select.outputs.files }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files <<< "$FILES"
+          npx eslint "${files[@]}"
