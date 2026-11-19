@@ -12,8 +12,8 @@
 
 | 脚本 | 适用网站 | 当前版本 | 功能 |
 | --- | --- | --- | --- |
-| [JavDB 评论批量搜索](scripts/javdb-review-batch.user.js) | JavDB | 1.1.0 | 批量搜索番号并获取评论，支持筛选、展开、复制、暂停与继续 |
-| [LTX 批量番号存在性检测](scripts/ltx-batch-checker.user.js) | LTX | 1.2.0 | 批量检测番号是否存在，并获取 magnet / ed2k 资源链接 |
+| [JavDB 评论批量搜索](scripts/javdb-review-batch.user.js) | JavDB | 1.1.1 | 批量搜索番号并获取评论，支持筛选、展开、复制、暂停与继续 |
+| [LTX 批量番号存在性检测](scripts/ltx-batch-checker.user.js) | LTX | 1.2.1 | 批量检测番号是否存在，并获取 magnet / ed2k 资源链接 |
 
 ## 安装
 
