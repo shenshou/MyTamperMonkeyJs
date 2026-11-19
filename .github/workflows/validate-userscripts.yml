@@ -1,18 +1,13 @@
 name: Validate userscripts
 
 on:
-  push:
-    paths:
-      - "scripts/**/*.user.js"
-      - "eslint.config.js"
-      - "package.json"
-      - ".github/workflows/validate-userscripts.yml"
   pull_request:
     paths:
       - "scripts/**/*.user.js"
       - "eslint.config.js"
       - "package.json"
       - ".github/workflows/validate-userscripts.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
