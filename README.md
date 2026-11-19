@@ -32,6 +32,29 @@
 - 修改后至少进行语法检查，并根据改动范围执行静态检查、模拟测试和真实浏览器验证。自动化测试不能替代需要登录态或真实上游接口的验证。
 - 发布前更新对应脚本的版本号，并确认元数据中的更新地址仍指向本仓库的 Raw 文件。
 
+### 本地质量检查
+
+需要 Node.js 24 或兼容的较新版本。
+
+```bash
+npm install
+```
+
+检查单个脚本的语法：
+
+```bash
+node --check scripts/javdb-review-batch.user.js
+node --check scripts/ltx-batch-checker.user.js
+```
+
+运行 ESLint：
+
+```bash
+npm run lint
+```
+
+GitHub Actions 会在相关脚本、检查配置或工作流变更时自动执行语法检查和 ESLint。当前阶段不引入构建工具或浏览器自动化；当出现适合独立测试的业务逻辑时，再按需增加单元测试。
+
 ## 工程规范
 
 跨网站用户脚本开发的通用调查方法、工程判断与质量要求，参见：
