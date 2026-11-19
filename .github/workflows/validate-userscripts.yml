@@ -3,11 +3,14 @@ name: Validate userscripts
 on:
   pull_request:
     paths:
-      - "scripts/**/*.user.js"
+      - "scripts/*.user.js"
       - "eslint.config.js"
       - "package.json"
       - ".github/workflows/validate-userscripts.yml"
-  workflow_dispatch:
+
+concurrency:
+  group: userscript-quality-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
