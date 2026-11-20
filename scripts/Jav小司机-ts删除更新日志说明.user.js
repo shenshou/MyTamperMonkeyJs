@@ -36,7 +36,8 @@ function setCookie(cookieName, cookieValue, expireDays) {
     let expireDate =new Date();
     expireDate.setDate(expireDate.getDate() + expireDays);
     let expires = "expires=" + ((expireDays == null) ? '' : expireDate.toUTCString());
-    document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+    const secure = window.location.protocol === "https:" ? ";Secure" : "";
+    document.cookie = cookieName + "=" + encodeURIComponent(cookieValue) + ";" + expires + ";path=/;SameSite=Lax" + secure;
 }
 
 function insertAfter(newNode, referenceNode) {
@@ -51,6 +52,27 @@ function removeElementIfPresent(element) {
     if (element) {
         return element.parentNode.removeChild(element);
     }
+}
+
+function sanitizeImportedNode(root) {
+    if (!root || root.nodeType !== Node.ELEMENT_NODE) return root;
+    const elements = [root, ...root.querySelectorAll('*')];
+    for (const element of elements) {
+        if (['SCRIPT', 'IFRAME', 'OBJECT', 'EMBED'].includes(element.tagName)) {
+            element.remove();
+            continue;
+        }
+        for (const attribute of Array.from(element.attributes)) {
+            const name = attribute.name.toLowerCase();
+            if (name.startsWith('on')) element.removeAttribute(attribute.name);
+            else if (['href', 'src', 'xlink:href', 'action', 'formaction'].includes(name)
+                && /^(?:javascript|vbscript|data):/i.test(attribute.value.trim())) {
+                element.removeAttribute(attribute.name);
+            }
+        }
+        if (element.target === '_blank') element.rel = 'noopener noreferrer';
+    }
+    return root;
 }
 
 async function runWithConcurrency(items, limit, task) {
@@ -89,6 +111,10 @@ function parseBBCode(escapedText) {
         const safe = safeUrl(value);
         return safe ? `<a href="${escapeHtml(safe)}" target="_blank" rel="noopener noreferrer">${value}</a>` : value;
     });
+    html = html.replace(/\\[img\\]([\\s\\S]*?)\\[\\/img\\]/gi, (m, value) => {
+        const safe = safeUrl(value);
+        return safe ? `<img src=\"${escapeHtml(safe)}\" alt=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer\" />` : '';
+    });
     const tags = [['b','strong'],['i','em'],['u','u'],['s','s'],['quote','blockquote'],['code','code']];
     for (let pass=0; pass<8; pass++) {
         let changed=false;
@@ -117,7 +143,7 @@ function gmFetch(obj) {
         GM_xmlhttpRequest({
             method: obj.method || 'GET',
             // timeout in ms
-            timeout: obj.timeout,
+            timeout: obj.timeout || 10000,
             url: obj.url,
             headers: obj.headers ? obj.headers : {},
             data: obj.data,
@@ -364,7 +390,7 @@ class MiniDriverThumbnail {
         if (videos && currentVideos) {
             const items = Array.from(videos.children);
             for (const video of items) {
-                currentVideos.appendChild(video);
+                currentVideos.appendChild(sanitizeImportedNode(video));
                 this.updateVideoEvents(video);
             }
             await runWithConcurrency(items, 4, video => this.updateVideoDetail(video));
@@ -416,14 +442,16 @@ class MiniDriverThumbnail {
                 this.videoStats[video.id]['minViewer'] = parseFloat(videoWatched);
             }
 
-            let videoDetailsHtml = `
-                <div class="thumbnailDetail">
-                    <span>${videoDate}</span>&nbsp;&nbsp;<span style='color:red;'>${videoScore}</span>
-                    <br/>
-                    <span>${videoWatched} 人看过</span>
-                </div>
-            `;
-            let videoDetails = createElementFromHTML(videoDetailsHtml);
+            const videoDetails = document.createElement('div');
+            videoDetails.className = 'thumbnailDetail';
+            const date = document.createElement('span');
+            date.textContent = videoDate;
+            const score = document.createElement('span');
+            score.style.color = 'red';
+            score.textContent = videoScore;
+            const watched = document.createElement('span');
+            watched.textContent = `${videoWatched} 人看过`;
+            videoDetails.append(date, document.createTextNode('  '), score, document.createElement('br'), watched);
             video.insertBefore(videoDetails, video.getElementsByClassName('toolbar')[0]);
 
             // Apply filter
@@ -547,12 +575,15 @@ class MiniDriver {
         // Add English title
         if (!window.location.href.includes('/en/')) {
             let request = {url: `/en/?v=${this.javVideoId}`};
-            let response = await xhrFetchWithRetry(request).catch(err => { return;});
-            let responseText = await response.text().catch(err => { return;});
+            let response = await xhrFetchWithRetry(request).catch(() => null);
+            if (!response) return;
+            let responseText = await response.text();
             let videoDetailsDoc = parseHTMLText(responseText);
-            let englishTitle = videoDetailsDoc.getElementById('video_title')
-                                    .getElementsByClassName('post-title')[0]
-                                    .getElementsByTagName('a')[0].innerText;
+            let englishTitleLink = videoDetailsDoc.getElementById('video_title')
+                ?.getElementsByClassName('post-title')[0]
+                ?.getElementsByTagName('a')[0];
+            if (!englishTitleLink) return;
+            let englishTitle = englishTitleLink.innerText;
             postTitle.append(document.createElement('br'), document.createTextNode(englishTitle));
         }
     }
@@ -575,11 +606,11 @@ class MiniDriver {
     }
 
     async addScreenshot() {
-        let javscreensUrl = `https://javscreens.com/images/${this.editionNumber}.jpg`;
+        let javscreensUrl = `https://javscreens.com/images/${encodeURIComponent(this.editionNumber)}.jpg`;
         let videoDates = document.getElementById('video_date').getElementsByClassName('text')[0].innerText.split('-');
-        let jbUrl = `https://img.japanese-bukkake.net/${videoDates[0]}/${videoDates[1]}/${this.editionNumber}_s.jpg`;
+        let jbUrl = `https://img.japanese-bukkake.net/${encodeURIComponent(videoDates[0])}/${encodeURIComponent(videoDates[1])}/${encodeURIComponent(this.editionNumber)}_s.jpg`;
         for (let url of [javscreensUrl, jbUrl]) {
-            let img = await this.loadImg(url).catch((img) => {return img;});
+            let img = await this.loadImg(url).catch(() => null);
             if (img && img.naturalHeight > 200) {
                 insertBefore(img, document.getElementById('rightcolumn').getElementsByClassName('socialmedia')[0]);
                 img.addEventListener('click', () => this.screenShotOnclick(img));
@@ -610,6 +641,7 @@ class MiniDriver {
                 },
                 onerror: reject,
                 ontimeout: reject,
+                timeout: 10000,
             });
         });
     }
@@ -650,6 +682,7 @@ class MiniDriver {
     updateReviews() {
         // Remove existing reviews
         let videoReviews = document.getElementById('video_reviews');
+        if (!videoReviews) return;
         Array.from(videoReviews.children).forEach(child => {
             if (child.id.includes('review')) {
                 child.parentNode.removeChild(child);
@@ -721,6 +754,7 @@ class MiniDriver {
     updateComments() {
         // Remove existing comments
         let videoComments = document.getElementById('video_comments');
+        if (!videoComments) return;
         Array.from(videoComments.children).forEach(child => {
             if (child.id.includes('comment')) {
                 child.parentNode.removeChild(child);
@@ -1042,12 +1076,6 @@ class MiniDriver {
         
     }
 
-    includesEditionNumber(str) {
-        return str != null
-                // && str.includes(this.editionNumber.toLowerCase().split('-')[0])
-                && str.includes(this.editionNumber.toLowerCase().split('-')[1]);
-    }
-
 
 }
 
@@ -1061,7 +1089,7 @@ function blockAds() {
     let scope = (typeof unsafeWindow === "undefined") ? window : unsafeWindow;
     scope.open = function(open) {
         return function(url, name, features) {
-            if (adSites.some(site => url.includes(site))) {
+            if (typeof url === 'string' && adSites.some(site => url.includes(site))) {
                 return;
             }
             return open.call(scope, url, name, features);
