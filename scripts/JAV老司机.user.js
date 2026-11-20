@@ -769,37 +769,6 @@
             }
             //请求搜索blogjav.net的番号
             return Common.searchBing(Common.getBlogJavSearchVal(avid),"blogjav.net","&mkt=zh-TW")
-            // .then(a => {
-            //     if (a) {
-            //         return Promise.resolve(a);
-            //     } else {
-            //         return Common.request(`https://blogjav.net/?s=${Common.getBlogJavSearchVal(avid)}`, "", 15000).then((result) => {
-            //             if (!result.loadstuts) {
-
-            //                 return null;
-            //             }
-            //             var doc = Common.parsetext(result.responseText);
-            //             let a_array = $(doc).find(".entry-title a");
-            //             let a = null;
-
-            //             //如果找到全高清大图优先获取全高清的
-            //             for (let i = 0; i < a_array.length; i++) {
-            //                 if (i == 5) break;
-            //                 // 筛选匹配的番号数据  mium-999 => 正则/mium.*999/gi
-            //                 let reg = RegExp(avid.replace(/-/g, ".*"), "gi");
-            //                 if (a_array[i].innerHTML.search(reg) > 0) {
-            //                     if (!a) a = a_array[i];
-            //                     var fhd_idx = a_array[i].innerHTML.search(/FHD/i);
-            //                     if (fhd_idx > 0) {
-            //                         a = a_array[i];
-            //                         break;
-            //                     }
-            //                 }
-            //             };
-            //             return Promise.resolve(a);
-            //         });
-            //     }
-            //})
             .then(url => {
                 let targetImgUrl = "";
                 if (url.length > 0) {
@@ -1871,13 +1840,6 @@
                     $('#magnet-table tbody tr').append('<td style="text-align:center;white-space:nowrap">操作</td><td style="text-align:center;white-space:nowrap">离线下载</td>');
                     // 先执行一次，针对已经提前加载出磁链列表结果时有效
                     this.javbusUs();
-                    // 针对为提前加载出磁链列表结果，通过dom元素是否改变事件来判断是否执行功能。
-                    // $('#magnet-table').on("DOMNodeInserted", () => {
-                    //     // 触发后关闭监听事件
-                    //     $('#magnet-table').off();
-                    //     this.javbusUs();
-                    // });
-
                     // 使用MutationObserver API替换DOMNodeInserted
                     const observer = new MutationObserver((mutationsList, observer) => {
                         // 触发后关闭监听事件
@@ -3006,11 +2968,6 @@
             },
             // 挊
             search_engines: {
-                switch_engine: (i) => {
-                    // var index = GM_getValue("search_index",0);
-                    GM_setValue('search_index', i);
-                    return i;
-                },
                 cur_engine: (kw, callback) => {
                     let ops = Object.keys(thirdparty.nong.resource_sites);
                     let z = thirdparty.nong.resource_sites[GM_getValue('search_index', ops[0])];
@@ -3069,9 +3026,6 @@
                             b.firstChild.textContent = list[i];
                             a.appendChild(b);
                         }
-                        // var select_box = this.create_select_box();
-                        // a.firstChild.appendChild(select_box);
-
                         return a;
                     },
                     create_row: (data) => {
@@ -3138,22 +3092,6 @@
                         var a = thirdparty.nong.magnet_table.template.offline();
                         a.className = 'nong-offline';
                         return a;
-                    },
-                    create_select_box: () => {
-                        var select_box = document.createElement('select');
-                        select_box.id = 'nong-search-select';
-                        select_box.setAttribute('title', '切换搜索结果');
-                        var search_name = GM_getValue('search', default_search_name);
-                        for (var k in thirdparty.nong.search_engines) {
-                            var o = document.createElement('option');
-                            if (k == search_name) {
-                                o.setAttribute('selected', 'selected');
-                            }
-                            o.setAttribute('value', k);
-                            o.textContent = k;
-                            select_box.appendChild(o);
-                        }
-                        return select_box;
                     },
                     head: (() => {
                         var a = document.createElement('th');
