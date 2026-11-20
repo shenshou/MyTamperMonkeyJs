@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jav小司机-ts删除更新日志说明
 // @namespace    wddd
-// @version      1.1.6
+// @version      1.1.7
 // @author       wddd
 // @license      MIT
 // @match        *://*.javlibrary.com/*
@@ -281,6 +281,34 @@ if (typeof GM_registerMenuCommand === 'function') {
         const value = prompt('输入你自己获得的 JavTrailers API Token。留空则清除。', current);
         if (value !== null) GM_setValue('javTrailersApiToken', value.trim());
     });
+    GM_registerMenuCommand(`设置视频列表请求并发数（当前：${GM_getValue('mdVideoConcurrency', 4)}）`, () => {
+        const current = GM_getValue('mdVideoConcurrency', 4);
+        const value = prompt('设置视频列表详情请求并发数（1-8）。数值越低，请求越平缓。', String(current));
+        if (value === null) return;
+        const limit = Number.parseInt(value, 10);
+        if (Number.isInteger(limit) && limit >= 1 && limit <= 8) GM_setValue('mdVideoConcurrency', limit);
+        else alert('请输入 1 到 8 之间的整数。');
+    });
+    GM_registerMenuCommand(GM_getValue('mdEnablePreview', true) ? '关闭视频预览' : '开启视频预览',
+        () => GM_setValue('mdEnablePreview', !GM_getValue('mdEnablePreview', true)));
+    GM_registerMenuCommand(`设置截图来源（当前：${GM_getValue('mdScreenshotSource', 'both')}）`, () => {
+        const current = GM_getValue('mdScreenshotSource', 'both');
+        const value = prompt('选择截图来源：\n both = 两个来源依次尝试\n javscreens = 仅 JavScreens\n japanese = 仅 Japanese-Bukkake\n off = 不加载截图', current);
+        if (value === null) return;
+        const normalized = value.trim().toLowerCase();
+        if (['both', 'javscreens', 'japanese', 'off'].includes(normalized)) GM_setValue('mdScreenshotSource', normalized);
+        else alert('无效选项，请输入 both、javscreens、japanese 或 off。');
+    });
+    const torrentSites = [
+        ['sukebei', 'Sukebei'], ['btsow', 'BTSOW'], ['javbus', 'JavBus'],
+        ['torrentKitty', 'TorrentKitty'], ['tokyotosho', 'TokyoTosho'],
+        ['biedian', 'Biedian'], ['btDigg', 'BTDigg'], ['idope', 'iDope']
+    ];
+    for (const [key, label] of torrentSites) {
+        GM_registerMenuCommand(`${GM_getValue('mdTorrentSite_' + key, true) ? '隐藏' : '显示'}种子搜索入口：${label}`, () => {
+            GM_setValue('mdTorrentSite_' + key, !GM_getValue('mdTorrentSite_' + key, true));
+        });
+    }
 }
 
 // Thumbnail
@@ -397,7 +425,7 @@ class MiniDriverThumbnail {
                 currentVideos.appendChild(sanitizeImportedNode(video));
                 this.updateVideoEvents(video);
             }
-            await runWithConcurrency(items, 4, video => this.updateVideoDetail(video));
+            await runWithConcurrency(items, GM_getValue('mdVideoConcurrency', 4), video => this.updateVideoDetail(video));
         }
 
         // Replace page selector content
@@ -509,7 +537,7 @@ class MiniDriver {
             this.addTorrentLinks();
             this.updateReviews();
             this.updateComments();
-            this.getPreview();
+            if (GM_getValue('mdEnablePreview', true)) this.getPreview();
         }
     }
 
@@ -610,10 +638,18 @@ class MiniDriver {
     }
 
     async addScreenshot() {
-        let javscreensUrl = `https://javscreens.com/images/${encodeURIComponent(this.editionNumber)}.jpg`;
-        let videoDates = document.getElementById('video_date').getElementsByClassName('text')[0].innerText.split('-');
-        let jbUrl = `https://img.japanese-bukkake.net/${encodeURIComponent(videoDates[0])}/${encodeURIComponent(videoDates[1])}/${encodeURIComponent(this.editionNumber)}_s.jpg`;
-        for (let url of [javscreensUrl, jbUrl]) {
+        const source = GM_getValue('mdScreenshotSource', 'both');
+        if (source === 'off') return;
+        const sources = [];
+        if (source === 'both' || source === 'javscreens') {
+            sources.push(`https://javscreens.com/images/${encodeURIComponent(this.editionNumber)}.jpg`);
+        }
+        if (source === 'both' || source === 'japanese') {
+            const dateText = document.getElementById('video_date')?.getElementsByClassName('text')[0]?.innerText;
+            const videoDates = dateText ? dateText.split('-') : [];
+            if (videoDates.length >= 2) sources.push(`https://img.japanese-bukkake.net/${encodeURIComponent(videoDates[0])}/${encodeURIComponent(videoDates[1])}/${encodeURIComponent(this.editionNumber)}_s.jpg`);
+        }
+        for (let url of sources) {
             let img = await this.loadImg(url).catch(() => null);
             if (img && img.naturalHeight > 200) {
                 insertBefore(img, document.getElementById('rightcolumn').getElementsByClassName('socialmedia')[0]);
@@ -651,50 +687,76 @@ class MiniDriver {
     }
 
     addTorrentLinks() {
-        let sukebei = `https://sukebei.nyaa.si/?f=0&c=0_0&q=${encodeURIComponent(this.editionNumber)}`;
-        let btsow = `https://btos.pw/search/${encodeURIComponent(this.editionNumber)}`;
-        let javbus = `https://www.javbus.com/${this.editionNumber}`;
-        let torrentKitty = `https://www.torrentkitty.tv/search/${this.editionNumber}`;
-        let tokyotosho = `https://www.tokyotosho.info/search.php?terms=${encodeURIComponent(this.editionNumber)}`;
-        let biedian = `https://biedian.me/search?source=%E7%A7%8D%E5%AD%90%E6%90%9C&s=time&p=1&k=${encodeURIComponent(this.editionNumber)}`;
-        let btDigg = `https://btdig.com/search?q=${this.editionNumber}`;
-        let idope = `https://idope.se/torrent-list/${encodeURIComponent(this.editionNumber)}/`;
-
-        let torrentsHTML = `
-            <div id="torrents">
-                <table>
-                    <tr>
-                        <td><strong>种子:</strong></td>
-                        <td><a href="${sukebei}" target="_blank" rel="noopener noreferrer">sukebei</a></td>
-                        <td><a href="${btsow}" target="_blank">btsow</a></td>
-                        <td><a href="${javbus}" target="_blank">javbus</a></td>
-                        <td><a href="${torrentKitty}" target="_blank">torrentKitty</a></td>
-                        <td><a href="${tokyotosho}" target="_blank">tokyotosho</a></td>
-                        <td><a href="${biedian}" target="_blank">biedian</a></td>
-                        <td><a href="${btDigg}" target="_blank">btDigg</a></td>
-                        <td><a href="${idope}" target="_blank">idope</a></td>
-        
-                    </tr>
-                </table>
-            </div>
-        `;
-
-        let torrents = createElementFromHTML(torrentsHTML);
-        insertAfter(torrents, document.getElementById('video_favorite_edit'));
+        const id = encodeURIComponent(this.editionNumber);
+        const sites = [
+            ['sukebei', 'sukebei', `https://sukebei.nyaa.si/?f=0&c=0_0&q=${id}`],
+            ['btsow', 'btsow', `https://btos.pw/search/${id}`],
+            ['javbus', 'javbus', `https://www.javbus.com/${id}`],
+            ['torrentKitty', 'torrentKitty', `https://www.torrentkitty.tv/search/${id}`],
+            ['tokyotosho', 'tokyotosho', `https://www.tokyotosho.info/search.php?terms=${id}`],
+            ['biedian', 'biedian', `https://biedian.me/search?source=%E7%A7%8D%E5%AD%90%E6%90%9C&s=time&p=1&k=${id}`],
+            ['btDigg', 'btDigg', `https://btdig.com/search?q=${id}`],
+            ['idope', 'idope', `https://idope.se/torrent-list/${id}/`]
+        ];
+        const enabledSites = sites.filter(([key]) => GM_getValue('mdTorrentSite_' + key, true));
+        const torrents = document.createElement('div');
+        torrents.id = 'torrents';
+        if (!enabledSites.length) {
+            torrents.textContent = '种子搜索入口已全部隐藏，可在油猴菜单中重新启用。';
+        } else {
+            const table = document.createElement('table');
+            const row = table.insertRow();
+            const heading = row.insertCell();
+            const strong = document.createElement('strong');
+            strong.textContent = '种子:';
+            heading.appendChild(strong);
+            for (const [, label, url] of enabledSites) {
+                const cell = row.insertCell();
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = label;
+                cell.appendChild(link);
+            }
+            torrents.appendChild(table);
+        }
+        const anchor = document.getElementById('video_favorite_edit');
+        if (anchor) insertAfter(torrents, anchor);
     }
 
     updateReviews() {
-        // Remove existing reviews
-        let videoReviews = document.getElementById('video_reviews');
-        if (!videoReviews) return;
-        Array.from(videoReviews.children).forEach(child => {
-            if (child.id.includes('review')) {
-                child.parentNode.removeChild(child);
+        this.addDeferredLoadButton('video_reviews', 'md-load-rating-trigger', '加载评价', 'reviews');
+    }
+
+    updateComments() {
+        this.addDeferredLoadButton('video_comments', 'md-load-cmt-trigger', '加载评论', 'comments');
+    }
+
+    addDeferredLoadButton(containerId, buttonId, label, pageType) {
+        const container = document.getElementById(containerId);
+        if (!container || document.getElementById(buttonId)) return;
+        const button = document.createElement('button');
+        button.id = buttonId;
+        button.type = 'button';
+        button.textContent = label;
+        button.style.cssText = 'margin:8px 0;padding:5px 12px;cursor:pointer;';
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            button.textContent = '正在加载…';
+            try {
+                Array.from(container.children).forEach(child => {
+                    const marker = pageType === 'reviews' ? 'review' : 'comment';
+                    if (child.id && child.id.includes(marker)) child.remove();
+                });
+                await this.getNextPage(1, pageType);
+                button.remove();
+            } catch {
+                button.disabled = false;
+                button.textContent = label + '（重试）';
             }
         });
-
-        // Add all reviews
-        this.getNextPage(1, 'reviews');
+        container.appendChild(button);
     }
 
     async getNextPage(page, pageType) {
@@ -756,19 +818,7 @@ class MiniDriver {
         }
     }
 
-    updateComments() {
-        // Remove existing comments
-        let videoComments = document.getElementById('video_comments');
-        if (!videoComments) return;
-        Array.from(videoComments.children).forEach(child => {
-            if (child.id.includes('comment')) {
-                child.parentNode.removeChild(child);
-            }
-        });
 
-        // Add all comments
-        this.getNextPage(1, 'comments');
-    }
 
     processUrls(content) {
         Array.from(content.getElementsByTagName('a')).forEach(a => {
