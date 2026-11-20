@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.21
+// @version      1.8.45.22
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2362,6 +2362,12 @@
                     ed2k: DataExtractor.extractEd2k(doc),
                     thunder: DataExtractor.extractThunder(doc),
                     attachments: DataExtractor.extractAttachments(doc).map(att => {
+                        if (managedObjectUrls.has(att.url)) {
+                            return {
+                                ...att,
+                                url: att.url
+                            };
+                        }
                         try {
                             const attachmentUrl = new URL(att.url, threadURL);
                             if (!["http:", "https:"].includes(attachmentUrl.protocol) || attachmentUrl.origin !== new URL(threadURL).origin || attachmentUrl.username || attachmentUrl.password) return null;
