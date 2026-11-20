@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.25
+// @version      1.8.45.26
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2796,6 +2796,10 @@
                     Toast.show("⚠️ 暂时无法确认今日签到状态，已停止自动流程；请刷新页面后重试", "warning", 4e3);
                     return;
                 }
+                if (stats.signedToday === null) {
+                    Toast.show("⚠️ 服务器未明确说明今日签到状态，已停止自动流程；请稍后刷新重试", "warning", 4e3);
+                    return;
+                }
                 if (stats.signedToday) return Toast.show("✅ 今天已经签到过了", "success", 2e3), 
                 setStatusCache(!0, stats.lastSignTime), void this.updateButtonStatus(buttonElement, !0);
                 const moods = [ "kx", "fd", "yl" ], selectedMood = moods[Math.floor(Math.random() * moods.length)], replyState = await this.getTodayReplyState();
@@ -3043,7 +3047,10 @@
         }
         static isSignedTodayHtml(html) {
             const doc = (new DOMParser).parseFromString(html, "text/html"), tacTd = doc.querySelector("td.tac") || doc.querySelector('td[class*="tac"]'), tacText = tacTd?.textContent?.replace(/\s+/g, " ").trim() || "";
-            return !tacText.includes("今天未签到") && !tacText.includes("今日未签到") && (!(!tacText.includes("今天已签到") && !tacText.includes("今日已签到")) || !html.includes("今天未签到") && !html.includes("今日未签到") && (html.includes("今天已签到") || html.includes("今日已签到")));
+            const signed = /今天已签到|今日已签到/.test(tacText) || /今天已签到|今日已签到/.test(html);
+            const unsigned = /今天未签到|今日未签到/.test(tacText) || /今天未签到|今日未签到/.test(html);
+            if (signed === unsigned) return null;
+            return signed;
         }
         static parseCheckInStatsFromTac(doc, html, signedToday) {
             const tacTd = doc.querySelector("td.tac") || doc.querySelector('td[class*="tac"]'), tacHtml = tacTd?.innerHTML || "", tacText = tacTd?.textContent || "", totalMatch = tacHtml.match(/您累计已签到[：:]\s*<b>(\d+)<\/b>\s*天/) || tacText.match(/您累计已签到[：:]\s*(\d+)\s*天/) || html.match(/您累计已签到[：:]\s*<b>(\d+)<\/b>\s*天/), monthMatch = tacHtml.match(/您本月已累计签到[：:]\s*<b>(\d+)<\/b>\s*天/) || tacText.match(/您本月已累计签到[：:]\s*(\d+)\s*天/) || html.match(/您本月已累计签到[：:]\s*<b>(\d+)<\/b>\s*天/), timeMatch = tacHtml.match(/上次签到[：:]\s*<font[^>]*>(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})<\/font>/) || tacText.match(/上次签到[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/) || html.match(/上次签到[：:]\s*<font[^>]*>(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})<\/font>/);
@@ -3303,7 +3310,7 @@
                     totalDays: 0,
                     monthDays: 0,
                     lastSignTime: "",
-                    signedToday: !1
+                    signedToday: null
                 }, candidate = await AutoCheckIn.preloadReplyCandidate(replyState), latestRepliedThread = "replied" === replyState ? await AutoCheckIn.getLatestTodayReplyThreadForPanel() : null;
                 this.createInfoPanel(bannerTd, safeStats, replyState, candidate, latestRepliedThread);
             } catch (error) {}
@@ -3311,7 +3318,7 @@
         static createInfoPanel(container, stats, replyState, candidate, latestRepliedThread) {
             const existing = container.querySelector(".checkin-panel-wrapper");
             existing && existing.remove();
-            const isToday = stats.signedToday, statusIcon = isToday ? "✅" : "⏰", statusText = isToday ? "已签到" : "未签到", statusColor = isToday ? "#90EE90" : "#FFD700", replyStatusText = "replied" === replyState ? "已回帖" : "not_replied" === replyState ? "未回帖" : "待确认", replyColor = "replied" === replyState ? "#90EE90" : "#FFD700", detailThread = "replied" === replyState ? latestRepliedThread : candidate, replyTitleText = "replied" === replyState ? detailThread ? `今日已回帖：${detailThread.title}` : "今日已回帖（未解析到帖子标题）" : candidate ? `目标帖子：${candidate.title}` : "暂未获取到可回帖帖子", panel = document.createElement("div");
+            const isToday = stats.signedToday === true, isSignStatusUnknown = stats.signedToday == null, statusIcon = isToday ? "✅" : isSignStatusUnknown ? "❔" : "⏰", statusText = isToday ? "已签到" : isSignStatusUnknown ? "签到状态待确认" : "未签到", statusColor = isToday ? "#90EE90" : "#FFD700", replyStatusText = "replied" === replyState ? "已回帖" : "not_replied" === replyState ? "未回帖" : "待确认", replyColor = "replied" === replyState ? "#90EE90" : "#FFD700", detailThread = "replied" === replyState ? latestRepliedThread : candidate, replyTitleText = "replied" === replyState ? detailThread ? `今日已回帖：${detailThread.title}` : "今日已回帖（未解析到帖子标题）" : candidate ? `目标帖子：${candidate.title}` : "暂未获取到可回帖帖子", panel = document.createElement("div");
             panel.className = "checkin-info-panel", panel.style.cssText = '\n      display: flex;\n      flex-direction: column;\n      align-items: stretch;\n      justify-content: flex-start;\n      padding: 6px 12px;\n      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n      border-radius: 6px;\n      box-shadow: 0 2px 6px rgba(0,0,0,0.15);\n      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;\n      color: #fff;\n      font-size: 13px;\n      line-height: 1;\n      gap: 8px;\n      box-sizing: border-box;\n      width: auto;\n      max-width: 100%;\n      min-width: 0;\n    ';
             const statsDiv = document.createElement("div");
             statsDiv.style.cssText = "display: flex; gap: 10px; opacity: 0.9;";
@@ -3367,7 +3374,7 @@
             const btnWrap = document.createElement("div");
             btnWrap.style.cssText = "flex: 0 0 auto;";
             const checkInBtn = document.createElement("button");
-            checkInBtn.textContent = isToday ? "已签到" : "一键签到", checkInBtn.title = replyTitleText, 
+            checkInBtn.textContent = isToday ? "已签到" : isSignStatusUnknown ? "状态待确认" : "一键签到", checkInBtn.title = isSignStatusUnknown ? "暂时无法确认今日签到状态，点击后会重新检查" : replyTitleText, 
             checkInBtn.style.cssText = `\n      padding: 6px 12px;\n      background: ${isToday ? "rgba(255,255,255,0.2)" : "#fff"};\n      color: ${isToday ? "#fff" : "#667eea"};\n      border: none;\n      border-radius: 4px;\n      font-size: 13px;\n      font-weight: bold;\n      cursor: ${isToday ? "default" : "pointer"};\n      transition: all 0.2s;\n    `, 
             isToday || (checkInBtn.onmouseover = () => {
                 checkInBtn.style.opacity = "0.9";
