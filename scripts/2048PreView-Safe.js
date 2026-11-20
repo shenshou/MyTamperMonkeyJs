@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.23
+// @version      1.8.45.24
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2792,11 +2792,12 @@
             try {
                 Toast.show("正在检查签到状态...", "info", 2e3);
                 const stats = await this.getCheckInStats();
-                let alreadySigned = !1;
-                if (stats) {
-                    if (alreadySigned = stats.signedToday, alreadySigned) return Toast.show("✅ 今天已经签到过了", "success", 2e3), 
-                    setStatusCache(!0, stats.lastSignTime), void this.updateButtonStatus(buttonElement, !0);
-                } else ;
+                if (!stats) {
+                    Toast.show("⚠️ 暂时无法确认今日签到状态，已停止自动流程；请刷新页面后重试", "warning", 4e3);
+                    return;
+                }
+                if (stats.signedToday) return Toast.show("✅ 今天已经签到过了", "success", 2e3), 
+                setStatusCache(!0, stats.lastSignTime), void this.updateButtonStatus(buttonElement, !0);
                 const moods = [ "kx", "fd", "yl" ], selectedMood = moods[Math.floor(Math.random() * moods.length)], replyState = await this.getTodayReplyState();
                 if ("not_logged_in" === replyState) return void Toast.show("请先登录论坛后再签到", "error", 2500);
                 if (!replyState.replied) {
