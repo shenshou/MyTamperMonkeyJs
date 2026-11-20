@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.5
+// @version      1.8.45.7
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2045,30 +2045,44 @@
                         const currentAid = aid || att.aid, doCheck = async (depth = 0) => {
                             if (depth > 2) return checkBtn.textContent = "检测失败：重定向次数过多", void checkBtn.removeAttribute("data-loading");
                             try {
+                                if (!/^\d+$/.test(String(currentAid))) throw new Error("附件编号无效");
+                                const checkpanUrl = new URL(`checkpan.php?aid=${encodeURIComponent(currentAid)}`, `${Utils.getBaseUrl()}/`);
+                                if (checkpanUrl.origin !== window.location.origin || !["http:", "https:"].includes(checkpanUrl.protocol)) throw new Error("已阻止不安全的网盘检测地址");
                                 const text = await new Promise((resolve, reject) => {
                                     GM_xmlhttpRequest({
                                         method: "GET",
-                                        url: `checkpan.php?aid=${currentAid}`,
+                                        url: checkpanUrl.href,
+                                        timeout: 15000,
+                                        redirect: "error",
                                         headers: {
                                             "X-Requested-With": "XMLHttpRequest"
                                         },
-                                        onload: res => resolve(res.responseText),
-                                        onerror: err => reject(err)
+                                        onload: res => res.status >= 200 && res.status < 300 ? resolve(res.responseText) : reject(new Error(`HTTP error ${res.status}`)),
+                                        onerror: err => reject(err),
+                                        ontimeout: () => reject(new Error("网盘检测请求超时"))
                                     });
                                 }), doc = (new DOMParser).parseFromString(text, "text/html"), agreeLink = Array.from(doc.querySelectorAll("a")).find(a => a.textContent?.includes("已过 18") || a.textContent?.includes("警告"));
                                 if (agreeLink) {
                                     const href = agreeLink.getAttribute("href");
-                                    if (href) return await new Promise((resolve, reject) => {
-                                        GM_xmlhttpRequest({
-                                            method: "GET",
-                                            url: href,
-                                            headers: {
-                                                "X-Requested-With": "XMLHttpRequest"
-                                            },
-                                            onload: () => resolve(),
-                                            onerror: reject
+                                    if (href) {
+                                        const agreeUrl = new URL(href, checkpanUrl.href);
+                                        if (agreeUrl.origin !== window.location.origin || !["http:", "https:"].includes(agreeUrl.protocol) || agreeUrl.username || agreeUrl.password) throw new Error("已阻止不安全的网盘确认地址");
+                                        await new Promise((resolve, reject) => {
+                                            GM_xmlhttpRequest({
+                                                method: "GET",
+                                                url: agreeUrl.href,
+                                                timeout: 15000,
+                                                redirect: "error",
+                                                headers: {
+                                                    "X-Requested-With": "XMLHttpRequest"
+                                                },
+                                                onload: res => res.status >= 200 && res.status < 300 ? resolve() : reject(new Error(`HTTP error ${res.status}`)),
+                                                onerror: reject,
+                                                ontimeout: () => reject(new Error("网盘确认请求超时"))
+                                            });
                                         });
-                                    }), await doCheck(depth + 1);
+                                        return await doCheck(depth + 1);
+                                    }
                                 }
                                 doc.querySelectorAll("script, style, meta, iframe").forEach(el => el.remove());
                                 const resultText = doc.body.textContent?.replace(/\s+/g, " ").trim() || "获取结果失败";
@@ -2204,8 +2218,15 @@
     let SearchFilter = _SearchFilter;
     class PreviewProcessor {
         static async processThreadLink(link) {
-            const threadURL = link.href;
-            if (!threadURL || !CONFIG.regex.threadUrl.test(threadURL)) return;
+            let threadURL;
+            try {
+                const parsedThreadUrl = new URL(link.href, window.location.href);
+                if (parsedThreadUrl.origin !== window.location.origin || !["http:", "https:"].includes(parsedThreadUrl.protocol)) return;
+                threadURL = parsedThreadUrl.href;
+            } catch {
+                return;
+            }
+            if (!CONFIG.regex.threadUrl.test(threadURL)) return;
             const tr = link.closest("tr");
             if (tr && !tr.querySelector('img[src*="headtopic"]') && !SearchFilter.shouldFilterRow(tr) && "none" !== tr.style.display) try {
                 const response = await fetch(threadURL), pageContent = await response.text(), doc = (new DOMParser).parseFromString(pageContent, "text/html"), isPaid = DataExtractor.isPaidContent(doc);
@@ -2218,10 +2239,18 @@
                     magnet: magnet || "",
                     ed2k: DataExtractor.extractEd2k(doc),
                     thunder: DataExtractor.extractThunder(doc),
-                    attachments: DataExtractor.extractAttachments(doc).map(att => ({
-                        ...att,
-                        url: new URL(att.url, threadURL).href
-                    }))
+                    attachments: DataExtractor.extractAttachments(doc).map(att => {
+                        try {
+                            const attachmentUrl = new URL(att.url, threadURL);
+                            if (!["http:", "https:"].includes(attachmentUrl.protocol) || attachmentUrl.origin !== new URL(threadURL).origin || attachmentUrl.username || attachmentUrl.password) return null;
+                            return {
+                                ...att,
+                                url: attachmentUrl.href
+                            };
+                        } catch {
+                            return null;
+                        }
+                    }).filter(Boolean)
                 };
                 if (!(previewData.imgSrcs.length || previewData.magnet || previewData.ed2k || previewData.thunder || previewData.attachments.length)) return;
                 UIComponents.buildPreviewUI(tr, previewData);
