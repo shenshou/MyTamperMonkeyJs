@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.16
+// @version      1.8.45.17
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -24,6 +24,36 @@
     const initializationFlag = "__2048PreviewSafeInitialized";
     if (window[initializationFlag]) return;
     window[initializationFlag] = true;
+    const managedObjectUrls = new Set();
+    function createManagedObjectUrl(blob) {
+        const url = URL.createObjectURL(blob);
+        managedObjectUrls.add(url);
+        return url;
+    }
+    function revokeManagedObjectUrl(url) {
+        if (!managedObjectUrls.delete(url)) return;
+        URL.revokeObjectURL(url);
+    }
+    function releaseRemovedObjectUrls(node) {
+        if (!node || node.nodeType !== 1) return;
+        const elements = [];
+        if (node.matches?.("[data-managed-object-url]")) elements.push(node);
+        elements.push(...node.querySelectorAll?.("[data-managed-object-url]") || []);
+        for (const element of elements) {
+            const url = element.dataset.managedObjectUrl;
+            if (url && !document.documentElement?.contains(element)) revokeManagedObjectUrl(url);
+        }
+    }
+    if (typeof MutationObserver !== "undefined" && document.documentElement) {
+        const objectUrlObserver = new MutationObserver(records => {
+            for (const record of records) record.removedNodes.forEach(releaseRemovedObjectUrls);
+        });
+        objectUrlObserver.observe(document.documentElement, {childList: true, subtree: true});
+    }
+    window.addEventListener("pagehide", () => {
+        for (const url of managedObjectUrls) URL.revokeObjectURL(url);
+        managedObjectUrls.clear();
+    }, {once: true});
     class Storage {
         static get(key, defaultValue = null) {
             try {
@@ -1546,7 +1576,7 @@
                     if (!pureText) return;
                     const filename = "隐藏网盘资源(已解锁).txt", aid = `bq_${index}_${Date.now()}`, blob = new Blob([ pureText ], {
                         type: "text/plain;charset=utf-8"
-                    }), href = URL.createObjectURL(blob);
+                    }), href = createManagedObjectUrl(blob);
                     attachments.push({
                         name: filename,
                         url: href,
@@ -2087,6 +2117,7 @@
                 let isPurchased = !1;
                 isPaid && aid && purchasedAids.includes(aid) && (isPaid = !1, isPurchased = !0);
                 const item = document.createElement("div");
+                if (att.url?.startsWith("blob:")) item.dataset.managedObjectUrl = att.url;
                 item.style.cssText = `\n        display: flex;\n        align-items: center;\n        gap: 6px;\n        padding: 6px 8px;\n        margin-bottom: 4px;\n        background: ${isPaid ? "#fff8f0" : isPurchased ? "#f1f8e9" : "#f7f5f2"};\n        border: 1px solid ${isPaid ? "#ffe0b2" : isPurchased ? "#c8e6c9" : "#e5e0d8"};\n        border-left: 3px solid ${isPaid ? "#ff9800" : isPurchased ? "#4caf50" : "#2196F3"};\n        border-radius: 4px;\n        cursor: pointer;\n        transition: background 0.2s;\n        font-size: 13px;\n        color: ${isPaid ? "#e65100" : isPurchased ? "#2e7d32" : "#1976d2"};\n      `, 
                 item.onmouseenter = () => {
                     item.style.background = isPaid ? "#ffe0b2" : isPurchased ? "#e8f5e9" : "#e3f2fd";
@@ -2975,6 +3006,7 @@
                     cleanup();
                 }, 18e4);
             } catch (error) {
+                this.checkInPopupCleanup?.();
                 Toast.show("❌ 加载失败: " + error.message, "error", 3e3);
             }
         }
