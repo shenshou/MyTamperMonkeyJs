@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.11
+// @version      1.8.45.12
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -41,6 +41,19 @@
             } catch (error) {
                 return !1;
             }
+        }
+    }
+    async function fetchWithTimeout(input, init = {}, timeout = 20000) {
+        if ("undefined" === typeof AbortController) return fetch(input, init);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+            return await fetch(input, {
+                ...init,
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeoutId);
         }
     }
     const CONFIG = {
@@ -1567,6 +1580,7 @@
                 return new Promise(resolve => {
                     const requestConfig = {
                         method: site.method,
+                        timeout: 15000,
                         url: "GET" === site.method ? `${site.url}?name=${hash}` : site.url,
                         headers: {
                             Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -1800,14 +1814,14 @@
                     });
                     return;
                 }
-                fetch(target.href, {
+                fetchWithTimeout(target.href, {
                     headers: {
                         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                         "Cache-Control": "no-cache"
                     },
                     credentials: sameOrigin ? "include" : "omit",
                     redirect: "manual"
-                }).then(async response => {
+                }, 30000).then(async response => {
                     if (response.status >= 300 && response.status < 400) {
                         const location = response.headers.get("Location");
                         if (!location) throw new Error("附件跳转缺少有效的 Location 地址");
@@ -2231,7 +2245,9 @@
             if (!CONFIG.regex.threadUrl.test(threadURL)) return;
             const tr = link.closest("tr");
             if (tr && !tr.querySelector('img[src*="headtopic"]') && !SearchFilter.shouldFilterRow(tr) && "none" !== tr.style.display) try {
-                const response = await fetch(threadURL), pageContent = await response.text(), doc = (new DOMParser).parseFromString(pageContent, "text/html"), isPaid = DataExtractor.isPaidContent(doc);
+                const response = await fetchWithTimeout(threadURL, {}, 20000);
+            if (!response.ok) return;
+            const pageContent = await response.text(), doc = (new DOMParser).parseFromString(pageContent, "text/html"), isPaid = DataExtractor.isPaidContent(doc);
                 let magnet = DataExtractor.extractMagnet(doc);
                 if (!magnet && !isPaid) {
                     magnet = await ExternalMagnetExtractor.extractFromPage(pageContent) || "";
@@ -2489,9 +2505,11 @@
     }
     async function getRecentThreads() {
         try {
-            const response = await fetch(`${Utils.getBaseUrl()}/thread.php?fid=136`, {
+            const response = await fetchWithTimeout(`${Utils.getBaseUrl()}/thread.php?fid=136`, {
                 credentials: "include"
-            }), html = await response.text(), doc = (new DOMParser).parseFromString(html, "text/html"), threads = [], twoDaysAgo = new Date((new Date).getTime() - 1728e5), rows = doc.querySelectorAll("tr.tr3.t_one");
+            }, 20000);
+            if (!response.ok) return [];
+            const html = await response.text(), doc = (new DOMParser).parseFromString(html, "text/html"), threads = [], twoDaysAgo = new Date((new Date).getTime() - 1728e5), rows = doc.querySelectorAll("tr.tr3.t_one");
             for (const row of Array.from(rows)) {
                 if (row.querySelector('img[src*="headtopic"]')) continue;
                 const allLinks = row.querySelectorAll('a[href*="read.php?tid="]');
@@ -2596,9 +2614,9 @@
             if (threadUrl.origin !== window.location.origin || !["http:", "https:"].includes(threadUrl.protocol) || threadUrl.searchParams.get("tid") !== String(thread.tid)) {
                 throw new Error("已阻止非论坛同源或帖子编号不匹配的回帖地址");
             }
-            const response = await fetch(threadUrl.href, {
+            const response = await fetchWithTimeout(threadUrl.href, {
                 credentials: "include"
-            });
+            }, 20000);
             if (!response.ok) throw new Error(`读取候选帖子失败（HTTP ${response.status}）`);
             const html = await response.text(), parser = new DOMParser, doc = parser.parseFromString(html, "text/html"), form = doc.querySelector('form[name="FORM"]');
             if (!form) throw new Error("未找到回复表单，帖子可能已锁定或当前账号无回复权限");
@@ -2619,11 +2637,11 @@
                 const name = input.name, value = input.value;
                 name && value && formData.append(name, value);
             });
-            const replyResponse = await fetch(`${Utils.getBaseUrl()}/post.php?`, {
+            const replyResponse = await fetchWithTimeout(`${Utils.getBaseUrl()}/post.php?`, {
                 method: "POST",
                 credentials: "include",
                 body: formData
-            });
+            }, 20000);
             if (!replyResponse.ok) throw new Error(`回复请求失败（HTTP ${replyResponse.status}）`);
             const replyResult = await replyResponse.text();
             const failKeyword = REPLY_FAIL_KEYWORDS.find(kw => replyResult.includes(kw));
@@ -2680,10 +2698,10 @@
         }
         static async checkNeedsReplyFromServer() {
             try {
-                const response = await fetch(this.CHECK_IN_URL, {
+                const response = await fetchWithTimeout(this.CHECK_IN_URL, {
                     credentials: "include",
                     cache: "no-cache"
-                });
+                }, 15000);
                 if (!response.ok) return null;
                 const html = await response.text();
                 if (/请先登录|您还没有登录|您没有登录/.test(html) || /验证码|captcha|sliderbox|verify_token/i.test(html)) return null;
@@ -2733,10 +2751,12 @@
         }
         static async getCheckInStats() {
             try {
-                const response = await fetch(this.CHECK_IN_URL, {
+                const response = await fetchWithTimeout(this.CHECK_IN_URL, {
                     credentials: "include",
                     cache: "no-cache"
-                }), html = await response.text(), signedToday = this.isSignedTodayHtml(html), doc = (new DOMParser).parseFromString(html, "text/html"), tacStats = this.parseCheckInStatsFromTac(doc, html, signedToday);
+                }, 15000);
+                if (!response.ok) return null;
+                const html = await response.text(), signedToday = this.isSignedTodayHtml(html), doc = (new DOMParser).parseFromString(html, "text/html"), tacStats = this.parseCheckInStatsFromTac(doc, html, signedToday);
                 if (tacStats) return tacStats;
                 if (html.includes("slider_captcha") || html.includes("sliderbox") || html.includes("verify_token") || html.includes("验证码") || html.includes("captcha") || html.includes("verifycode")) {
                     const selectors = [ ".stats", ".signarea .stats", ".qiandao_text", ".sign-info", '[id*="qiandao"] .stats', '[class*="qiandao"] .stats', '[id*="qiandao"]', '[class*="qiandao"]' ];
@@ -2913,10 +2933,10 @@
                 if (this.repliedThreadInCurrentSession) return this.repliedThreadInCurrentSession;
                 const url = this.getCurrentReplyPageUrl();
                 if (!url) return null;
-                const response = await fetch(url, {
+                const response = await fetchWithTimeout(url, {
                     credentials: "include",
                     cache: "no-cache"
-                });
+                }, 15000);
                 if (!response.ok) return null;
                 const html = await response.text(), doc = (new DOMParser).parseFromString(html, "text/html"), today = getTodayDate(), todayMonthDay = today.slice(5), rows = Array.from(doc.querySelectorAll("tr"));
                 let firstThreadInPage = null;
