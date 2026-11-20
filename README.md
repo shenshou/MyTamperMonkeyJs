@@ -12,14 +12,12 @@
 
 | 脚本 | 适用网站 | 当前版本 | 功能 |
 | --- | --- | --- | --- |
-| [JavDB 评论批量搜索](scripts/javdb-review-batch.user.js) | JavDB | 1.1.1 | 批量搜索番号并获取评论，支持筛选、展开、复制、暂停与继续 |
 | [LTX 批量番号存在性检测](scripts/ltx-batch-checker.user.js) | LTX | 1.2.1 | 批量检测番号是否存在，并获取 magnet / ed2k 资源链接 |
 
 ## 安装
 
 安装 Tampermonkey 或 Violentmonkey 后，打开对应 Raw 地址安装：
 
-- [安装 JavDB 评论批量搜索](https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/javdb-review-batch.user.js)
 - [安装 LTX 批量番号存在性检测](https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/ltx-batch-checker.user.js)
 
 脚本更新由各自的 `@downloadURL` / `@updateURL` 指向本仓库的 Raw 文件。安装后由用户脚本管理器按其更新机制检查更新。
