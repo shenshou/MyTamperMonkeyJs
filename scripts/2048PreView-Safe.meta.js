@@ -7,9 +7,7 @@
 // @include      *://hjd2048.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=https://bbs.djqot.com/
 // @license      GPL-3.0
-// @grant        GM_deleteValue
 // @grant        GM_getValue
-// @grant        GM_listValues
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @connect      hjd2048.com
