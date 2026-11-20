@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.2
+// @version      1.8.45.3
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2132,10 +2132,6 @@
             currentExcluded.includes(forumId) || (currentExcluded.push(forumId), CONFIG.setExcludedForums(currentExcluded), 
             this.reapplyFilter());
         }
-        static removeExcludedForum(forumId) {
-            const newExcluded = this.getExcludedForums().filter(id => id !== forumId);
-            CONFIG.setExcludedForums(newExcluded), this.reapplyFilter();
-        }
         static shouldFilterRow(row) {
             const forumId = this.extractForumId(row), excludedForums = this.getExcludedForums();
             return !!forumId && excludedForums.includes(forumId);
@@ -2954,10 +2950,6 @@
                 return null;
             }
         }
-        static parseCheckInResultHtml(html, source) {
-            const hasSuccess = this.isCheckInSuccessHtml(html), signedByTac = this.isSignedTodayHtml(html), needEmail = html.includes("必须绑定邮箱") || html.includes("绑定邮箱"), needReplyError = this.isNeedReplyHtml(html) || html.includes("未回复");
-            return hasSuccess || signedByTac ? "success" : needEmail ? "fail" : needReplyError ? "need_reply" : "fail";
-        }
         static isCheckInSuccessHtml(html) {
             return html.includes("签到成功") || html.includes("恭喜你签到成功") || html.includes("今天已签到") || html.includes("今日已签到");
         }
@@ -3131,7 +3123,7 @@
             const searchLinks = document.querySelectorAll('a[href="/search.php"], a[href="search.php"]');
             searchLinks.forEach(link => {
                 link.href = "/2048/search.php?advanced=1&keyword=&old=old#submit";
-            }), searchLinks.length;
+            });
         }
         static is2048Site() {
             const title = document.title;
