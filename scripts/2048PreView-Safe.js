@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.14
+// @version      1.8.45.15
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -20,6 +20,10 @@
 
 !function() {
     "use strict";
+    if (window.top !== window.self) return;
+    const initializationFlag = "__2048PreviewSafeInitialized";
+    if (window[initializationFlag]) return;
+    window[initializationFlag] = true;
     class Storage {
         static get(key, defaultValue = null) {
             try {
@@ -2724,6 +2728,11 @@
             return `${Utils.getBaseUrl()}/hack.php?H_name=qiandao`;
         }
         static async execute(buttonElement) {
+            if (this.isExecuting || document.querySelector("#checkin-slider-modal")) {
+                Toast.show("签到流程正在执行，请勿重复点击", "warning", 2500);
+                return;
+            }
+            this.isExecuting = true;
             try {
                 Toast.show("正在检查签到状态...", "info", 2e3);
                 const stats = await this.getCheckInStats();
@@ -2743,6 +2752,8 @@
                 Toast.show("正在打开签到窗口...", "info", 2e3), this.openCheckInPopup(buttonElement, selectedMood);
             } catch (error) {
                 Toast.show("自动签到失败: " + error.message, "error", 3e3);
+            } finally {
+                this.isExecuting = false;
             }
         }
         static async checkNeedsReplyFromServer() {
@@ -2762,6 +2773,11 @@
             }
         }
         static async doAutoReplyWithVerify(thread) {
+            if (this.isReplying) {
+                Toast.show("自动回帖流程正在执行，请勿重复提交", "warning", 2500);
+                return false;
+            }
+            this.isReplying = true;
             try {
                 await async function(preselectedThread) {
                     if (preselectedThread) return void (await replyThread(preselectedThread));
@@ -2796,6 +2812,8 @@
                 !0;
             } catch (error) {
                 return Toast.show("回帖失败: " + error.message, "error", 3e3), !1;
+            } finally {
+                this.isReplying = false;
             }
         }
         static async getCheckInStats() {
@@ -2864,6 +2882,7 @@
         static async openCheckInPopup(buttonElement, selectedMood) {
             Toast.show("正在拉起验证码，请在当前页弹窗内完成验证", "info", 3e3);
             try {
+                this.checkInPopupCleanup?.();
                 const existing = document.querySelector("#checkin-slider-modal");
                 existing && existing.remove();
                 const modal = document.createElement("div");
@@ -2883,9 +2902,17 @@
                 header.appendChild(title), header.appendChild(closeBtn), iframeContainer.appendChild(iframe), 
                 modal.appendChild(header), modal.appendChild(tip), modal.appendChild(iframeContainer), 
                 document.body.appendChild(modal);
-                let handled = !1, submitting = !1, focusedCaptcha = !1, startTriggered = !1;
+                let handled = !1, submitting = !1, focusedCaptcha = !1, startTriggered = !1, checkInterval = null, timeoutId = null;
+                const cleanup = () => {
+                    if (checkInterval !== null) cleanup();
+                    if (timeoutId !== null) window.clearTimeout(timeoutId);
+                    checkInterval = null;
+                    timeoutId = null;
+                    if (this.checkInPopupCleanup === cleanup) this.checkInPopupCleanup = null;
+                };
+                this.checkInPopupCleanup = cleanup;
                 closeBtn.onclick = () => {
-                    handled = !0, modal.remove();
+                    handled = !0, cleanup(), modal.remove();
                 };
                 const focusVisibleCaptcha = () => {
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -2915,7 +2942,7 @@
                         "function" == typeof iframeWindow.qdCaptchaStart && (startTriggered = !0, iframeWindow.qdCaptchaStart());
                     } catch (error) {}
                 };
-                const checkInterval = window.setInterval(() => {
+                checkInterval = window.setInterval(() => {
                     try {
                         if (handled) return;
                         const popupDoc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -2927,25 +2954,25 @@
                         if (!submitting && (hycode || hyrandstr)) {
                             const form = popupDoc.querySelector("form");
                             form && Array.from(form.querySelectorAll('input[type="hidden"]'));
-                            return submitting = !0, handled = !0, window.clearInterval(checkInterval), modal.remove(), 
+                            return submitting = !0, handled = !0, cleanup(), modal.remove(), 
                             void this.finishCheckInAfterVerifyReload(buttonElement);
                         }
                         const tokenInput = popupDoc.querySelector("#verify_token");
                         if (tokenInput?.value) {
-                            handled = !0, window.clearInterval(checkInterval), modal.remove();
+                            handled = !0, cleanup(), modal.remove();
                             tokenInput.value;
                             return void this.finishCheckInAfterVerifyReload(buttonElement);
                         }
-                        if (this.isCheckInSuccessPageHtml(frameHtml)) return handled = !0, window.clearInterval(checkInterval), 
+                        if (this.isCheckInSuccessPageHtml(frameHtml)) return handled = !0, cleanup(), 
                         modal.remove(), void this.finishCheckInSuccess(buttonElement);
-                        this.isNeedReplyHtml(frameHtml) && (handled = !0, window.clearInterval(checkInterval), 
+                        this.isNeedReplyHtml(frameHtml) && (handled = !0, cleanup(), 
                         modal.remove(), Toast.show("验证通过，但服务端要求先回帖，正在处理...", "info", 3e3), this.doAutoReplyWithVerify(this.prefetchedReplyThread).then(replyOk => {
                             replyOk && (Toast.show("回帖成功，请重新完成一次签到验证", "success", 3e3), this.openCheckInPopup(buttonElement, selectedMood));
                         }));
                     } catch (error) {}
                 }, 500);
-                window.setTimeout(() => {
-                    window.clearInterval(checkInterval);
+                timeoutId = window.setTimeout(() => {
+                    cleanup();
                 }, 18e4);
             } catch (error) {
                 Toast.show("❌ 加载失败: " + error.message, "error", 3e3);
@@ -3187,7 +3214,7 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
     };
-    _AutoCheckIn.prefetchedReplyThread = null, _AutoCheckIn.repliedThreadInCurrentSession = null;
+    _AutoCheckIn.prefetchedReplyThread = null, _AutoCheckIn.repliedThreadInCurrentSession = null, _AutoCheckIn.isExecuting = !1, _AutoCheckIn.isReplying = !1, _AutoCheckIn.checkInPopupCleanup = null;
     let AutoCheckIn = _AutoCheckIn;
     class CheckInInfoPanel {
         static async waitForElement(selector, timeout = 5e3) {
