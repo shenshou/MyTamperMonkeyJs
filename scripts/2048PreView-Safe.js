@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.22
+// @version      1.8.45.23
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2301,6 +2301,8 @@
             document.querySelectorAll('tr[id^="search_"], tr.imagePreviewTr').forEach(row => {
                 row.style.display = "";
             }), this.filteredCount = 0, this.filterSearchResults(), this.updateResultStats();
+            const savedKeyword = sessionStorage.getItem("2048_keyword_filter") || "";
+            savedKeyword && KeywordFilter.filterThreads(savedKeyword);
         }
         static addExcludedForum(forumId) {
             const currentExcluded = this.getExcludedForums();
@@ -2493,15 +2495,12 @@
                 let titleLink = null;
                 titleLink = isSearchPage ? row.querySelector('a[href*="read.php?tid="]') || row.querySelector("a") : row.querySelector('.subject a, a[id^="a_ajax_"]') || row.querySelector("a");
                 const titleText = titleLink?.textContent?.toLowerCase() || "", rowText = row.textContent?.toLowerCase() || "", keywords = keyword.split(/\s+/).filter(k => k), isMatch = keywords.some(k => titleText.includes(k) || rowText.includes(k));
-                if (keywords.length > 0 && isMatch) {
-                    row.style.display = "none";
-                    const nextRow = row.nextElementSibling;
-                    nextRow && nextRow.classList.contains("imagePreviewTr") && (nextRow.style.display = "none");
-                } else {
-                    row.style.display = "";
-                    const nextRow = row.nextElementSibling;
-                    nextRow && nextRow.classList.contains("imagePreviewTr") && (nextRow.style.display = "");
-                }
+                const hiddenByKeyword = keywords.length > 0 && isMatch;
+                const hiddenByForum = isSearchPage && SearchFilter.shouldFilterRow(row);
+                const shouldHide = hiddenByKeyword || hiddenByForum;
+                row.style.display = shouldHide ? "none" : "";
+                const nextRow = row.nextElementSibling;
+                nextRow && nextRow.classList.contains("imagePreviewTr") && (nextRow.style.display = shouldHide ? "none" : "");
             });
         }
     }
