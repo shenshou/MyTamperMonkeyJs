@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.13
+// @version      1.8.45.14
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -56,6 +56,7 @@
             clearTimeout(timeoutId);
         }
     }
+    const MAX_ATTACHMENT_PREVIEW_BYTES = 20 * 1024 * 1024;
     const CONFIG = {
         PREVIEW_IMAGE_HEIGHT: 300,
         PREVIEW_COUNT: 4,
@@ -1763,11 +1764,46 @@
             }
             return parsed;
         }
+        static async readResponseArrayBuffer(response) {
+            const declaredLength = Number(response.headers?.get("Content-Length") || 0);
+            if (declaredLength > MAX_ATTACHMENT_PREVIEW_BYTES) {
+                throw new Error("附件超过 20 MB 预览限制，请直接下载查看");
+            }
+            if (!response.body?.getReader) {
+                const buffer = await response.arrayBuffer();
+                if (buffer.byteLength > MAX_ATTACHMENT_PREVIEW_BYTES) throw new Error("附件超过 20 MB 预览限制，请直接下载查看");
+                return buffer;
+            }
+            const reader = response.body.getReader(), chunks = [];
+            let totalBytes = 0;
+            try {
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    totalBytes += value.byteLength;
+                    if (totalBytes > MAX_ATTACHMENT_PREVIEW_BYTES) {
+                        await reader.cancel();
+                        throw new Error("附件超过 20 MB 预览限制，请直接下载查看");
+                    }
+                    chunks.push(value);
+                }
+            } catch (error) {
+                try { await reader.cancel(); } catch {}
+                throw error;
+            }
+            const result = new Uint8Array(totalBytes);
+            let offset = 0;
+            for (const chunk of chunks) {
+                result.set(chunk, offset);
+                offset += chunk.byteLength;
+            }
+            return result.buffer;
+        }
         static request(url, redirectCount = 0) {
             if (url.startsWith("blob:") || url.startsWith("data:")) {
-                return fetch(url).then(response => {
+                return fetchWithTimeout(url, {}, 30000).then(async response => {
                     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                    return response.arrayBuffer();
+                    return this.readResponseArrayBuffer(response);
                 });
             }
             if (redirectCount > 3) return Promise.reject(new Error("附件跳转次数过多，已停止请求"));
@@ -1780,7 +1816,8 @@
             const sameOrigin = target.origin === window.location.origin;
             return new Promise((resolve, reject) => {
                 if ("undefined" != typeof GM_xmlhttpRequest) {
-                    GM_xmlhttpRequest({
+                    let requestHandle, sizeLimitExceeded = false;
+                    requestHandle = GM_xmlhttpRequest({
                         method: "GET",
                         url: target.href,
                         responseType: "arraybuffer",
@@ -1792,7 +1829,19 @@
                             "Cache-Control": "no-cache",
                             "Upgrade-Insecure-Requests": "1"
                         },
+                        onprogress: event => {
+                            if (event.loaded > MAX_ATTACHMENT_PREVIEW_BYTES) {
+                                sizeLimitExceeded = true;
+                                requestHandle?.abort();
+                                reject(new Error("附件超过 20 MB 预览限制，请直接下载查看"));
+                            }
+                        },
                         onload: response => {
+                            if (sizeLimitExceeded) return;
+                            const declaredLength = Number((response.responseHeaders || "").match(/^content-length:\s*(\d+)/im)?.[1] || 0);
+                            if (declaredLength > MAX_ATTACHMENT_PREVIEW_BYTES || response.response?.byteLength > MAX_ATTACHMENT_PREVIEW_BYTES) {
+                                return reject(new Error("附件超过 20 MB 预览限制，请直接下载查看"));
+                            }
                             if (response.status >= 300 && response.status < 400) {
                                 const locationMatch = (response.responseHeaders || "").match(/^location:\s*(.+)$/im);
                                 if (!locationMatch) return reject(new Error("附件跳转缺少有效的 Location 地址"));
@@ -1829,7 +1878,7 @@
                         return this.request(this.normalizeHttpUrl(location, target.href).href, redirectCount + 1);
                     }
                     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-                    return response.arrayBuffer();
+                    return this.readResponseArrayBuffer(response);
                 }).then(resolve).catch(reject);
             });
         }
