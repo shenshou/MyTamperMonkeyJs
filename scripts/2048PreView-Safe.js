@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.9
+// @version      1.8.45.10
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2210,7 +2210,6 @@
                     }, btn.onclick = e => {
                         if (e.preventDefault(), e.stopPropagation(), confirm(`确定要屏蔽板块【${forumLink.textContent}】吗？\n\n屏蔽后此板块的搜索结果将不再显示。\n如需恢复，请点击顶部菜单的"搜索过滤"按钮。`)) {
                             this.addExcludedForum(forumId), this.reapplyFilter();
-                            document.querySelectorAll(`tr[id^="search_${forumId}_"]`).length;
                         }
                     }, forumLink.parentElement.appendChild(btn);
                 }
