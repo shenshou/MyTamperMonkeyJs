@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.17
+// @version      1.8.45.18
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -3003,10 +3003,15 @@
                     } catch (error) {}
                 }, 500);
                 timeoutId = window.setTimeout(() => {
+                    if (handled) return;
+                    handled = !0;
                     cleanup();
+                    modal.remove();
+                    Toast.show("签到验证超时，请重新尝试", "warning", 3e3);
                 }, 18e4);
             } catch (error) {
                 this.checkInPopupCleanup?.();
+                document.querySelector("#checkin-slider-modal")?.remove();
                 Toast.show("❌ 加载失败: " + error.message, "error", 3e3);
             }
         }
