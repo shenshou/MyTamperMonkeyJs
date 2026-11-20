@@ -48,9 +48,11 @@ function insertBefore(newNode, referenceNode) {
 }
 
 function removeElementIfPresent(element) {
-    if (element) {
-        return element.parentNode.removeChild(element);
+    if (!element) return;
+    if (element instanceof HTMLImageElement && element.src.startsWith('blob:')) {
+        URL.revokeObjectURL(element.src);
     }
+    return element.parentNode?.removeChild(element);
 }
 
 function sanitizeImportedNode(root) {
