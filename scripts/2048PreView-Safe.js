@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.12
+// @version      1.8.45.13
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -3071,10 +3071,10 @@
             try {
                 const url = this.getCurrentReplyPageUrl();
                 if (!url) return null;
-                const response = await fetch(url, {
+                const response = await fetchWithTimeout(url, {
                     credentials: "include",
                     cache: "no-cache"
-                });
+                }, 15000);
                 if (!response.ok) return null;
                 const html = await response.text(), doc = (new DOMParser).parseFromString(html, "text/html"), today = getTodayDate(), pageText = doc.body?.textContent?.replace(/\s+/g, " ").trim() || "", hasReplyLink = !!doc.querySelector('a[href*="read.php?tid="]'), hasReplyTable = Array.from(doc.querySelectorAll("tr")).some(row => {
                     const text = row.textContent?.replace(/\s+/g, " ").trim() || "";
