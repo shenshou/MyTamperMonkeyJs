@@ -1,15 +1,13 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.1
+// @version      1.8.45.2
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
 // @include      *://hjd2048.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=https://bbs.djqot.com/
 // @license      GPL-3.0
-// @grant        GM_deleteValue
 // @grant        GM_getValue
-// @grant        GM_listValues
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @run-at       document-start
@@ -37,37 +35,6 @@
             try {
                 const jsonValue = JSON.stringify(value);
                 return GM_setValue(key, jsonValue), !0;
-            } catch (error) {
-                return !1;
-            }
-        }
-        static delete(key) {
-            try {
-                return GM_deleteValue(key), !0;
-            } catch (error) {
-                return !1;
-            }
-        }
-        static listKeys() {
-            try {
-                return GM_listValues();
-            } catch (error) {
-                return [];
-            }
-        }
-        static migrateFromLocalStorage(key, deleteAfterMigration = !0) {
-            try {
-                const localValue = localStorage.getItem(key);
-                if (null !== localValue) {
-                    try {
-                        const parsed = JSON.parse(localValue);
-                        this.set(key, parsed);
-                    } catch {
-                        GM_setValue(key, localValue);
-                    }
-                    return deleteAfterMigration && localStorage.removeItem(key), !0;
-                }
-                return !1;
             } catch (error) {
                 return !1;
             }
@@ -189,13 +156,6 @@
             const {protocol: protocol, hostname: hostname, port: port, pathname: pathname} = window.location, portStr = port ? `:${port}` : "";
             return pathname.startsWith("/2048/") || "/2048" === pathname ? `${protocol}//${hostname}${portStr}/2048` : `${protocol}//${hostname}${portStr}`;
         },
-        safeQuerySelector(selector, context = document) {
-            try {
-                return context.querySelector(selector);
-            } catch (error) {
-                return null;
-            }
-        },
         safeQuerySelectorAll(selector, context = document) {
             try {
                 return Array.from(context.querySelectorAll(selector));
@@ -204,17 +164,11 @@
             }
         }
     }, _ForumData = class {
-        static getForumById(id) {
-            return this.FORUM_SECTIONS.find(forum => forum.id === id);
-        }
         static getChildForums(parentId) {
             return this.FORUM_SECTIONS.filter(forum => forum.parent === parentId);
         }
         static getMainCategories() {
             return this.FORUM_SECTIONS.filter(forum => 2 === forum.level && "1" === forum.parent);
-        }
-        static getDisplayName(forum) {
-            return `${"　".repeat(Math.max(0, forum.level - 2))}${forum.name}`;
         }
         static getForumTree() {
             const result = [];
@@ -1379,15 +1333,6 @@
             style.id = this.styleElementId, style.textContent = '.click-tip{position:fixed;background:rgba(0,0,0,0.8);color:#fff;padding:6px 12px;border-radius:4px;font-size:13px;z-index:10000}.thread-title-highlighted{background:#e8f4fd!important;border-radius:4px 4px 0 0}.preview-container{margin:0 0 10px 0;border:1px solid #dee2e6;border-top:none;border-radius:0 0 4px 4px;padding:16px;background:#f8f9fa}.preview-images{display:flex;gap:12px;margin-bottom:16px}.preview-image-wrapper{height:300px;flex:0 0 auto;border-radius:4px;cursor:pointer;overflow:hidden}.preview-image{width:100%;height:100%;object-fit:cover}.preview-magnet{font-size:13px;word-break:break-all;cursor:pointer;padding:10px 12px;background:#f0f9ff;border:1px solid #e0f2fe;border-radius:4px;margin-bottom:10px}.content-magnet-block{margin:12px 0 18px;padding:12px 16px;background:#eff6ff;border:1px solid #dbeafe;border-radius:10px;box-shadow:0 1px 2px rgba(15,23,42,0.06)}.content-magnet-title{font-size:14px;font-weight:600;color:#1d4ed8;margin-bottom:6px}.content-magnet-text{font-size:13px;color:#0f172a;word-break:break-all;background:#fff;border:1px dashed #bfdbfe;border-radius:6px;padding:10px 12px;cursor:pointer;transition:background 0.2s}.content-magnet-text:hover{background:#dbeafe}.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;visibility:hidden}.lightbox.active{opacity:1;visibility:visible}.lightbox-image{border-radius:8px;display:block;object-fit:contain}.lightbox-prev,.lightbox-next,.lightbox-close{position:absolute;color:#fff;cursor:pointer;background:rgba(0,0,0,0.5);border-radius:50%;display:flex;align-items:center;justify-content:center}.lightbox-prev,.lightbox-next{top:50%;transform:translateY(-50%);font-size:36px;width:60px;height:60px}.lightbox-close{top:20px;right:20px;font-size:24px;width:40px;height:40px}.lightbox-prev{left:20px}.lightbox-next{right:20px}.simple-toggle-btn{color:#007bff;text-decoration:none;font-size:13px;cursor:pointer}.simple-toggle-btn:hover{color:#0056b3;text-decoration:underline}.clean-search-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10001;background:#fff;border:1px solid #ddd;border-radius:8px;font-family:system-ui,sans-serif;width:750px;max-height:80vh;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.2)}.clean-search-panel header{position:relative;padding:16px 20px;border-bottom:1px solid #e5e7eb;background:#f8f9fa;border-radius:8px 8px 0 0;font-size:15px;font-weight:600;color:#374151}.clean-forum-tree{padding:20px;max-height:500px;overflow-y:auto}.clean-forum-card{margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background:#fff}.clean-forum-card:last-child{margin-bottom:0}.clean-card-header{padding:12px 16px;background:#f1f5f9;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px}.main-forum-title{font-weight:600;font-size:14px;color:#1f2937;cursor:pointer}.main-forum-checkbox{margin:0;transform:scale(1.1)}.clean-card-content{padding:16px}.clean-sub-section{margin-bottom:16px;border-left:3px solid #e5e7eb;padding-left:12px}.clean-sub-section:last-child{margin-bottom:0}.clean-sub-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}.sub-forum-title{font-weight:500;font-size:13px;color:#4b5563;cursor:pointer}.sub-forum-checkbox{margin:0}.clean-level4-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-left:20px}.clean-level4-item{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:6px;cursor:pointer;font-size:12px;color:#6b7280}.clean-level4-item:hover{background:#f3f4f6}.level4-forum-checkbox{margin:0;transform:scale(0.9)}.clean-compact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:12px}.clean-compact-item{display:flex;align-items:center;gap:6px;padding:10px 12px;background:#fff;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;font-size:13px;color:#4b5563}.clean-compact-item:hover{background:#f9fafb}.compact-forum-checkbox{margin:0;transform:scale(1.05)}.filter-controls{display:flex;gap:10px}.clean-search-panel footer{padding:16px 20px;background:#f8f9fa;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;display:flex;justify-content:space-between;align-items:center}.clean-search-panel button{padding:8px 16px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;cursor:pointer;font-size:13px;font-weight:500}.clean-search-panel button.secondary{background:#f9fafb}.clean-search-panel #search-save-settings-btn{background:#3b82f6;border-color:#3b82f6;color:#fff}.flex{display:flex}.items-center{align-items:center}.justify-center{justify-content:center}.gap-2{gap:0.5rem}.mb-3{margin-bottom:0.75rem}.p-3{padding:0.75rem}.text-center{text-align:center}.cursor-pointer{cursor:pointer}.close-x{position:absolute;top:12px;right:16px;width:24px;height:24px;border:none;background:none;color:#999;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}.close-x:hover{color:#666}.search-img-group,.search-thumb-toggle .form-label-tip{display:none!important}/* Fixed Pagination Bar */.pages.fixed-top-pages{position:fixed!important;top:0;left:0;right:0;z-index:9997;background:#fff;border-bottom:1px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,0.1);padding:8px 15px;width:100%;box-sizing:border-box}/* Placeholder for fixed pagination */.pages-placeholder{height:35px}/* Infinite Scroll Loader */.infinite-scroll-loader{text-align:center;padding:20px;color:#666;font-size:14px;clear:both;background:#f9f9f9;border-top:1px solid #eee;margin-top:10px}.loader-spinner{display:inline-block;width:20px;height:20px;border:2px solid #ddd;border-top:2px solid #0066cc;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;margin-right:8px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} /* Fix native search page pagination input */ .pagesone { display: inline-flex !important; align-items: center !important; vertical-align: middle !important; } .pagesone input { width: 40px !important; min-width: 40px !important; max-width: 40px !important; height: 22px !important; box-sizing: content-box !important; padding: 0 4px !important; margin: 0 4px !important; text-align: center !important; border: 1px solid #ccc !important; } .pagesone button { height: 26px !important; cursor: pointer !important; }/* TXT Preview Modal */.txt-preview-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:10000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(2px);opacity:0;transition:opacity .2s}.txt-preview-overlay.active{opacity:1}.txt-preview-container{background:#fff;width:80%;max-width:800px;height:80%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);display:flex;flex-direction:column;overflow:hidden;animation:txt-pop-in .2s ease-out}@keyframes txt-pop-in{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}.txt-preview-header{padding:12px 16px;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center}.txt-preview-title{font-weight:700;color:#333;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.txt-preview-close{cursor:pointer;font-size:18px;color:#666;padding:0 8px}.txt-preview-close:hover{color:#d32f2f}.txt-preview-content{flex:1;overflow-y:auto;padding:16px;margin:0;background:#fff;font-family:Consolas,Monaco,"Courier New",monospace;font-size:13px;line-height:1.6;color:#333;white-space:pre-wrap;word-break:break-all}.txt-preview-line{padding:6px 8px;border-bottom:1px solid #f1f5f9;transition:background .2s}.txt-preview-line:hover{background:#f8fafc}.txt-preview-line:last-child{border-bottom:none}.txt-preview-link{color:#2563eb;text-decoration:none;font-weight:500;padding:4px 8px;border-radius:6px;background:#eff6ff;display:inline-block;margin:2px 0;border:1px solid #dbeafe;font-family:inherit}.txt-preview-link:hover{background:#dbeafe;text-decoration:underline;color:#1d4ed8}.txt-preview-link.ed2k{border-left:4px solid #2563eb}.txt-preview-link.magnet{color:#dc2626;border-left:4px solid #dc2626;background:#fef2f2;border-color:#fee2e2}.txt-preview-link.magnet:hover{background:#fee2e2;color:#b91c1c}.txt-preview-footer{padding:12px 16px;background:#f8f9fa;border-top:1px solid #e5e7eb;text-align:right;display:flex;justify-content:flex-end;gap:12px}.txt-preview-btn{padding:6px 16px;background:#1976d2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;transition:background .2s}.txt-preview-btn:hover{background:#1565c0}/* Attachment Preview Enhancement */.attach-previewable{border-left:3px solid #2196F3!important;transition:border-color .2s}.attach-previewable:hover{border-left-color:#1565c0!important}.attach-previewable .attach-name-link{cursor:pointer;color:#1976d2!important}.attach-preview-badge{display:inline-block;margin-left:8px;padding:1px 6px;background:#e3f2fd;color:#1976d2;border-radius:3px;font-size:11px;vertical-align:middle}', 
             document.head.appendChild(style);
         }
-        static setImageGridWidth(container, count) {
-            let imageWidth;
-            if (1 === count) imageWidth = "50%"; else {
-                imageWidth = `calc((100% - ${12 * (count - 1)}px) / ${count})`;
-            }
-            Array.from(container.children).forEach(child => {
-                child.style.width = imageWidth, child.style.flex = "0 0 auto";
-            });
-        }
     };
     _UltraMinimalStyleManager.styleElementId = "ultra-minimal-styles";
     let UltraMinimalStyleManager = _UltraMinimalStyleManager;
@@ -2182,16 +2127,6 @@
                 row.style.display = "";
             }), this.filteredCount = 0, this.filterSearchResults(), this.updateResultStats();
         }
-        static getFilterStats() {
-            return {
-                total: this.totalCount,
-                filtered: this.filteredCount,
-                visible: this.totalCount - this.filteredCount
-            };
-        }
-        static clearAllFilters() {
-            CONFIG.setExcludedForums([]), this.reapplyFilter();
-        }
         static addExcludedForum(forumId) {
             const currentExcluded = this.getExcludedForums();
             currentExcluded.includes(forumId) || (currentExcluded.push(forumId), CONFIG.setExcludedForums(currentExcluded), 
@@ -2200,9 +2135,6 @@
         static removeExcludedForum(forumId) {
             const newExcluded = this.getExcludedForums().filter(id => id !== forumId);
             CONFIG.setExcludedForums(newExcluded), this.reapplyFilter();
-        }
-        static toggleForumExclusion(forumId) {
-            this.getExcludedForums().includes(forumId) ? this.removeExcludedForum(forumId) : this.addExcludedForum(forumId);
         }
         static shouldFilterRow(row) {
             const forumId = this.extractForumId(row), excludedForums = this.getExcludedForums();
@@ -2606,29 +2538,6 @@
         static get CHECK_IN_URL() {
             return `${Utils.getBaseUrl()}/hack.php?H_name=qiandao`;
         }
-        static syncStatusFromCache(buttonElement) {
-            try {
-                const cache = function() {
-                    try {
-                        return Storage.get("CHECK_IN_STATUS_V3", null);
-                    } catch {
-                        return null;
-                    }
-                }(), today = getTodayDate();
-                cache && cache.date === today && cache.signed ? this.updateButtonStatus(buttonElement, !0) : buttonElement && (buttonElement.textContent = "自动签到", 
-                buttonElement.title = "点击自动签到");
-            } catch (error) {
-                buttonElement && (buttonElement.textContent = "自动签到", buttonElement.title = "点击自动签到");
-            }
-        }
-        static async initStatusCheck(buttonElement) {
-            try {
-                const stats = await this.getCheckInStats();
-                if (!stats) return void this.updateButtonStatus(buttonElement, !1);
-                const signed = stats.signedToday;
-                setStatusCache(signed, stats.lastSignTime), this.updateButtonStatus(buttonElement, signed);
-            } catch (error) {}
-        }
         static async execute(buttonElement) {
             try {
                 Toast.show("正在检查签到状态...", "info", 2e3);
@@ -2952,13 +2861,6 @@
             const todayTime = rowText.match(/今天\s*(\d{2}:\d{2})/);
             return todayTime ? `今天 ${todayTime[1]}` : "";
         }
-        static async executeReplyOnly() {
-            const replyState = await this.getTodayReplyState();
-            return "not_logged_in" === replyState ? (Toast.show("请先登录论坛后再回帖", "error", 2500), 
-            !1) : replyState.replied ? (Toast.show("今天已经回帖过了", "success", 2e3), !0) : (this.prefetchedReplyThread || (this.prefetchedReplyThread = await prepareReplyCandidate()), 
-            this.prefetchedReplyThread ? (Toast.show("今日未回帖，正在自动回帖...", "info", 2500), await this.doAutoReplyWithVerify(this.prefetchedReplyThread)) : (Toast.show("未获取到可回帖帖子，请稍后刷新重试", "error", 3e3), 
-            !1));
-        }
         static getCurrentReplyPageUrl() {
             try {
                 const directLink = document.querySelector('a[href="u.php?action=post"], a[href*="u.php?action=post"]');
@@ -3052,31 +2954,8 @@
                 return null;
             }
         }
-        static buildCheckInFormDataFromInputs(allHiddenInputs, mood, hycode, hyrandstr) {
-            const formData = new URLSearchParams;
-            formData.append("action", "qiandao"), formData.append("qdxq", mood);
-            for (const input of allHiddenInputs) {
-                const name = input.name, value = input.value;
-                name && formData.append(name, value);
-            }
-            return formData.has("method") || formData.append("method", "AND"), formData.has("sch_area") || formData.append("sch_area", "0"), 
-            formData.has("f_fid") || formData.append("f_fid", "0"), formData.has("sch_time") || formData.append("sch_time", "all"), 
-            formData.set("hycode", hycode), formData.set("hyrandstr", hyrandstr), formData;
-        }
-        static async submitCheckInFormData(formData, source) {
-            const response = await fetch(this.CHECK_IN_URL, {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: formData.toString()
-            }), html = await response.text();
-            return this.parseCheckInResultHtml(html, source);
-        }
         static parseCheckInResultHtml(html, source) {
             const hasSuccess = this.isCheckInSuccessHtml(html), signedByTac = this.isSignedTodayHtml(html), needEmail = html.includes("必须绑定邮箱") || html.includes("绑定邮箱"), needReplyError = this.isNeedReplyHtml(html) || html.includes("未回复");
-            html.includes("提示信息") || html.includes("错误");
             return hasSuccess || signedByTac ? "success" : needEmail ? "fail" : needReplyError ? "need_reply" : "fail";
         }
         static isCheckInSuccessHtml(html) {
@@ -3253,13 +3132,6 @@
             searchLinks.forEach(link => {
                 link.href = "/2048/search.php?advanced=1&keyword=&old=old#submit";
             }), searchLinks.length;
-        }
-        static isLoggedIn() {
-            if (document.querySelector('#td_userinfomore[href*="u.php?action=show"]')) return !0;
-            const loginLink = document.querySelector('a[href="login.php"]');
-            if (loginLink && loginLink.textContent?.includes("登录")) return !1;
-            const registerLink = document.querySelector('a[href="register.php"]');
-            return registerLink && registerLink.textContent?.includes("注册"), !1;
         }
         static is2048Site() {
             const title = document.title;
