@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.10
+// @version      1.8.45.11
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2584,10 +2584,34 @@
     const REPLY_FAIL_KEYWORDS = [ "无权", "权限不足", "请输入验证码", "操作太快", "灌水", "不允许", "禁止发言", "请先登录", "发表失败", "回复失败" ], REPLY_SUCCESS_KEYWORDS = [ "发表成功", "回复成功", "回帖成功", "发帖成功" ];
     async function replyThread(thread) {
         try {
-            const response = await fetch(thread.url, {
+            if (!thread || !/^\d+$/.test(String(thread.tid)) || isBlockedThreadTitle(thread.title || "")) {
+                throw new Error("候选帖子信息无效或命中禁止回复规则");
+            }
+            let threadUrl;
+            try {
+                threadUrl = new URL(thread.url, `${Utils.getBaseUrl()}/`);
+            } catch {
+                throw new Error("候选帖子地址无效");
+            }
+            if (threadUrl.origin !== window.location.origin || !["http:", "https:"].includes(threadUrl.protocol) || threadUrl.searchParams.get("tid") !== String(thread.tid)) {
+                throw new Error("已阻止非论坛同源或帖子编号不匹配的回帖地址");
+            }
+            const response = await fetch(threadUrl.href, {
                 credentials: "include"
-            }), html = await response.text(), parser = new DOMParser, form = parser.parseFromString(html, "text/html").querySelector('form[name="FORM"]');
-            if (!form) throw new Error("未找到回复表单");
+            });
+            if (!response.ok) throw new Error(`读取候选帖子失败（HTTP ${response.status}）`);
+            const html = await response.text(), parser = new DOMParser, doc = parser.parseFromString(html, "text/html"), form = doc.querySelector('form[name="FORM"]');
+            if (!form) throw new Error("未找到回复表单，帖子可能已锁定或当前账号无回复权限");
+            const statusText = doc.querySelector("#messagetext, .guide .message, .alert_error")?.textContent?.replace(/\s+/g, " ").trim() || "";
+            if (/本帖已锁定|主题已锁定|禁止回复|关闭回复|无法回复|没有回复权限|无权回复|您没有权限回复/.test(statusText)) {
+                throw new Error("论坛页面提示该帖子不可回复");
+            }
+            const replyField = form.querySelector('textarea[name="atc_content"], textarea');
+            if (!replyField || replyField.disabled || replyField.readOnly) throw new Error("回复输入框不可用，已停止自动回帖");
+            const formTid = form.querySelector('input[name="tid"]')?.value;
+            if (formTid && formTid !== String(thread.tid)) throw new Error("回复表单帖子编号不匹配");
+            const submitControl = form.querySelector('button[type="submit"], input[type="submit"]');
+            if (submitControl?.disabled) throw new Error("回复提交按钮不可用");
             const replyContent = REPLY_POOL[Math.floor(Math.random() * REPLY_POOL.length)], formData = new FormData;
             formData.append("step", "2"), formData.append("tid", thread.tid), formData.append("atc_content", replyContent), 
             formData.append("atc_title", "RE: " + thread.title.substring(0, 50));
