@@ -5,7 +5,6 @@
 // @author       星宿老魔
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
 // @include      *://hjd2048.com/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=https://bbs.djqot.com/
 // @license      GPL-3.0
 // @grant        GM_deleteValue
 // @grant        GM_getValue
