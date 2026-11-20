@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.3
+// @version      1.8.45.4
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2949,9 +2949,6 @@
             } catch (error) {
                 return null;
             }
-        }
-        static isCheckInSuccessHtml(html) {
-            return html.includes("签到成功") || html.includes("恭喜你签到成功") || html.includes("今天已签到") || html.includes("今日已签到");
         }
         static isCheckInSuccessPageHtml(html) {
             return html.includes("签到成功") || html.includes("恭喜你签到成功");
