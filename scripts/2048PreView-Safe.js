@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.19
+// @version      1.8.45.20
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -48,7 +48,7 @@
         const objectUrlObserver = new MutationObserver(records => {
             for (const record of records) record.removedNodes.forEach(releaseRemovedObjectUrls);
         });
-        objectUrlObserver.observe(document.documentElement, {childList: true, subtree: true});
+        objectUrlObserver.observe(document, {childList: true, subtree: true});
     }
     window.addEventListener("pagehide", () => {
         for (const url of managedObjectUrls) URL.revokeObjectURL(url);
