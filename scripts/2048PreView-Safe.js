@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.24
+// @version      1.8.45.25
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -14,8 +14,8 @@
 // @connect      bt.bxmho.cn
 // @connect      www.82bt.com
 // @run-at       document-start
-// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/2048PreView-Safe.js
-// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/2048PreView-Safe.meta.js
+// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/2048preview-safe/scripts/2048PreView-Safe.js
+// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/2048preview-safe/scripts/2048PreView-Safe.meta.js
 // ==/UserScript==
 
 !function() {
