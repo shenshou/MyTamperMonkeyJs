@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.15
+// @version      1.8.45.16
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2904,7 +2904,7 @@
                 document.body.appendChild(modal);
                 let handled = !1, submitting = !1, focusedCaptcha = !1, startTriggered = !1, checkInterval = null, timeoutId = null;
                 const cleanup = () => {
-                    if (checkInterval !== null) cleanup();
+                    if (checkInterval !== null) window.clearInterval(checkInterval);
                     if (timeoutId !== null) window.clearTimeout(timeoutId);
                     checkInterval = null;
                     timeoutId = null;
