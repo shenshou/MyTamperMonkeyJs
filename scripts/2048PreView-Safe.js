@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.18
+// @version      1.8.45.19
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -81,13 +81,31 @@
         if ("undefined" === typeof AbortController) return fetch(input, init);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
+        const cleanup = () => clearTimeout(timeoutId);
         try {
-            return await fetch(input, {
+            const response = await fetch(input, {
                 ...init,
                 signal: controller.signal
             });
-        } finally {
-            clearTimeout(timeoutId);
+            Object.defineProperty(response, "__requestTimeoutCleanup", {
+                value: cleanup,
+                configurable: true
+            });
+            for (const method of ["text", "json", "arrayBuffer", "blob", "formData"]) {
+                const original = response[method];
+                if (typeof original !== "function") continue;
+                response[method] = async function(...args) {
+                    try {
+                        return await original.apply(this, args);
+                    } finally {
+                        cleanup();
+                    }
+                };
+            }
+            return response;
+        } catch (error) {
+            cleanup();
+            throw error;
         }
     }
     const MAX_ATTACHMENT_PREVIEW_BYTES = 20 * 1024 * 1024;
@@ -1824,6 +1842,8 @@
             } catch (error) {
                 try { await reader.cancel(); } catch {}
                 throw error;
+            } finally {
+                response.__requestTimeoutCleanup?.();
             }
             const result = new Uint8Array(totalBytes);
             let offset = 0;
