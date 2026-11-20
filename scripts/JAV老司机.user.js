@@ -206,14 +206,12 @@
             var index = this.indexOfIdle();
             if (index != -1) {
                 this.threads[index].idle(callback);
-                //try { console.log('Thread-' + (index+1) + ' accept the task!') } catch (e) {}
             } else {
                 this.taskList.push(callback);
                 for (var i = 0, l = this.threads.length; i < l; i++) {
                     ((thread, self, id) => {
                         thread.idle(() => {
                             if (self.taskList.length > 0) {
-                                //try { console.log('Thread-' + (id+1) + ' accept the task!') } catch (e) {}
                                 let promise = self.taskList.shift()(); // 正确的返回值应该是一个promise对象
                                 return promise.promise ? promise : $.Deferred().resolve().promise();
                             } else {
@@ -2312,7 +2310,7 @@
                 }
 
                 let filerScore = (indexCd_id, score) => {
-                    //过滤X评分以下的影片  //if(vid == 'javlikq7qu')debugger;
+                    //过滤X评分以下的影片
                     if ($(indexCd_id).context.URL.indexOf("?delete") > 0) {
                         if ($(indexCd_id).context.URL.indexOf("delete7down") > 0 && score <= 7.01) {
                             $(indexCd_id).remove();
@@ -2642,7 +2640,6 @@
                                     link.target = "_blank";
                                 }
                             }
-                            // javdb列表 bug：一直有最后一页 console.log(`1 ${url}`);console.log(`2 ${nextURL}`);
                             if ($(JAVDB_ITEM_SELECTOR).length && (this._count !== 0) && url === nextURL) {
                                 if ($(`#waterfall>div>a[href="${$(elems[0]).find('a.box')[0].attr('href')}"]`).length > 0) {
                                     nextURL = undefined;
