@@ -15,12 +15,11 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
+// @grant        unsafeWindow
 // @connect      javscreens.com
 // @connect      img.japanese-bukkake.net
 // @connect      search.javtrailers.com
 // @connect      javtrailers.com
-// @connect      bing.com
-// @connect      google.com
 // @homepage     https://github.com/wdwind/JavMiniDriver
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/Jav%E5%B0%8F%E5%8F%B8%E6%9C%BA-ts%E5%88%A0%E9%99%A4%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97%E8%AF%B4%E6%98%8E.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/Jav%E5%B0%8F%E5%8F%B8%E6%9C%BA-ts%E5%88%A0%E9%99%A4%E6%9B%B4%E6%96%B0%E6%97%A5%E5%BF%97%E8%AF%B4%E6%98%8E.user.js
@@ -79,7 +78,10 @@ async function runWithConcurrency(items, limit, task) {
     let next = 0;
     const count = Math.min(Math.max(1, limit), items.length);
     await Promise.all(Array.from({ length: count }, async () => {
-        while (next < items.length) await task(items[next++]);
+        while (next < items.length) {
+            const item = items[next++];
+            try { await task(item); } catch { /* Continue processing remaining items. */ }
+        }
     }));
 }
 
@@ -401,7 +403,7 @@ class MiniDriverThumbnail {
         let showPageSelector = GM_getValue(pageSelectorId, 'none') != 'block' ? 'none' : 'block';
         const currentSelector = document.getElementsByClassName('page_selector')[0];
         if (currentSelector && pageSelector) {
-            currentSelector.replaceChildren(...Array.from(pageSelector.childNodes).map(node => document.importNode(node, true)));
+            currentSelector.replaceChildren(...Array.from(pageSelector.childNodes).map(node => sanitizeImportedNode(document.importNode(node, true))));
             currentSelector.id = pageSelectorId;
             currentSelector.style.display = showPageSelector;
         }
@@ -423,7 +425,7 @@ class MiniDriverThumbnail {
 
             // Video score
             let videoScore = '';
-            if (videoDetailsDoc.getElementById('video_review')) {
+            if (videoDetailsDoc.getElementById('video_review')?.getElementsByClassName('score')[0]) {
                 let videoScoreStr = videoDetailsDoc.getElementById('video_review').getElementsByClassName('score')[0].innerText;
                 videoScore = videoScoreStr.substring(1, videoScoreStr.length - 1);
                 if (!(video.id in this.videoStats)) {
@@ -434,7 +436,7 @@ class MiniDriverThumbnail {
 
             // Video watched
             let videoWatched = '0';
-            if (videoDetailsDoc.getElementById('watched')) {
+            if (videoDetailsDoc.getElementById('watched')?.getElementsByTagName('a')[0]) {
                 videoWatched = videoDetailsDoc.getElementById('watched').getElementsByTagName('a')[0].innerText;
                 if (!(video.id in this.videoStats)) {
                     this.videoStats[video.id] = {};
@@ -719,7 +721,8 @@ class MiniDriver {
 
         // Set element texts
         Array.from(elements.getElementsByClassName('t')).forEach(element => {
-            let elementText = parseBBCode(escapeHtml(element.getElementsByTagName('textarea')[0].innerText));
+            const commentText = element.getElementsByTagName('textarea')[0]?.innerText ?? '';
+            let elementText = parseBBCode(escapeHtml(commentText));
             let elementHtml = createElementFromHTML(`<div>${parseHTMLText(elementText).body.innerHTML}</div>`);
             element.getElementsByClassName('text')[0].replaceWith(this.processUrls(elementHtml));
         });
