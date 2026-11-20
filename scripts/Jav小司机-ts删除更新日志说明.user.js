@@ -749,8 +749,9 @@ class MiniDriver {
                     const marker = pageType === 'reviews' ? 'review' : 'comment';
                     if (child.id && child.id.includes(marker)) child.remove();
                 });
-                await this.getNextPage(1, pageType);
-                button.remove();
+                const loaded = await this.getNextPage(1, pageType);
+                if (loaded) button.remove();
+                else throw new Error('Unable to load ' + pageType);
             } catch {
                 button.disabled = false;
                 button.textContent = label + '（重试）';
@@ -767,7 +768,7 @@ class MiniDriver {
         // Load more reviews
         let request = {url: `/cn/${urlPath}.php?v=${this.javVideoId}&mode=2&page=${page}`};
         let response = await xhrFetchWithRetry(request).catch(() => null);
-        if (!response) return;
+        if (!response) return false;
         let responseText = await response.text();
         let doc = parseHTMLText(responseText);
 
@@ -780,7 +781,7 @@ class MiniDriver {
         // Get comments/reviews in the next page
         let elements = doc && doc.getElementById(elementsId);
         if (!elements || !elements.getElementsByClassName('t')[0] || !doc.getElementsByClassName('page_selector')[0]) {
-            return;
+            return false;
         }
 
         // Set element texts
@@ -793,7 +794,7 @@ class MiniDriver {
 
         // Append elements to the page
         let currentElements = document.getElementById(elementsId);
-        if (!currentElements) return;
+        if (!currentElements) return false;
         let bottomLine = currentElements.getElementsByClassName('grey')[0];
         Array.from(elements.children).forEach(element => {
             if (element.tagName == 'TABLE' || element.tagName == 'TD') {
@@ -816,6 +817,7 @@ class MiniDriver {
             }
             insertAfter(pageSelector, currentElements);
         }
+        return true;
     }
 
 
