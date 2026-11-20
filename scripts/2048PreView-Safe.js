@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.7
+// @version      1.8.45.8
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2579,7 +2579,7 @@
             modal.appendChild(actions), overlay.appendChild(modal), document.body.appendChild(overlay);
         });
     }
-    const REPLY_FAIL_KEYWORDS = [ "无权", "权限不足", "请输入验证码", "操作太快", "灌水", "不允许", "禁止发言", "请先登录", "发表失败", "回复失败" ], REPLY_SUCCESS_KEYWORDS = [ "read.php?tid=", "发表成功", "回复成功", "发帖成功", "操作成功", "成功" ];
+    const REPLY_FAIL_KEYWORDS = [ "无权", "权限不足", "请输入验证码", "操作太快", "灌水", "不允许", "禁止发言", "请先登录", "发表失败", "回复失败" ], REPLY_SUCCESS_KEYWORDS = [ "发表成功", "回复成功", "回帖成功", "发帖成功" ];
     async function replyThread(thread) {
         try {
             const response = await fetch(thread.url, {
@@ -2597,12 +2597,24 @@
                 method: "POST",
                 credentials: "include",
                 body: formData
-            }), replyResult = await replyResponse.text();
+            });
             if (!replyResponse.ok) throw new Error(`回复请求失败（HTTP ${replyResponse.status}）`);
-            const hasSuccessSign = REPLY_SUCCESS_KEYWORDS.some(kw => replyResult.includes(kw)), hasRedirect = replyResponse.redirected || replyResult.includes("location.href") || replyResult.includes("window.location") || /http-equiv=["']refresh["']/i.test(replyResult) || /url=.*read\.php/i.test(replyResult);
-            if (hasSuccessSign || hasRedirect) return void saveRepliedThread(thread.tid);
+            const replyResult = await replyResponse.text();
             const failKeyword = REPLY_FAIL_KEYWORDS.find(kw => replyResult.includes(kw));
             if (failKeyword) throw new Error(`回复失败（${failKeyword}）`);
+            const hasExplicitSuccess = REPLY_SUCCESS_KEYWORDS.some(kw => replyResult.includes(kw));
+            let redirectedToThread = false;
+            if (replyResponse.redirected && replyResponse.url) {
+                try {
+                    const finalUrl = new URL(replyResponse.url, `${Utils.getBaseUrl()}/`);
+                    redirectedToThread = finalUrl.origin === window.location.origin &&
+                        /(?:^|\/)read\.php$/.test(finalUrl.pathname) &&
+                        finalUrl.searchParams.get("tid") === String(thread.tid);
+                } catch {}
+            }
+            if (!hasExplicitSuccess && !redirectedToThread) {
+                throw new Error("服务器未明确确认回帖成功，未保存成功记录");
+            }
             saveRepliedThread(thread.tid);
         } catch (error) {
             throw error;
@@ -2645,10 +2657,15 @@
                 const response = await fetch(this.CHECK_IN_URL, {
                     credentials: "include",
                     cache: "no-cache"
-                }), html = await response.text();
-                return html.includes("回复任何帖子") || html.includes("回复任意帖子") || html.includes("回复一个帖子") || html.includes("先回复") || html.includes("回帖") && html.includes("无法签到") || html.includes("回复") && html.includes("才能签到");
-            } catch (error) {
-                return !1;
+                });
+                if (!response.ok) return null;
+                const html = await response.text();
+                if (/请先登录|您还没有登录|您没有登录/.test(html) || /验证码|captcha|sliderbox|verify_token/i.test(html)) return null;
+                const needsReply = html.includes("回复任何帖子") || html.includes("回复任意帖子") || html.includes("回复一个帖子") || html.includes("先回复") || html.includes("回帖") && html.includes("无法签到") || html.includes("回复") && html.includes("才能签到");
+                if (needsReply) return true;
+                return /签到|qiandao/i.test(html) ? false : null;
+            } catch {
+                return null;
             }
         }
         static async doAutoReplyWithVerify(thread) {
@@ -2671,8 +2688,9 @@
                     if (!selectedThread) throw new Error("没有确认任何候选帖子，签到流程已中止");
                     await replyThread(selectedThread);
                 }(thread || void 0), Toast.show("回帖已提交，验证中...", "info", 2e3), await this.sleep(2e3);
-                if (await this.checkNeedsReplyFromServer()) return Toast.show("❌ 回帖未被服务端确认，签到中止", "error", 3e3), 
-                !1;
+                const serverNeedsReply = await this.checkNeedsReplyFromServer();
+                if (serverNeedsReply === true) return Toast.show("❌ 回帖未被服务端确认，签到中止", "error", 3e3), !1;
+                if (serverNeedsReply === null) return Toast.show("⚠️ 暂时无法确认回帖状态，签到已中止；请稍后检查回帖记录", "warning", 4e3), !1;
                 if (thread) {
                     const now = new Date, hour = String(now.getHours()).padStart(2, "0"), minute = String(now.getMinutes()).padStart(2, "0");
                     this.repliedThreadInCurrentSession = {
