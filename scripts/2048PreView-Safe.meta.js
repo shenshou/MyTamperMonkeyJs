@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.5
+// @version      1.8.45.7
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
