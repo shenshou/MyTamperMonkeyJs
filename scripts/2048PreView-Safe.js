@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.4
+// @version      1.8.45.5
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -2472,8 +2472,23 @@
             const desc = document.createElement("div");
             desc.textContent = `即将自动回帖并继续签到，当前候选 ${currentIndex + 1} / ${total}`, desc.style.cssText = "font-size: 13px; color: #666; margin-bottom: 16px;";
             const info = document.createElement("div");
-            info.style.cssText = "\n            background: #f7f8fa;\n            border: 1px solid #e5e7eb;\n            border-radius: 10px;\n            padding: 14px;\n            margin-bottom: 16px;\n            line-height: 1.7;\n            word-break: break-all;\n        ", 
-            info.innerHTML = `\n            <div><strong>帖子标题：</strong>${thread.title}</div>\n            <div><strong>发帖时间：</strong>${thread.date || "未知"}</div>\n        `;
+            info.style.cssText = "\n            background: #f7f8fa;\n            border: 1px solid #e5e7eb;\n            border-radius: 10px;\n            padding: 14px;\n            margin-bottom: 16px;\n            line-height: 1.7;\n            word-break: break-all;\n        ";
+            const threadTitleRow = document.createElement("div");
+            const threadTitleLabel = document.createElement("strong");
+            threadTitleLabel.textContent = "帖子标题：";
+            const threadTitleText = document.createElement("span");
+            threadTitleText.textContent = thread.title || "";
+            threadTitleRow.appendChild(threadTitleLabel);
+            threadTitleRow.appendChild(threadTitleText);
+            const threadDateRow = document.createElement("div");
+            const threadDateLabel = document.createElement("strong");
+            threadDateLabel.textContent = "发帖时间：";
+            const threadDateText = document.createElement("span");
+            threadDateText.textContent = thread.date || "未知";
+            threadDateRow.appendChild(threadDateLabel);
+            threadDateRow.appendChild(threadDateText);
+            info.appendChild(threadTitleRow);
+            info.appendChild(threadDateRow);
             const tip = document.createElement("div");
             tip.textContent = "如果看起来像测试帖/检测帖，可点击“换下一帖”。", tip.style.cssText = "font-size: 13px; color: #b45309; margin-bottom: 18px;";
             const actions = document.createElement("div");
@@ -3027,9 +3042,37 @@
             const isToday = stats.signedToday, statusIcon = isToday ? "✅" : "⏰", statusText = isToday ? "已签到" : "未签到", statusColor = isToday ? "#90EE90" : "#FFD700", replyStatusText = "replied" === replyState ? "已回帖" : "not_replied" === replyState ? "未回帖" : "待确认", replyColor = "replied" === replyState ? "#90EE90" : "#FFD700", detailThread = "replied" === replyState ? latestRepliedThread : candidate, replyTitleText = "replied" === replyState ? detailThread ? `今日已回帖：${detailThread.title}` : "今日已回帖（未解析到帖子标题）" : candidate ? `目标帖子：${candidate.title}` : "暂未获取到可回帖帖子", panel = document.createElement("div");
             panel.className = "checkin-info-panel", panel.style.cssText = '\n      display: flex;\n      flex-direction: column;\n      align-items: stretch;\n      justify-content: flex-start;\n      padding: 6px 12px;\n      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n      border-radius: 6px;\n      box-shadow: 0 2px 6px rgba(0,0,0,0.15);\n      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;\n      color: #fff;\n      font-size: 13px;\n      line-height: 1;\n      gap: 8px;\n      box-sizing: border-box;\n      width: auto;\n      max-width: 100%;\n      min-width: 0;\n    ';
             const statsDiv = document.createElement("div");
-            statsDiv.style.cssText = "display: flex; gap: 10px; opacity: 0.9;", statsDiv.innerHTML = `\n      <span>累计: <b style="font-weight:700;">${stats.totalDays}</b>天</span>\n      <span>本月: <b style="font-weight:700;">${stats.monthDays}</b>天</span>\n      <span>上次: ${stats.lastSignTime ? stats.lastSignTime.substring(0, 10) : "暂无"}</span>\n    `;
+            statsDiv.style.cssText = "display: flex; gap: 10px; opacity: 0.9;";
+            const totalDaysSpan = document.createElement("span");
+            totalDaysSpan.append("累计: ");
+            const totalDaysValue = document.createElement("b");
+            totalDaysValue.style.fontWeight = "700";
+            totalDaysValue.textContent = String(stats.totalDays ?? 0);
+            totalDaysSpan.appendChild(totalDaysValue);
+            totalDaysSpan.append("天");
+            const monthDaysSpan = document.createElement("span");
+            monthDaysSpan.append("本月: ");
+            const monthDaysValue = document.createElement("b");
+            monthDaysValue.style.fontWeight = "700";
+            monthDaysValue.textContent = String(stats.monthDays ?? 0);
+            monthDaysSpan.appendChild(monthDaysValue);
+            monthDaysSpan.append("天");
+            const lastSignSpan = document.createElement("span");
+            lastSignSpan.textContent = `上次: ${stats.lastSignTime ? stats.lastSignTime.substring(0, 10) : "暂无"}`;
+            statsDiv.append(totalDaysSpan, monthDaysSpan, lastSignSpan);
             const statusDiv = document.createElement("div");
-            statusDiv.style.cssText = "display: flex; gap: 10px; align-items: center;", statusDiv.innerHTML = `\n      <span style="color: ${statusColor}; font-weight: bold;">${statusIcon} ${statusText}</span>\n      <span style="opacity: 0.5;">|</span>\n      <span style="color: ${replyColor}; font-weight: bold;" title="${replyTitleText.replace(/"/g, "&quot;")}">💬 ${replyStatusText}</span>\n    `;
+            statusDiv.style.cssText = "display: flex; gap: 10px; align-items: center;";
+            const checkInStatusSpan = document.createElement("span");
+            checkInStatusSpan.style.cssText = `color: ${statusColor}; font-weight: bold;`;
+            checkInStatusSpan.textContent = `${statusIcon} ${statusText}`;
+            const statusSeparator = document.createElement("span");
+            statusSeparator.style.opacity = "0.5";
+            statusSeparator.textContent = "|";
+            const replyStatusSpan = document.createElement("span");
+            replyStatusSpan.style.cssText = `color: ${replyColor}; font-weight: bold;`;
+            replyStatusSpan.title = replyTitleText;
+            replyStatusSpan.textContent = `💬 ${replyStatusText}`;
+            statusDiv.append(checkInStatusSpan, statusSeparator, replyStatusSpan);
             const replyDetailDiv = document.createElement("div");
             if (replyDetailDiv.style.cssText = "display: flex; align-items: center; justify-content: space-between; gap: 12px; opacity: 0.95; width: 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-align: left;", 
             detailThread) {
