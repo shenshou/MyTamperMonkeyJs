@@ -1728,11 +1728,7 @@
                         metaMatch && (redirectUrl = metaMatch[1]);
                     }
                     if (redirectUrl) {
-                        try {
-                            redirectUrl = new URL(redirectUrl, window.location.href).href;
-                        } catch {
-                            redirectUrl.startsWith("http") || (redirectUrl = window.location.origin + "/" + redirectUrl.replace(/^\//, ""));
-                        }
+                        redirectUrl = this.normalizeHttpUrl(redirectUrl, window.location.href).href;
                         this.showLoading("检测到跳转页面，正在请求真实地址..."), await new Promise(resolve => setTimeout(resolve, 1500)), 
                         buffer = await this.request(redirectUrl), text = this.decode(buffer), (text.trim().startsWith("<!DOCTYPE html>") || text.includes("<html")) && this.handleHtmlError(text);
                     } else this.handleHtmlError(text);
@@ -1743,34 +1739,78 @@
                 return this.showError(filename, `预览失败: ${displayMsg}\n\n建议直接点击链接下载查看。`), !1;
             }
         }
-        static request(url) {
-            return url.startsWith("blob:") || url.startsWith("data:") ? fetch(url).then(res => res.arrayBuffer()) : new Promise((resolve, reject) => {
-                "undefined" != typeof GM_xmlhttpRequest ? GM_xmlhttpRequest({
-                    method: "GET",
-                    url: url,
-                    responseType: "arraybuffer",
-                    headers: {
-                        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                        "Cache-Control": "no-cache",
-                        "Upgrade-Insecure-Requests": "1",
-                        Referer: window.location.href
-                    },
-                    onload: response => {
-                        response.status >= 200 && response.status < 300 ? resolve(response.response) : reject(new Error(`HTTP error ${response.status}`));
-                    },
-                    onerror: () => {
-                        reject(new Error("网络请求错误 (GM_xmlhttpRequest)"));
-                    },
-                    ontimeout: () => {
-                        reject(new Error("请求超时"));
-                    }
-                }) : fetch(url, {
+        static normalizeHttpUrl(value, base = window.location.href) {
+            const parsed = new URL(value, base);
+            if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) {
+                throw new Error("已阻止不安全的附件地址");
+            }
+            return parsed;
+        }
+        static request(url, redirectCount = 0) {
+            if (url.startsWith("blob:") || url.startsWith("data:")) {
+                return fetch(url).then(response => {
+                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                    return response.arrayBuffer();
+                });
+            }
+            if (redirectCount > 3) return Promise.reject(new Error("附件跳转次数过多，已停止请求"));
+            let target;
+            try {
+                target = this.normalizeHttpUrl(url);
+            } catch (error) {
+                return Promise.reject(error);
+            }
+            const sameOrigin = target.origin === window.location.origin;
+            return new Promise((resolve, reject) => {
+                if ("undefined" != typeof GM_xmlhttpRequest) {
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: target.href,
+                        responseType: "arraybuffer",
+                        timeout: 30000,
+                        redirect: "manual",
+                        anonymous: !sameOrigin,
+                        headers: {
+                            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                            "Cache-Control": "no-cache",
+                            "Upgrade-Insecure-Requests": "1"
+                        },
+                        onload: response => {
+                            if (response.status >= 300 && response.status < 400) {
+                                const locationMatch = (response.responseHeaders || "").match(/^location:\s*(.+)$/im);
+                                if (!locationMatch) return reject(new Error("附件跳转缺少有效的 Location 地址"));
+                                if (redirectCount >= 3) return reject(new Error("附件跳转次数过多，已停止请求"));
+                                try {
+                                    const nextUrl = this.normalizeHttpUrl(locationMatch[1].trim(), target.href);
+                                    this.request(nextUrl.href, redirectCount + 1).then(resolve, reject);
+                                } catch (error) {
+                                    reject(error);
+                                }
+                                return;
+                            }
+                            response.status >= 200 && response.status < 300
+                                ? resolve(response.response)
+                                : reject(new Error(`HTTP error ${response.status}`));
+                        },
+                        onerror: () => reject(new Error("网络请求错误 (GM_xmlhttpRequest)")),
+                        ontimeout: () => reject(new Error("请求超时"))
+                    });
+                    return;
+                }
+                fetch(target.href, {
                     headers: {
                         Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                         "Cache-Control": "no-cache"
                     },
-                    credentials: "include"
-                }).then(response => {
+                    credentials: sameOrigin ? "include" : "omit",
+                    redirect: "manual"
+                }).then(async response => {
+                    if (response.status >= 300 && response.status < 400) {
+                        const location = response.headers.get("Location");
+                        if (!location) throw new Error("附件跳转缺少有效的 Location 地址");
+                        if (redirectCount >= 3) throw new Error("附件跳转次数过多，已停止请求");
+                        return this.request(this.normalizeHttpUrl(location, target.href).href, redirectCount + 1);
+                    }
                     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                     return response.arrayBuffer();
                 }).then(resolve).catch(reject);
