@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JAV老司机（测试版）
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/test
-// @version      3.8.13
+// @version      3.8.14
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
@@ -88,8 +88,48 @@
     const JAVDB_DOMAIN = 'javdb368.com';
     const TORRENTKITTY_DOMAIN = 'www.torrentkitty.one';
     const MMTV_DOMAIN = '7mmtv.sx';
+
+    const SITE_CONFIG_KEY = 'javOldDriver_siteConfig';
+    const DEFAULT_SITE_CONFIG = [{"id":"javlib","name":"JavLibrary","host":"www.javlibrary.com","template":"/cn/vl_searchbyid.php?keyword={id}","groups":["jump"],"enabled":true},{"id":"javbus","name":"JavBus","host":"www.javbus.com","template":"/{id}","groups":["jump"],"enabled":true},{"id":"avsox","name":"AVSOX","host":"avsox.click","template":"/cn/search/{id}","groups":["jump"],"enabled":true},{"id":"onejav","name":"OneJAV","host":"onejav.com","template":"/search/{code}","groups":["jump"],"enabled":true},{"id":"jav321","name":"JAV321","host":"www.jav321.com","template":"/search","groups":["jump"],"enabled":true,"dynamic":true},{"id":"javstore","name":"JavStore","host":"javstore.net","template":"/search/{id}.html","groups":["jump"],"enabled":true,"dynamic":true},{"id":"missav","name":"MissAV","host":"missav.com","template":"/cn/{id}","groups":["preview"],"enabled":true},{"id":"mmtv","name":"7mmtv","host":"7mmtv.sx","template":"/zh/censored_search/all/{id}/1.html","groups":["preview"],"enabled":true},{"id":"supjav","name":"SupJav","host":"supjav.com","template":"/zh/?s={id}","groups":["preview"],"enabled":true},{"id":"njav","name":"NJAV","host":"njav.tv","template":"/zh/search?keyword={id}","groups":["preview"],"enabled":true}];
+    const LEGACY_SITE_KEYS = {javlib_url:'javlib',javbus_url:'javbus',avsox_url:'avsox',onejav_url:'onejav',jav321_url:'jav321',javstore_url:'javstore',missav_url:'missav',mmtv_url:'mmtv',supjav_url:'supjav',njav_url:'njav'};
+    function normalizeSiteHost(value) {
+        const host=String(value||'').trim().replace(/^https?:\/\//i,'').split('/')[0];
+        if(!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host)||host.includes('..')) return '';
+        return host.toLowerCase();
+    }
+    function readSiteConfig() {
+        const saved=GM_getValue(SITE_CONFIG_KEY,undefined);
+        if(Array.isArray(saved)) return saved.map(site=>({...site,host:normalizeSiteHost(site.host)})).filter(site=>site.id&&site.name&&site.host);
+        return DEFAULT_SITE_CONFIG.map(site=>{
+            const legacyKey=Object.keys(LEGACY_SITE_KEYS).find(key=>LEGACY_SITE_KEYS[key]===site.id);
+            const legacyHost=legacyKey?GM_getValue(legacyKey,site.host):site.host;
+            return {...site,host:normalizeSiteHost(legacyHost)||site.host};
+        });
+    }
+    function escapeSiteHtml(value) {
+        return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    }
+    function buildSiteUrl(siteOrId, avid) {
+        const site=typeof siteOrId==='string'?readSiteConfig().find(item=>item.id===siteOrId):siteOrId;
+        if(!site||!site.enabled||!site.host||!site.template) return '';
+        const full=String(avid||'').trim();
+        const code=full.replace(/-/g,'');
+        const path=String(site.template).trim();
+        if(!path.startsWith('/')||path.startsWith('//')||/[\u0000-\u001f]/.test(path)) return '';
+        const expanded=path.replace(/\{(id|code)\}/g,(_,key)=>encodeURIComponent(key==='code'?code:full));
+        try {
+            const url=new URL('https://'+site.host+expanded);
+            if(url.protocol!=='https:'||url.hostname!==site.host.split(':')[0]) return '';
+            return url.href;
+        } catch(error) { return ''; }
+    }
+    function renderSiteLinks(avid, group) {
+        return readSiteConfig().filter(site=>site.enabled&&!site.dynamic&&Array.isArray(site.groups)&&site.groups.includes(group))
+            .map(site=>{const url=buildSiteUrl(site,avid);return url?'<a href="'+escapeSiteHtml(url)+'" target="_blank" rel="noopener noreferrer" title="'+escapeSiteHtml(site.name)+'">'+escapeSiteHtml(site.name)+'&nbsp;</a>':'';}).join('');
+    }
     function getSiteDomain(key, fallback) {
-        return String(GM_getValue(key, fallback) || fallback).trim().replace(/^https?:\/\//i, '').split('/')[0];
+        const id=LEGACY_SITE_KEYS[key],site=id&&readSiteConfig().find(item=>item.id===id);
+        return site?site.host:String(GM_getValue(key,fallback)||fallback).trim().replace(/^https?:\/\//i,'').split('/')[0];
     }
     const JAVLIB_DOMAIN = 's87n.com';
     const MAGNET_SOURCES = [
@@ -201,43 +241,86 @@
      * 公用类
      */
     class Common {
+
         static init() {
-            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN,javlib_url:'www.javlibrary.com',javbus_url:'www.javbus.com',avsox_url:'avsox.click',onejav_url:'onejav.com',jav321_url:'www.jav321.com',javstore_url:'javstore.net',missav_url:'missav.com',mmtv_url:MMTV_DOMAIN,supjav_url:'supjav.com',njav_url:'njav.tv'};
+            if(GM_getValue(SITE_CONFIG_KEY,undefined)===undefined) GM_setValue(SITE_CONFIG_KEY,readSiteConfig());
+            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN};
             for(const [key,value] of Object.entries(defaults))if(GM_getValue(key,undefined)===undefined)GM_setValue(key,value);
             for(const source of MAGNET_SOURCES)if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
             GM_setValue('javOldDriver_version',GM_info.script.version);
             GM_registerMenuCommand('设置',()=>Common.openSystemConfig());
         }
         static openSystemConfig() {
-            const dom=document.createElement('div'),inputs={},toggles={};
-            const siteFields=[['javlib_url','JavLibrary 域名','www.javlibrary.com'],['javbus_url','JavBus 域名','www.javbus.com'],['avsox_url','AVSOX 域名','avsox.click'],['onejav_url','OneJAV 域名','onejav.com'],['jav321_url','JAV321 域名','www.jav321.com'],['javstore_url','JavStore 域名','javstore.net'],['missav_url','MissAV 域名','missav.com'],['mmtv_url','7mmtv 域名',MMTV_DOMAIN],['supjav_url','SupJav 域名','supjav.com'],['njav_url','NJAV 域名','njav.tv']];
+            const dom=document.createElement('div');
+            dom.id='tm-site-config';
+            const siteList=document.createElement('div');
+            const controls=document.createElement('div');
+            const makeInput=(value,placeholder)=>{const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=value||'';input.placeholder=placeholder||'';return input;};
+            const makeCheck=(checked)=>{const input=document.createElement('input');input.type='checkbox';input.className='tm-checkbox';input.checked=!!checked;return input;};
+            const makeSiteRow=(site)=>{
+                const row=document.createElement('section');row.className='tm-site-row';row.dataset.siteId=site.id||'';
+                const title=makeInput(site.name,'站点名称');title.setAttribute('aria-label','站点名称');
+                const host=makeInput(site.host,'域名，例如 www.example.com');host.setAttribute('aria-label','域名');
+                const template=makeInput(site.template,'路径模板，例如 /search/{id}');template.setAttribute('aria-label','URL 路径模板');
+                const enabled=makeCheck(site.enabled!==false);
+                const jump=makeCheck((site.groups||[]).includes('jump'));
+                const preview=makeCheck((site.groups||[]).includes('preview'));
+                const top=document.createElement('div');top.className='tm-site-row-top';
+                const fields=document.createElement('div');fields.className='tm-site-fields';
+                const named=(label,node)=>{const wrap=document.createElement('label');wrap.className='tm-site-field';const caption=document.createElement('span');caption.textContent=label;wrap.append(caption,node);return wrap;};
+                fields.append(named('站点名称',title),named('域名',host),named('URL 路径模板',template));
+                const flags=document.createElement('div');flags.className='tm-site-flags';
+                const addFlag=(label,input)=>{const wrap=document.createElement('label');wrap.append(input,document.createTextNode(label));flags.appendChild(wrap);};
+                addFlag('启用',enabled);addFlag('JAV 跳转',jump);addFlag('在线预览',preview);
+                const remove=document.createElement('button');remove.type='button';remove.className='tm-site-remove';remove.textContent='删除站点';
+                remove.addEventListener('click',()=>row.remove());
+                top.append(fields,flags,remove);row.appendChild(top);
+                return {row,title,host,template,enabled,jump,preview,original:site};
+            };
+            const siteRows=[];
+            const heading=document.createElement('h3');heading.textContent='统一资源站跳转配置';dom.appendChild(heading);
+            const help=document.createElement('p');help.className='tm-setting-help';help.textContent='修改、新增或删除后会应用到对应的全站跳转入口。路径模板使用 {id} 表示完整番号，{code} 表示去掉连字符的番号；例如 /cn/search/{id}。域名与路径分开填写。';dom.appendChild(help);
+            const renderRows=()=>{siteList.replaceChildren();siteRows.length=0;for(const site of readSiteConfig()){const row=makeSiteRow(site);siteList.appendChild(row.row);siteRows.push(row);}};
+            renderRows();dom.appendChild(siteList);
+            const add=document.createElement('button');add.type='button';add.className='tm-site-add';add.textContent='＋ 添加自定义站点';
+            add.addEventListener('click',()=>{const row=makeSiteRow({id:'custom-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:'自定义站点',host:'example.com',template:'/{id}',groups:['jump'],enabled:true});siteList.appendChild(row.row);siteRows.push(row);row.title.focus();});
+            const restore=document.createElement('button');restore.type='button';restore.className='tm-site-restore';restore.textContent='恢复默认内置站点';
+            restore.addEventListener('click',()=>{if(!confirm('恢复默认站点会覆盖当前站点清单，是否继续？'))return;siteList.replaceChildren();siteRows.length=0;for(const site of DEFAULT_SITE_CONFIG){const row=makeSiteRow({...site});siteList.appendChild(row.row);siteRows.push(row);}});
+            controls.className='tm-site-controls';controls.append(add,restore);dom.appendChild(controls);
             const scrollRow=document.createElement('label');scrollRow.className='tm-setting';scrollRow.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
-            const scroll=document.createElement('input');scroll.type='checkbox';scroll.className='tm-checkbox';scroll.checked=GM_getValue('scroll_status',1)!==0;scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
-            const siteHeading=document.createElement('h3');siteHeading.textContent='资源站域名';dom.appendChild(siteHeading);
-            for(const [key,title,fallback] of siteFields){
-                const row=document.createElement('label');row.className='tm-setting';row.appendChild(document.createTextNode(title));
-                const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(key,fallback)||fallback);inputs[key]=input;row.appendChild(input);dom.appendChild(row);
-            }
-            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源（可独立启用、禁用和修改域名）';dom.appendChild(magnetHeading);
+            const scroll=makeCheck(GM_getValue('scroll_status',1)!==0);scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
+            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源（独立配置）';dom.appendChild(magnetHeading);
+            const magnetInputs={},toggles={};
             for(const source of MAGNET_SOURCES){
                 const row=document.createElement('div');row.className='tm-setting';
                 const label=document.createElement('label');label.textContent=source.label+' 启用';
-                const toggle=document.createElement('input');toggle.type='checkbox';toggle.className='tm-checkbox';toggle.checked=GM_getValue(source.enabledKey,true);toggles[source.enabledKey]=toggle;label.appendChild(toggle);
-                const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(source.domainKey,source.defaultDomain)||source.defaultDomain);inputs[source.domainKey]=input;
+                const toggle=makeCheck(GM_getValue(source.enabledKey,true));toggles[source.enabledKey]=toggle;label.appendChild(toggle);
+                const input=makeInput(String(GM_getValue(source.domainKey,source.defaultDomain)||source.defaultDomain),'磁力源域名');magnetInputs[source.domainKey]=input;
                 row.append(label,input);dom.appendChild(row);
             }
-            Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存'}).then(result=>{
-                if(!result.value)return;
-                const values={};
-                for(const [key,input] of Object.entries(inputs)){
-                    const host=input.value.trim().replace(/^https?:\/\//i,'').split('/')[0];
-                    if(!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host)||host.includes('..')){
-                        Swal.fire('网址格式错误','请填写有效域名，可包含端口，不要填写路径或脚本代码。','error');return;
-                    }
-                    values[key]=host.toLowerCase();
+            const collectSites=()=>{
+                const result=[];
+                for(const row of siteRows){
+                    if(!row.row.isConnected)continue;
+                    const name=row.title.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim();
+                    const groups=[];if(row.jump.checked)groups.push('jump');if(row.preview.checked)groups.push('preview');
+                    if(!name||!host||!template||!template.startsWith('/')||template.startsWith('//')||/[\u0000-\u001f]/.test(template)||!groups.length)throw new Error('站点名称、有效域名、以 / 开头的路径模板及至少一个适用场景均为必填项。');
+                    const original=row.original||{};
+                    result.push({id:original.id||row.row.dataset.siteId||('custom-'+Date.now()),name,host,template,groups,enabled:row.enabled.checked,dynamic:!!original.dynamic});
                 }
+                return result;
+            };
+            Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存',showCancelButton:true,cancelButtonText:'取消',
+                onOpen:popup=>{popup.style.width='min(920px, calc(100vw - 24px))';popup.style.maxHeight='calc(100vh - 24px)';popup.style.display='flex';popup.style.flexDirection='column';const content=popup.querySelector('.swal2-content');if(content){content.style.overflowY='auto';content.style.minHeight='0';content.style.flex='1';}const actions=popup.querySelector('.swal2-actions');if(actions)actions.style.flexShrink='0';}
+            }).then(result=>{
+                if(!result.value)return;
+                let sites;
+                try{sites=collectSites();}catch(error){Swal.fire('配置有误',error.message,'error');return;}
+                const magnetValues={};
+                for(const [key,input] of Object.entries(magnetInputs)){const host=normalizeSiteHost(input.value);if(!host){Swal.fire('网址格式错误','请填写有效磁力源域名，可包含端口。','error');return;}magnetValues[key]=host;}
+                GM_setValue(SITE_CONFIG_KEY,sites);
                 GM_setValue('scroll_status',scroll.checked?1:0);
-                for(const [key,value] of Object.entries(values))GM_setValue(key,value);
+                for(const [key,value] of Object.entries(magnetValues))GM_setValue(key,value);
                 for(const source of MAGNET_SOURCES)GM_setValue(source.enabledKey,toggles[source.enabledKey].checked);
                 const enabled=enabledMagnetSources(),selected=GM_getValue('search_index','');
                 if(enabled.length&&!enabled.includes(selected))GM_setValue('search_index',enabled[0]);
@@ -1065,7 +1148,7 @@
                             <table><tbody><tr>
                                 <td class="header">JAV跳转:</td>
                                 <td id="linkJump">
-                                    <span class="genre"><a id="javbus_jump_link" href="https://${GM_getValue('javbus_url')}/${AVID}" target="_blank" rel="noopener noreferrer">JavBus</a></span>
+                                    ${renderSiteLinks(AVID, "jump")}
                                 </td>
                             </tr></tbody></table>
                         </div>
@@ -1090,9 +1173,7 @@
                             <table><tbody><tr>
                                 <td class="header">在线预览:</td>
                                 <td>
-                                    <span class="genre"><a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${AVID}" target="_blank" title="MissAV">missav</a></span>
-                                    <span class="genre"><a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${AVID}/1.html" target="_blank" title="7mmtv">7mmtv</a></span>
-                                    <span class="genre"><a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${Common.getAvCode(AVID)}+${AVID}" target="_blank" title="SupJav">supjav</a></span>
+                                    ${renderSiteLinks(AVID, "preview")}
                                 </td>
                             </tr></tbody></table>
                         </div>
@@ -1190,18 +1271,14 @@
                     //加入在线预览跳转
                     $('.col-md-3.info').append(`
                         <p id="jav-online-preview">
-                            <span class="header">在线预览:</span>
-                            <a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;</a>
-                            <a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${AVID}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;</a>
-                            <a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;</a>
+                            <span class="header">在线预览:</span>${renderSiteLinks(AVID, "preview")}
                         </p>
                     `);
                     bindTampermonkeyOpenLinks(document.getElementById('jav-online-preview'));
                     // 加入javlib的跳转链接
                     $('.col-md-3.info').append(`
                         <p id="linkJump">
-                            <span class="header">JAV跳转:</span>
-                            <a href="https://${GM_getValue('javlib_url')}/cn/vl_searchbyid.php?keyword=${AVID}" target="_blank" style="color: rgb(204, 0, 0);">JavLib&nbsp;</a>
+                            <span class="header">JAV跳转:</span>${renderSiteLinks(AVID, "jump")}
                         </p>
                     `);
                     // javstoreLink
@@ -1455,10 +1532,7 @@
                 thirdparty.nong.searchMagnetRun();
 
                 $(".onlinePlayLink").append(`
-                    <a href="${'https://' + getSiteDomain('njav_url', 'njav.tv')}/zh/search?keyword=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="NJAV">njav&nbsp;&nbsp;</a>
-                    <a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;&nbsp;</a>
-                    <a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${$('.boxoleft .box_left_news.news_2n').attr("avid")}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;&nbsp;</a>
-                    <a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;&nbsp;</a>
+                    ${renderSiteLinks($(".boxoleft .box_left_news.news_2n").attr("avid"), "preview")}
                 `);
                 bindTampermonkeyOpenLinks(document.querySelector('.onlinePlayLink'));
 
@@ -1663,8 +1737,7 @@
                         $(aEle.parentElement.parentElement).attr("style", "flex-direction: column;");
                         if (!(/^FC2(-)/g).test(avid)) {
                             // Javlib的跳转链接
-                            $(aEle.parentElement).append(`<a style='color:red;' href='https://${GM_getValue('javlib_url')}/cn/vl_searchbyid.php?keyword=` +
-                                avcd + "&" + avid + "' target='_blank' title='点击到Javlib看看'>&nbsp;&nbsp;Javlib</a>");
+                            $(aEle.parentElement).append(renderSiteLinks(avid, 'jump'));
                         }
                         // 番号预览大图
                         Common.addAvImg(avcd, ($img) => {
@@ -1714,18 +1787,7 @@
                         }
                         if (!$("#waterfall").hasClass("v cols-4 vcols-8")) {
                             $div.append(`
-                                        <a title="可忽略" href="https://${GM_getValue('avsox_url')}/cn/search/${avid}" target="_blank">
-                                            <span class="tag hobby" style="margin-right: 5px;background-color:#bf9be6;display:none;">avsox</span>
-                                        </a>
-                                        <a title="无码 JAV资源站" href="https://${GM_getValue('javbus_url')}/${avid}" target="_blank">
-                                            <span class="tag hobby" style="margin-right: 5px;background-color:#febe00;">JavBus</span>
-                                        </a>
-                                        <a title="有码 JAV资源站" href="https://${GM_getValue('javlib_url')}/cn/vl_searchbyid.php?keyword=${avid}" target="_blank">
-                                            <span class="tag hobby" style="margin-right: 0px;background-color:#f908bb;">JavLib</span>
-                                        </a>
-                                        <a title="FC2 JAV资源站" href="${Common.getOneJavSearchUrl(avid)}" target="_blank">
-                                            <span class="tag hobby" style="margin-right: 3px;background-color:#00d1b2;">OneJav</span>
-                                        </a>
+                                        ${renderSiteLinks(avid, "jump")}
                                     `);
                             let $a = $(`
                                         <a title="素人 JAV资源站" href="javascript:void(0);">
