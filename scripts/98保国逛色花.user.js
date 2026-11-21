@@ -535,6 +535,13 @@
   });
   // #endregion
 
+  // 将动态文本安全地插入 HTML 属性或文本节点前进行转义。
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    })[char]);
+  }
+
   // #region 设置界面HTML构造
 
   /**
@@ -550,27 +557,27 @@
 
                         <label for="tipsText">提示文字</label>
                         <input type="text" id="tipsTextInput" value="${
-                          settings.tipsText
+                          escapeHTML(settings.tipsText)
                         }">
                         <br>
                         <label for="logoText">评分/特效文字</label>
                         <input type="text" id="logoTextInput" value="${
-                          settings.logoText
+                          escapeHTML(settings.logoText)
                         }">
                         <br>
                         <label for="imageSize">勋章尺寸：</label>
                         <input type="text" id="imageSizeInput" value="${
-                          settings.imageSize
+                          escapeHTML(settings.imageSize)
                         }">
                         <br>
                         <label for="imageUrl">替换勋章图片链接：</label>
                         <input type="text" id="imageUrlInput" value="${
-                          settings.imageUrl
+                          escapeHTML(settings.imageUrl)
                         }">
                         <br>
                         <label for="maxGradeThread">主贴评分最大值:</label>
                         <input type="number" id="maxGradeThread" value="${
-                          settings.maxGradeThread
+                          escapeHTML(settings.maxGradeThread)
                         }">
                         <br>
                         <!--勋章隐藏设置-->
@@ -663,13 +670,13 @@
 
                         <label for="titleStyleSize">字体大小</label>
                         <input type="text" id="titleStyleSizeInput" value="${
-                          settings.titleStyleSize
+                          escapeHTML(settings.titleStyleSize)
                         }">
                         <br>
 
                         <label for="titleStyleWeight">字体粗细</label>
                         <input type="text" id="titleStyleWeightInput" value="${
-                          settings.titleStyleWeight
+                          escapeHTML(settings.titleStyleWeight)
                         }">
 
 
@@ -829,23 +836,17 @@
                         <!--高级搜索排除关键字设置-->
                         <label for="excludeOptionsTextarea">高级搜索排除关键字（每行一个）:</label>
                         <br>
-                        <textarea id="excludeOptionsTextarea">${settings.excludeOptions.join(
-                          "\n"
-                        )}</textarea>
+                        <textarea id="excludeOptionsTextarea">${escapeHTML(settings.excludeOptions.join("\n"))}</textarea>
                         <br>
                         <!--黑名单用户名设置-->
                         <label for="blockedUsersList">黑名单屏蔽的用户名（每行一个）：</label>
                         <br>
-                        <textarea id="blockedUsersList">${settings.blockedUsers.join(
-                          "\n"
-                        )}</textarea>
+                        <textarea id="blockedUsersList">${escapeHTML(settings.blockedUsers.join("\n"))}</textarea>
                         <br>
                         <!--帖子列表页黑名单关键字设置-->
                         <label for="excludePostOptionsTextarea">帖子列表页黑名单关键字（每行一个）:</label>
                         <br>
-                        <textarea id="excludePostOptionsTextarea">${settings.excludePostOptions.join(
-                          "\n"
-                        )}</textarea>
+                        <textarea id="excludePostOptionsTextarea">${escapeHTML(settings.excludePostOptions.join("\n"))}</textarea>
                         <br>
 
                     </div>
@@ -1679,7 +1680,7 @@
     groupDiv.className = "bgsh-forget";
     groupDiv.id = id;
 
-    let innerHTML = `<strong>${title}</strong><br>`;
+    let innerHTML = `<strong>${escapeHTML(title)}</strong><br>`;
 
     // 添加一个'全选'复选框
     const selectAllId = `bgsh-${id}-select-all`;
@@ -1692,12 +1693,14 @@
           `;
 
     options.forEach((option) => {
-      const checkboxId = `bgsh-${id}-${option.value}`;
+      const safeValue = escapeHTML(option.value);
+      const safeLabel = escapeHTML(option.label);
+      const checkboxId = `bgsh-${escapeHTML(id)}-${safeValue}`;
       innerHTML += `
                   <label class="bgsh-checkbox-label">
-                      <input type="checkbox" id="${checkboxId}" value="${option.value}">
+                      <input type="checkbox" id="${checkboxId}" value="${safeValue}">
                       <span class="bgsh-checkbox-custom"></span>
-                      <span class="bgsh-label-text">${option.label}</span>
+                      <span class="bgsh-label-text">${safeLabel}</span>
                   </label>
           `;
     });
@@ -1883,12 +1886,13 @@
     // 获取当前脚本版本
     const currentVersion = GM.info.script.version;
     const updateURL =
-      "https://sleazyfork.org/zh-CN/scripts/494839-保国逛色花/code";
+      "https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E4%BF%9D%E5%9B%BD%E9%80%9B%E8%89%B2%E8%8A%B1.user.js";
 
     try {
       // 请求最新版本的脚本内容
-      let response = await fetch(updateURL);
-      let data = await response.text();
+      const response = await fetch(updateURL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`更新检查失败：HTTP ${response.status}`);
+      const data = await response.text();
 
       // 从脚本内容中匹配版本号
       const matchVersion = data.match(/@version\s+([\d.]+)/);
@@ -1915,7 +1919,7 @@
             <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
                 <div style="background: #fff; padding: 20px; border-radius: 5px;">
                     <p>有新版本的保国逛色花脚本可用！</p>
-                    <a href="https://sleazyfork.org/zh-CN/scripts/494839-保国逛色花" target="_blank">点击这里更新</a>
+                    <a href="https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E4%BF%9D%E5%9B%BD%E9%80%9B%E8%89%B2%E8%8A%B1.user.js" target="_blank" rel="noopener noreferrer">点击这里更新</a>
                     <button style="margin-top: 10px;" onclick="this.closest('.updateDialog').remove();">关闭</button>
                 </div>
             </div>`;
@@ -2454,7 +2458,7 @@
         error: "",
       };
     } catch (error) {
-      showTooltip(error+"111");
+      showTooltip(error);
       return infoDefaults;
     }
   }
@@ -2475,7 +2479,7 @@
     }
     const topicadminInfo = await getTopicadmin(fid, tid, pid);
     if (!topicadminInfo.state) {
-      showTooltip(topicadminInfo.error+"222");
+      showTooltip(topicadminInfo.error);
       return;
     }
     const settings = getSettings();
@@ -2886,15 +2890,21 @@
         Referer: baseURL,
       },
       onload: function (response) {
-        console.log(response);
         if (response.status === 301 || response.status === 302) {
           var headers = response.responseHeaders.split("\n");
           var locationHeader = headers.find((header) =>
             header.toLowerCase().startsWith("location:")
           );
           if (locationHeader) {
-            var location = locationHeader.split(":")[1].trim();
-            window.open(`${baseURL}/${location}`, "_blank");
+            const redirectValue = locationHeader.slice(locationHeader.indexOf(":") + 1).trim();
+            try {
+              const redirectURL = new URL(redirectValue, baseURL);
+              if (redirectURL.protocol === "http:" || redirectURL.protocol === "https:") {
+                window.open(redirectURL.href, "_blank", "noopener,noreferrer");
+              }
+            } catch (error) {
+              console.warn("划词搜索返回了无效的跳转地址：", error);
+            }
           }
         } else {
           if (response.finalUrl.includes("searchmd5")) {
@@ -2913,7 +2923,7 @@
           if (messagetextElement) {
             var firstPElement = messagetextElement.querySelector("p"); // 使用 querySelector 来获取第一个 <p> 标签
             if (firstPElement) {
-              showTooltip(firstPElement.textContent+"333");
+              showTooltip(firstPElement.textContent);
               return;
             }
           }
@@ -2988,28 +2998,45 @@
       isLoading = true;
       const url = nextPageLink.getAttribute("href");
 
-      const response = await fetch(url);
-      const text = await response.text();
+      try {
+        const nextPageURL = new URL(url, window.location.href);
+        if (nextPageURL.origin !== window.location.origin) {
+          throw new Error("分页链接不属于当前站点，已停止加载。");
+        }
+        const response = await fetch(nextPageURL.href);
+        if (!response.ok) throw new Error(`加载下一页失败：HTTP ${response.status}`);
 
-      const div = document.createElement("div");
-      div.innerHTML = text;
+        const div = document.createElement("div");
+        div.innerHTML = await response.text();
+        const newNextPageLink = div.querySelector(".nxt");
+        if (newNextPageLink) {
+          const nextHref = newNextPageLink.getAttribute("href");
+          if (nextHref) {
+            const validatedNextURL = new URL(nextHref, nextPageURL.href);
+            if (validatedNextURL.origin !== window.location.origin) {
+              throw new Error("下一页链接跳转到非当前站点，已停止加载。");
+            }
+            nextPageLink.setAttribute("href", validatedNextURL.href);
+          } else {
+            noMoreData = true;
+          }
+        } else {
+          noMoreData = true;
+        }
 
-      const newNextPageLink = div.querySelector(".nxt");
-      newNextPageLink
-        ? nextPageLink.setAttribute(
-            "href",
-            newNextPageLink.getAttribute("href")
-          )
-        : (noMoreData = true);
-
-      appendNewContent(div.querySelector(contentSelector));
-
-      updatePagination(div.querySelector(".pg"));
-
-      const newSettings = getSettings();
-      await processPageContentBasedOnSettings(pageName, newSettings);
-      blockContentByUsers(settings);
-      isLoading = false;
+        const newContent = div.querySelector(contentSelector);
+        if (!newContent) throw new Error("下一页响应中未找到帖子内容区域。");
+        appendNewContent(newContent);
+        updatePagination(div.querySelector(".pg"));
+        const newSettings = getSettings();
+        await processPageContentBasedOnSettings(pageName, newSettings);
+        blockContentByUsers(newSettings);
+      } catch (error) {
+        console.error("无缝翻页加载失败：", error);
+        showTooltip("下一页加载失败，请稍后重试。");
+      } finally {
+        isLoading = false;
+      }
       checkAndLoadIfContentNotEnough();
     }
 
@@ -3019,6 +3046,7 @@
      */
     function appendNewContent(newContent) {
       const currentContent = document.querySelector(contentSelector);
+      if (!newContent || !currentContent) return;
       newContent.childNodes.forEach((child) =>
         currentContent.appendChild(child.cloneNode(true))
       );
@@ -3029,6 +3057,7 @@
      * @param {Element} newPgElement 新的分页元素
      */
     function updatePagination(newPgElement) {
+      if (!newPgElement) return;
       const currentPageElements = document.querySelectorAll(".pg");
       currentPageElements.forEach(
         (pg) => (pg.innerHTML = newPgElement.innerHTML)
@@ -4514,8 +4543,7 @@
     if (found) {
       var href = window.location.href; // 获取当前页面的URL
       var tid = extractTid(href); // 从URL中获取tid参数
-      console.log("当前页面的tid:", tid);
-      if (tid) {
+        if (tid) {
         var buyInfo = await getViewpayments(tid); // 用于获取购买信息
         if (buyInfo.state) {
           var dataRowCount = buyInfo.dataRowCount;
@@ -4588,8 +4616,7 @@
       showModal("自转");
     });
     function showModal(param) {
-      console.log(param);
-      ttttype = param;
+        ttttype = param;
       document.getElementById("organizeModal").style.display = "block";
     }
     document.getElementById("insetBtn").addEventListener("click", function () {
@@ -5254,10 +5281,6 @@
         });
     });
 
-    // document.querySelectorAll('img[src="static/image/common/logo_sc_s.png"]').forEach(function (img) {
-    //         // 替换为新的图片路径
-    //         img.src = "static/image/common/logo.png";
-    //       });
   }
 
   // #endregion
