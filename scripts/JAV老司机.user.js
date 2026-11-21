@@ -2,10 +2,12 @@
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
 // @version      3.8.11
+// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
-// @source       https://github.com/hobbyfang/javOldDriver
+// @source       https://github.com/shenshou/MyTamperMonkeyJs
 // @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
-// @author       Hobby
+// @author       MyTamperMonkeyJs
 
 // @require      https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@9.17.2/dist/sweetalert2.all.min.js
@@ -1608,7 +1610,7 @@
                             }
                         });
                         let indexCd_id, actor, dateString, pingfengString;
-                        // 保留演员、发行日期、评分提取，不再读取或写入个人影片库。
+                        // 仅提取演员、发行日期与评分，不再读写本地影片数据库。
                         function getMovieInfo() {
                             w.queue.push(() => {
                                 let defer = $.Deferred();
@@ -2035,7 +2037,7 @@
                 },
             },
             resource_sites: {
-                [GM_getValue('javdb_url')]: (kw, callback) => {
+                [GM_getValue('javdb_url', JAVDB_DOMAIN)]: (kw, callback) => {
                     let promise = Common.request("https://" + GM_getValue('search_index') + "/search?f=download&q=" + kw, "https://" + GM_getValue('search_index') + "/");
                     promise.then((result) => {
                         let data = [];
@@ -2089,7 +2091,7 @@
                         });
                     });
                 },
-                [GM_getValue('btsow_url')]: (kw, callback) => {
+                [GM_getValue('btsow_url', BTSOW_DOMAIN)]: (kw, callback) => {
                     let promise = Common.request("https://" + GM_getValue('search_index') + "/search/" + kw);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
@@ -2115,7 +2117,7 @@
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('btdig_url')]: (kw, callback) => {
+                [GM_getValue('btdig_url', 'www.btdig.com')]: (kw, callback) => {
                     let promise = Common.request("https://" + GM_getValue('search_index') + "/search?q=" + kw);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
@@ -2143,7 +2145,7 @@
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('nyaa_url')]: (kw, callback) => {
+                [GM_getValue('nyaa_url', 'sukebei.nyaa.si')]: (kw, callback) => {
                     let promise = Common.request("https://" + GM_getValue('search_index') + "/?f=0&c=0_0&q=" + kw);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
@@ -2168,7 +2170,7 @@
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('torrentkitty_url')]: (kw, callback) => {
+                [GM_getValue('torrentkitty_url', TORRENTKITTY_DOMAIN)]: (kw, callback) => {
                     let promise = Common.request("https://" + GM_getValue('search_index') + "/search/" + kw);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
