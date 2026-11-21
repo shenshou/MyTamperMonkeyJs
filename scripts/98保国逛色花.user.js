@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.10
+// @version      100.11
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -126,86 +126,79 @@
    * @returns {Object} 返回一个对象，该对象包含了所有的用户设置。
    */
   function getSettings() {
-    /**
-     * 从脚本存储中获取JSON值。
-     * 如果检索到的值不是有效的JSON，则返回默认值。
-     *
-     * @param {string} key - 存储的键名。
-     * @param {string} defaultValue - 如果无法检索到或解析值，则返回的默认JSON值。
-     * @returns {any} 返回解析的JSON值或默认值。
-     */
-    const getJSONValue = (key, defaultValue) => {
-      const value = GM_getValue(key, defaultValue);
-      try {
-        return JSON.parse(value);
-      } catch {
-        return JSON.parse(defaultValue);
-      }
+    const readString = (key, fallback) => {
+      const value = GM_getValue(key, fallback);
+      return value == null ? fallback : String(value);
     };
-
+    const readBoolean = (key, fallback) => {
+      const value = GM_getValue(key, fallback);
+      if (typeof value === "boolean") return value;
+      if (value === 1 || value === "1" || value === "true") return true;
+      if (value === 0 || value === "0" || value === "false" || value == null) return false;
+      return fallback;
+    };
+    const readNumber = (key, fallback) => {
+      const value = GM_getValue(key, fallback);
+      const number = typeof value === "number" ? value : Number(value);
+      return Number.isFinite(number) ? number : fallback;
+    };
+    const readArray = (key, fallback = []) => {
+      const value = GM_getValue(key, fallback);
+      if (Array.isArray(value)) return value;
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      return fallback;
+    };
     return {
-      logoText: GM_getValue("logoText", "保国爱你"), // 评分文字和特效文字
-      tipsText: GM_getValue("tipsText", "马保国友情提示"), // 评分文字和特效文字
-      imageSize: GM_getValue("imageSize", "50px"), // 图片的大小
-      imageUrl: GM_getValue(
-        "imageUrl",
-        "/uc_server/data/avatar/000/46/26/94_avatar_big.jpg"
-      ), // 图片的URL
-      blockMedals: GM_getValue("blockMedals", 0), // 是否阻止显示勋章
-      resizeMedals: GM_getValue("resizeMedals", 0), // 是否调整勋章的大小
-      replaceMedals: GM_getValue("replaceMedals", 0), // 是否替换勋章
-      excludeGroup: getJSONValue("excludeGroup", "[]"), // 要排除的组
-      TIDGroup: getJSONValue("TIDGroup", "[]"), // TID分组
-      displayBlockedTips: GM_getValue("displayBlockedTips", true), // 是否显示消息
-      autoPagination: GM_getValue("autoPagination", true), // 是否开启自动分页
-      showImageButton: GM_getValue("showImageButton", "hide"), // 是否显示图片按钮
-      lastCheckedUpdate: GM_getValue("lastCheckedUpdate", 0), // 最后一次检查更新的时间
-      enableTitleStyle: GM_getValue("enableTitleStyle", true), // 是否启用标题样式
-      titleStyleSize: GM_getValue("titleStyleSize", 20), // 标题字体大小
-      titleStyleWeight: GM_getValue("titleStyleWeight", 700), // 标题字体粗细
-
-      excludeOptions: GM_getValue("excludeOptions", [
-        "度盘",
-        "夸克",
-        "内容隐藏",
-        "搬运",
-        "SHA1",
-      ]), // 要排除的选项
-      excludePostOptions: GM_getValue("excludePostOptions", ["度盘", "夸克"]), // 要排除的选项
-      blockedUsers: GM_getValue("blockedUsers", [
-        "老灯法师",
-        "树根520",
-        "豪大大鸡排",
-        "林哲",
-        "aa142150",
-        "如果有重来",
-        "Lcc123456cc",
-      ]), // 被屏蔽的用户
-      orderFids: getJSONValue("orderFids", "[]"), // FID的顺序
-      showAvatar: GM_getValue("showAvatar", true), // 是否显示用户头像
-      maxGradeThread: GM_getValue("maxGradeThread", 10),
-      defaultSwipeToSearch: GM_getValue("defaultSwipeToSearch", true), // 是否开启划词搜索
-      displayThreadImages: GM_getValue("displayThreadImages", false),
-      displayThreadBuyInfo: GM_getValue("displayThreadBuyInfo", true), ///帖子是否显示购买次数
-      isShowWatermarkMessage: GM_getValue("isShowWatermarkMessage", true),
-      showDown: GM_getValue("showDown", true), // 是否显示下载附件
-      showCopyCode: GM_getValue("showCopyCode", true), // 是否显示复制代码
-      showFastPost: GM_getValue("showFastPost", true), // 是否显示快速发帖
-      showFastReply: GM_getValue("showFastReply", true), // 是否显示快速回复
-      showQuickGrade: GM_getValue("showQuickGrade", true), // 是否显示快速评分
-      showQuickStar: GM_getValue("showQuickStar", true), // 是否显示快速收藏
-      showClickDouble: GM_getValue("showClickDouble", true), // 是否显示一键二连
-      showViewRatings: GM_getValue("showViewRatings", true), // 是否显示查看评分
-      showPayLog: GM_getValue("showPayLog", true), // 是否显示购买记录
-      showFastCopy: GM_getValue("showFastCopy", true), // 是否显示复制帖子
-      blockingResolved: GM_getValue("blockingResolved", true), // 是否显示屏蔽解决
-      isOnlyShowMoney: GM_getValue("isOnlyShowMoney", false), // 是否只显示现金帖
-      blockingIndex: GM_getValue("blockingIndex", false), // 是否屏蔽首页热门
-      qiandaoTip: GM_getValue("qiandaoTip", true), // 是否显示签到提示
-      menuButtonIsVisible: GM_getValue("menuButtonIsVisible", true), // 是否显示按钮容器
+      logoText: readString("logoText", "保国爱你"),
+      tipsText: readString("tipsText", "马保国友情提示"),
+      imageSize: readString("imageSize", "50px"),
+      imageUrl: readString("imageUrl", "/uc_server/data/avatar/000/46/26/94_avatar_big.jpg"),
+      blockMedals: readNumber("blockMedals", 0),
+      resizeMedals: readNumber("resizeMedals", 0),
+      replaceMedals: readNumber("replaceMedals", 0),
+      excludeGroup: readArray("excludeGroup"),
+      TIDGroup: readArray("TIDGroup"),
+      displayBlockedTips: readBoolean("displayBlockedTips", true),
+      autoPagination: readBoolean("autoPagination", true),
+      showImageButton: readString("showImageButton", "hide"),
+      lastCheckedUpdate: readNumber("lastCheckedUpdate", 0),
+      enableTitleStyle: readBoolean("enableTitleStyle", true),
+      titleStyleSize: readNumber("titleStyleSize", 20),
+      titleStyleWeight: readNumber("titleStyleWeight", 700),
+      excludeOptions: readArray("excludeOptions", ["度盘", "夸克", "内容隐藏", "搬运", "SHA1"]),
+      excludePostOptions: readArray("excludePostOptions", ["度盘", "夸克"]),
+      blockedUsers: readArray("blockedUsers", ["老灯法师", "树根520", "豪大大鸡排", "林哲", "aa142150", "如果有重来", "Lcc123456cc"]),
+      orderFids: readArray("orderFids"),
+      showAvatar: readBoolean("showAvatar", true),
+      maxGradeThread: readNumber("maxGradeThread", 10),
+      defaultSwipeToSearch: readBoolean("defaultSwipeToSearch", true),
+      displayThreadImages: readBoolean("displayThreadImages", false),
+      displayThreadBuyInfo: readBoolean("displayThreadBuyInfo", true),
+      isShowWatermarkMessage: readBoolean("isShowWatermarkMessage", true),
+      showDown: readBoolean("showDown", true),
+      showCopyCode: readBoolean("showCopyCode", true),
+      showFastPost: readBoolean("showFastPost", true),
+      showFastReply: readBoolean("showFastReply", true),
+      showQuickGrade: readBoolean("showQuickGrade", true),
+      showQuickStar: readBoolean("showQuickStar", true),
+      showClickDouble: readBoolean("showClickDouble", true),
+      showViewRatings: readBoolean("showViewRatings", true),
+      showPayLog: readBoolean("showPayLog", true),
+      showFastCopy: readBoolean("showFastCopy", true),
+      blockingResolved: readBoolean("blockingResolved", true),
+      isOnlyShowMoney: readBoolean("isOnlyShowMoney", false),
+      blockingIndex: readBoolean("blockingIndex", false),
+      qiandaoTip: readBoolean("qiandaoTip", true),
+      menuButtonIsVisible: readBoolean("menuButtonIsVisible", true),
     };
   }
-
   // #endregion
 
   // #region 样式
@@ -519,8 +512,8 @@
     setTimeout(() => {
       fadeOut(tooltip);
       setTimeout(() => {
-        document.body.removeChild(tooltip);
-        activeTooltips--;
+        tooltip.remove();
+        activeTooltips = Math.max(0, activeTooltips - 1);
       }, 500);
     }, 2000);
   }
@@ -669,13 +662,13 @@
                         <br>
 
                         <label for="titleStyleSize">字体大小</label>
-                        <input type="text" id="titleStyleSizeInput" value="${
+                        <input type="number" min="1" id="titleStyleSizeInput" value="${
                           escapeHTML(settings.titleStyleSize)
                         }">
                         <br>
 
                         <label for="titleStyleWeight">字体粗细</label>
-                        <input type="text" id="titleStyleWeightInput" value="${
+                        <input type="number" min="100" max="900" step="100" id="titleStyleWeightInput" value="${
                           escapeHTML(settings.titleStyleWeight)
                         }">
 
@@ -893,8 +886,8 @@
     document.body.appendChild(container);
 
     // 为“保存”和“关闭”按钮绑定事件
-    const saveButton = document.getElementById("saveButton");
-    const closeButton = document.getElementById("closeButton");
+    const saveButton = container.querySelector("#saveButton");
+    const closeButton = container.querySelector("#closeButton");
 
     // 保存按钮点击后，保存设置并隐藏界面
     saveButton.addEventListener("click", function () {
@@ -4827,12 +4820,8 @@
     // 从页面的UI元素中读取设置值
     settings.imageSize = document.getElementById("imageSizeInput").value;
     settings.logoText = document.getElementById("logoTextInput").value;
-    settings.titleStyleSize = document.getElementById(
-      "titleStyleSizeInput"
-    ).value;
-    settings.titleStyleWeight = document.getElementById(
-      "titleStyleWeightInput"
-    ).value;
+    settings.titleStyleSize = Number(document.getElementById("titleStyleSizeInput").value);
+    settings.titleStyleWeight = Number(document.getElementById("titleStyleWeightInput").value);
     settings.tipsText = document.getElementById("tipsTextInput").value;
     settings.showDown = document.getElementById("showDownCheckbox").checked;
     settings.showCopyCode = document.getElementById(
@@ -4880,9 +4869,9 @@
     settings.autoPagination = document.getElementById(
       "autoPaginationCheckbox"
     ).checked;
-    settings.blockMedals = getCheckedRadioValue("blockMedals");
-    settings.resizeMedals = getCheckedRadioValue("resizeMedals");
-    settings.replaceMedals = getCheckedRadioValue("replaceMedals");
+    settings.blockMedals = getCheckedRadioValue("blockMedals") ?? oldSettings.blockMedals;
+    settings.resizeMedals = getCheckedRadioValue("resizeMedals") ?? oldSettings.resizeMedals;
+    settings.replaceMedals = getCheckedRadioValue("replaceMedals") ?? oldSettings.replaceMedals;
     settings.showAvatar = document.getElementById("showAvatarCheckbox").checked;
     settings.displayThreadImages = document.getElementById(
       "displayThreadImagesCheckbox"
@@ -4894,7 +4883,10 @@
     settings.isShowWatermarkMessage = document.getElementById(
       "isShowWatermarkMessageCheckbox"
     ).checked;
-    settings.maxGradeThread = document.getElementById("maxGradeThread").value;
+    settings.maxGradeThread = Number(document.getElementById("maxGradeThread").value);
+    if (!Number.isFinite(settings.maxGradeThread) || settings.maxGradeThread < 0) settings.maxGradeThread = oldSettings.maxGradeThread;
+    if (!Number.isFinite(settings.titleStyleSize) || settings.titleStyleSize <= 0) settings.titleStyleSize = oldSettings.titleStyleSize;
+    if (!Number.isFinite(settings.titleStyleWeight) || settings.titleStyleWeight < 100 || settings.titleStyleWeight > 900) settings.titleStyleWeight = oldSettings.titleStyleWeight;
     settings.defaultSwipeToSearch = document.getElementById(
       "defaultSwipeToSearchCheckbox"
     ).checked;
