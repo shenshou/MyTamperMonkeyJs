@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.19
+// @version      100.20
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -2139,7 +2139,7 @@
       const text = await response.text();
       const xml = new DOMParser().parseFromString(text, "text/xml");
       const root = xml.querySelector("root");
-      if (!root) throw new Error("服务器返回了无法解析的评分/购买记录数据。");
+      if (!root) throw new Error("服务器返回了无法解析的评分数据。");
       const htmlContent = root.textContent;
       const doc = new DOMParser().parseFromString(htmlContent, "text/html");
 
@@ -2268,7 +2268,9 @@
       // 解析服务器返回的XML数据
       const text = await response.text();
       const xml = new DOMParser().parseFromString(text, "text/xml");
-      const htmlContent = xml.querySelector("root").textContent;
+      const root = xml.querySelector("root");
+      if (!root) throw new Error("服务器返回了无法解析的购买记录数据。");
+      const htmlContent = root.textContent;
       const doc = new DOMParser().parseFromString(htmlContent, "text/html");
 
       // 检查是否存在错误
