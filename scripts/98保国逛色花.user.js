@@ -1912,15 +1912,16 @@
 
   async function fetchWithContentType(url) {
     const response = await fetch(url);
-    const contentType = response.headers.get("Content-Type");
+    if (!response.ok) throw new Error(`请求失败：HTTP ${response.status}`);
+    const contentType = response.headers.get("Content-Type") || "";
     const responseText = await response.text();
     return { responseText, contentType };
   }
 
   function handleResponseContent(responseText, contentType) {
-    if (contentType.includes("text/xml")) {
+    if (contentType.toLowerCase().includes("text/xml")) {
       return handleXMLContent(responseText);
-    } else if (contentType.includes("text/html")) {
+    } else if (contentType.toLowerCase().includes("text/html")) {
       return extractSignParametersFromHTML(responseText);
     } else {
       throw new Error("Unsupported content type");
@@ -2081,7 +2082,7 @@
 
     // 如果既没有成功消息也没有重复收藏消息，视为出错并在控制台记录
     showTooltip("信息收藏出现问题！！！");
-    console.error(text);
+    console.error("收藏请求返回了未识别的响应。");
   }
 
   // #endregion
@@ -2209,7 +2210,7 @@
         showTooltip(`+${rateInfo.max} 评分成功，并通知了楼主!`);
       } else {
         showTooltip("抱歉，评分失败！");
-        console.error(responseText);
+        console.error("评分请求返回了未识别的响应。");
       }
     } catch (error) {
       showTooltip("评分请求失败！");
@@ -2423,7 +2424,7 @@
         );
       } else {
         showTooltip("抱歉，置顶失败！");
-        console.error(responseText);
+        console.error("置顶请求返回了未识别的响应。");
       }
     } catch (error) {
       showTooltip("置顶请求失败！");
@@ -2786,7 +2787,7 @@
    */
   function searchSehuatang(query) {
     const formhash = getFormHash();
-    const openSearch = () => window.open(`${baseURL}/search.php`, "_blank");
+    const openSearch = () => window.open(`${baseURL}/search.php`, "_blank", "noopener,noreferrer");
 
     if (!formhash) {
       copyToClipboard(query).then(openSearch);
@@ -2825,7 +2826,7 @@
             }
           }
         } else {
-          if (response.finalUrl.includes("searchmd5")) {
+          if (String(response.finalUrl || "").includes("searchmd5")) {
             showTooltip(
               "目前因论坛限制划词搜索只支持Tampermonkey BETA,请下载BETA版并移除本版本后再进行使用本功能"
             );
@@ -3202,7 +3203,7 @@
           const linkElement = post.querySelector(".s.xst");
           if (linkElement) {
             // 在新窗口中打开帖子链接
-            window.open(linkElement.href, "_blank");
+            window.open(linkElement.href, "_blank", "noopener,noreferrer");
           }
         }
       } else {
