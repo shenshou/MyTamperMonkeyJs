@@ -873,22 +873,27 @@
          * 加载数据  todo 改进
          * @param {String} pageName 访问网页名
          */
+
         static javbusUs() {
             $('#magnet-table tbody tr td[colspan="4"]').attr("colspan", "5");
-            let tr_array = $('#magnet-table tr[height="35px"]');
-            for (var i = 0; i < tr_array.length; i++) {
-                let trEle = tr_array[i];
-                let magnetUrl = $(trEle).find("td a")[0].href;
-                $(trEle).append("<td style='text-align:center;'><div><a class='nong-copy' href='" + magnetUrl + "'>复制</a></div></td>");
-                $(trEle).append("<td><div class='nong-offline'><a class='nong-offline-download' target='_blank' "
-                    + "href='https://115.com/?tab=offline&amp;mode=wangpan'>115离线</a></div></td>");
-                $(trEle).attr("maglink", magnetUrl);
-                $(trEle).find(".nong-copy")[0].addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-                $(trEle).find(".nong-offline-download")[0].addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-            }
+            $('#magnet-table tr[height="35px"]').each((index, row) => {
+                const magnet = $(row).find('td a').first().attr('href') || '';
+                if ($(row).find('.nong-copy').length) return;
+                const cell = document.createElement('td');
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'nong-copy';
+                button.textContent = '复制完整磁链';
+                button.setAttribute('data-magnet', magnet);
+                cell.style.textAlign = 'center';
+                cell.appendChild(button);
+                row.setAttribute('maglink', magnet);
+                row.appendChild(cell);
+                button.addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
+            });
         }
 
-        /**
+                /**
          * 初始化同步保存数据方法
          */
         static getAvidAndChgPage() {
@@ -1038,7 +1043,6 @@
                     window.onload = () => {
                         $('iframe').remove();
                     };
-                    let pickcode = '';
 
                     //增加预览图片大图链接
                     let imgs = $('.previewthumbs>img').clone();
@@ -1145,43 +1149,6 @@
 
 
 
-                    //查找115是否有此番号
-                    Common.search115Data(AVID, (BOOLEAN_TYPE, playUrl, pc) => {
-                        if (BOOLEAN_TYPE) {
-                            let $imgObj = $('#video_jacket_img');
-                            pickcode = pc;
-                            $imgObj.after(`
-                                <div style="position: absolute;width: 100%;height: 12%;background: rgba(0,0,0,0.5);top: 88%;left: 0;">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: left;">115网盘已拥有此片</p>
-                                    <a target="_blank" href="${playUrl}">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: right;width: 50%;">115在线播放 ►</p></a>
-                                </div>
-                            `);
-                            $('#owned button[class="smallbutton"]').click();
-                        }
-
-                        // 只支持javlibray处理已阅影片
-                        this.javlibSaveData(AVID, pickcode, pm_mater);
-                    });
-
-                    //查找夸克是否有此番号
-                    Common.searchQuarkData(AVID).then(result => {
-                        if (result.isHave) {
-                            let $imgObj = $('#video_jacket_img');
-                            $imgObj.after(`
-                                <div style="position: absolute;width: 100%;height: 12%;background: rgba(0,0,0,0.5);top: 88%;left: 0;">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: left;">夸克网盘已有此片</p>
-                                    <a target="_blank" href="${result.playUrl}">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: right;width: 50%;">夸克在线播放 ►</p></a>
-                                </div>
-                            `);
-                            $('#owned button[class="smallbutton"]').click();
-                        }
-
-                        // 只支持javlibray处理已阅影片
-                        this.javlibSaveData(AVID, pickcode, pm_mater);
-                    });
-
                     //标题去除超链接
                     $('#video_title h3').after($('#video_title a'));
                     $('#video_title h3').text($('#video_title a').text());
@@ -1265,35 +1232,6 @@
                         `);
                     });
 
-                    //查找115是否有此番号
-                    Common.search115Data(AVID, (BOOLEAN_TYPE, playUrl, pc) => {
-                        if (BOOLEAN_TYPE) {
-                            let $imgObj = $('.bigImage');
-                            $imgObj.after(`
-                                <div style="position: absolute;width: 100%;height: 12%;background: rgba(0,0,0,0.5);top: 88%;left: 0;">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: left;">115网盘已拥有此片</p>
-                                    <a target="_blank" href="${playUrl}">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: right;width: 50%;">115在线播放 ►</p></a>
-                                </div>
-                            `);
-                        }
-
-                    });
-
-                    //查找夸克是否有此番号
-                    Common.searchQuarkData(AVID).then(result => {
-                        if (result.isHave) {
-                            let $imgObj = $('.bigImage');
-                            $imgObj.after(`
-                                <div style="position: absolute;width: 100%;height: 12%;background: rgba(0,0,0,0.5);top: 88%;left: 0;">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: left;">夸克网盘已有此片</p>
-                                    <a target="_blank" href="${result.playUrl}">
-                                    <p style="color: white;font-size: 46px;margin: 0 0 0px;display: inline-block;text-align: right;width: 50%;">夸克在线播放 ►</p></a>
-                                </div>
-                            `);
-                        }
-                    });
-
                     //加入在线预览跳转
                     $('.col-md-3.info').append(`
                         <p>
@@ -1314,8 +1252,8 @@
                     let $a = $(`<a title="综合 JAV资源站" href="javascript:void(0);" style="color: rgb(204, 0, 0);">JavStore&nbsp;</a>`);
                     $('#linkJump').append(Common.javstoreLinkMousedown($a, AVID));
 
-                    // 修改javbus磁链列表头，增加两列
-                    $('#magnet-table tbody tr').append('<td style="text-align:center;white-space:nowrap">操作</td><td style="text-align:center;white-space:nowrap">离线下载</td>');
+                    // 磁链列表增加复制操作列
+                    $('#magnet-table tbody tr').append('<td style="text-align:center;white-space:nowrap">操作</td>');
                     // 先执行一次，针对已经提前加载出磁链列表结果时有效
                     this.javbusUs();
                     // 使用MutationObserver API替换DOMNodeInserted
@@ -1374,50 +1312,26 @@
                 let arr = meta.textContent.split(" ");
                 let javID = arr[0];
 
-                //查找115是否有此番号
-                Common.search115Data(javID, (BOOLEAN_TYPE, playUrl, pc) => {
-                    if (BOOLEAN_TYPE) {
-                        let $imgObj = $('div.col-xs-12.col-md-12 img.img-responsive');
-                        $imgObj.after(`
-                            <div style="position: absolute;width: 100%;height: 22%;background: rgba(0,0,0,0.5);top: 78%;left: 0;">
-                                <a target="_blank" href="${playUrl}"><p class="hobby_p">115在线播放 ►</p></a>
-                            </div>
-                        `);
-                    }
-
-                    //插入预览图
-                    Common.addAvImg(javID, ($img) => {
-                        //https://www.jav321.com/video/300mium-391
-                        var divEle = $("div.col-md-9")[0];
-                        //$(divEle).attr("id", "video_info");
-                        if (divEle) {
-                            $(divEle).after($img);
-                        }
-                    }, !BOOLEAN_TYPE);
-
-                    Common.addBrowseJavidCache(javID);
-                });
+                Common.addAvImg(javID, ($img) => { const divEle = $('div.col-md-9')[0]; if (divEle) $(divEle).after($img); }, true);
 
                 $('.panel.panel-info:eq(0)').after($('.panel.panel-info:has(.table.table-striped)'));
 
-                // 修改jav321磁链列表头，增加两列
-                $('table.table.table-striped tbody tr:eq(0)').append('<th>操作</th><th>离线下载</th>');
+                $('table.table.table-striped tbody tr:eq(0)').append('<th>操作</th>');
 
-                //详情页磁链列表增加复制、115离线快捷键功能函数
-                let tr_array = $('table.table.table-striped tbody tr:gt(0)');
-                for (var i = 0; i < tr_array.length; i++) {
-                    let trEle = tr_array[i];
-                    let magnetUrl = $(trEle).find("td a")[0].href;
-                    $(trEle).append(`
-                        <td style='text-align:center;'><div><a class='nong-copy' href='${magnetUrl}'>复制</a></div></td>
-                        <td><div class='nong-offline'>
-                        <a class='nong-offline-download' target='_blank' href='https://115.com/?tab=offline&amp;mode=wangpan'>115离线</a>
-                        </div></td>
-                    `);
-                    $(trEle).attr("maglink", magnetUrl);
-                    $(trEle).find(".nong-copy")[0].addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-                    $(trEle).find(".nong-offline-download")[0].addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-                    //.addEventListener('click', this.handle_event, false);
+
+                const magnetRows = $('table.table.table-striped tbody tr:gt(0)');
+                for (const row of magnetRows) {
+                    const magnet = $(row).find('td a').first().attr('href') || '';
+                    const cell = document.createElement('td');
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'nong-copy';
+                    button.textContent = '复制完整磁链';
+                    button.setAttribute('data-magnet', magnet);
+                    cell.appendChild(button);
+                    row.setAttribute('maglink', magnet);
+                    row.appendChild(cell);
+                    button.addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
                 }
             }
         }
@@ -1517,39 +1431,19 @@
                     });
 
 
-                    if ($("div.video-detail")) {
-                        var AVID = $("a.button.is-white.copy-to-clipboard")[0].dataset.clipboardText;
-                        Common.addBrowseJavidCache(AVID);
-                        //去除广告
+
+                    if ($("div.video-detail").length) {
                         $("div.top-meta").remove();
-
-                        //查找115是否有此番号
-                        Common.search115Data(AVID, (BOOLEAN_TYPE, playUrl, pc) => {
-                            if (BOOLEAN_TYPE) {
-                            let $imgObj = $("img.video-cover");
-                            $("div.column.column-video-cover a").before($imgObj);
-                            $("div.column.column-video-cover a").remove();
-                            $imgObj.after(`
-                                            <div style="position: absolute;width: 100%;height: 12%;background: rgba(0,0,0,0.5);top: 88%;left: 0;">
-                                                <p style="color: white;font-size: 40px;margin: 0 0 0px;display: inline-block;text-align: left;">115网盘已拥有此片</p>
-                                                <a target="_blank" href="${playUrl}">
-                                                <p style="color: white;font-size: 40px;margin: 0 0 0px;display: inline-block;text-align: right;width: 50%;">115在线播放 ►</p></a>
-                                            </div>
-                                        `);
-                            }
-                        });
-
-                        let mag_array = $("div.magnet-links .item");
-                        for (var i = 0; i < mag_array.length; i++) {
-                            let magEle = mag_array[i];
-                            let magnetUrl = $(magEle).find("a")[0].href;
-
-                            $(magEle).find(".buttons.column").append(`<button class=\"button is-info is-small nong-offline-download\" href=\"${magnetUrl}\" type=\"button\">&nbsp;115离线&nbsp;</button>`);
-                            $(magEle).find(".nong-offline-download")[0].addEventListener(
-                                "click",
-                                thirdparty.nong.magnet_table.handle_event,
-                                false
-                            );
+                        const magnetItems = $("div.magnet-links .item");
+                        for (const item of magnetItems) {
+                            const magnet = $(item).find("a").first().attr("href") || "";
+                            const button = document.createElement("button");
+                            button.type = "button";
+                            button.className = "nong-copy";
+                            button.textContent = "复制完整磁链";
+                            button.setAttribute("data-magnet", magnet);
+                            $(item).find(".buttons.column").append(button);
+                            button.addEventListener("click", thirdparty.nong.magnet_table.handle_event, false);
                         }
                     }
 
@@ -1611,7 +1505,6 @@
                     <a href="https://supjav.com/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="此站需解封">supjav&nbsp;&nbsp;</a>
                 `);
 
-                Common.addBrowseJavidCache($('.name').text().match(/[a-z|A-Z|0-9| _-]+/)[0].trim());
             }
         }
 
@@ -1769,66 +1662,32 @@
                         });
                         let indexCd_id, actor, dateString, pingfengString;
                         let code = $(elems[i]).find('.id').text();
-                        // 查找影片是否存在我浏览过的MyMovie表中
-                        let prom = javDb.select().from(myMovie).
-                            where(lf.op.and(myMovie.is_browse.eq(true), myMovie.index_cd.eq(_vid))).exec();
-                        prom.then(results => {
-                            //let promise1 = Promise.resolve();
-                            //return new Promise(resolve => {
-                            if (results.length != 0) {  //存在MyMovie表中
-                                indexCd_id = "#vid_" + results[0].index_cd;
-                                if ($(indexCd_id).context.URL.indexOf("bestrated.php?filterMyBrowse") > 0) {
-                                    $(indexCd_id).remove();
-                                } else {
-                                    $(indexCd_id).css("background-color", "#ffe7d3"); //hotpink,khaki,indianred,peachpuff
-                                    if (results.length != 0 && results[0].is_sync) { //已经同步过
-                                        extCode(indexCd_id, results[0].actor, results[0].release_date, results[0].score);
-                                    } else { //未同步过
-                                        getMovieInfo(true);
+                        // 保留演员、发行日期、评分提取，不再读取或写入个人影片库。
+                        function getMovieInfo() {
+                            w.queue.push(() => {
+                                let defer = $.Deferred();
+                                const promise = Common.request("https://" + JAVLIB_DOMAIN + "/ja/?v=" + _vid);
+                                promise.then(result => {
+                                    if (result.loadstuts && result.status < 300) {
+                                        indexCd_id = "#vid_" + result.finalUrl.split("=")[1];
+                                        const doc = result.responseText;
+                                        let movie_info = doc.substring(doc.search(/<table id="video_jacket_info">/),
+                                            doc.search(/<div id="video_favorite_edit" class="">/));
+                                        movie_info = movie_info.replace("src", "hobbysrc");
+                                        const $doc = $(Common.parsetext(movie_info));
+                                        actor = $('#video_cast .text .star a', $doc).text();
+                                        dateString = $('#video_date .text', $doc).text();
+                                        pingfengString = $('#video_review .text .score', $doc).text();
+                                        extCode(indexCd_id, actor, dateString, pingfengString);
                                     }
-                                    Common.addBrowseJavidCache(code);
-                                }
-                            }
-                            else if (Common.browseJavidHasCache(code)) {    //存在GM缓存中
-                                getMovieInfo(true);
-                            }
-                            else { //都不存在
-                                getMovieInfo(false);
-                            }
-
-                            function getMovieInfo(isSave) {
-
-
-                                w.queue.push(() => {
-                                    let defer = $.Deferred();
-                                    let promise1 = Common.request(`https://${JAVLIB_DOMAIN}/ja/?v=${_vid}`);
-                                    promise1.then((result) => {
-                                        if(result.loadstuts && result.status < 300){
-                                            indexCd_id = "#vid_" + result.finalUrl.split("=")[1]; //例如：http://www.j12lib.com/cn/?v=javlikd42a
-                                            let doc = result.responseText;
-                                            let movie_info = doc.substring(doc.search(/<table id="video_jacket_info">/),
-                                                doc.search(/<div id="video_favorite_edit" class="">/));
-                                            // 阻止构造Document对象时加载src内容
-                                            movie_info = movie_info.replace("src", "hobbysrc");
-                                            let $doc = $(Common.parsetext(movie_info));
-                                            actor = $('#video_cast .text .star a', $doc).text();
-                                            dateString = $('#video_date .text', $doc).text();
-                                            pingfengString = $('#video_review .text .score', $doc).text();
-                                            extCode(indexCd_id, actor, dateString, pingfengString);
-                                            // todo 1118
-                                            if (isSave) Jav.syncMovie(result);
-                                        } else {
-                                        }
-                                        return Promise.resolve();
-                                    }).then(() => { // 等待0.8秒执行下一个任务，受Cloudflare限制访问
-                                        setTimeout(() => {
-                                            defer.resolve();
-                                        },800);
-                                    });
-                                    return defer.promise();
+                                    return Promise.resolve();
+                                }).then(() => {
+                                    setTimeout(() => defer.resolve(), 800);
                                 });
-                            }
-                        });
+                                return defer.promise();
+                            });
+                        }
+                        getMovieInfo();
                     }
                 }
             });
@@ -1871,10 +1730,6 @@
                             let t1 = $(spanEle).html().substr($(spanEle).html().indexOf("<br>") + 4);
                             let t2 = $(spanEle).html().substr(0, $(spanEle).html().indexOf("<br>"));
                             $(spanEle).html(t1 + "<br>" + t2);
-                            // 已阅番号标色
-                            if (Common.browseJavidHasCache($(elems[i]).find(".photo-info>span>date:eq(0)").text())) {
-                                $(elems[i]).find(".movie-box").css("background-color", "#ffe7d3");
-                            }
                             // 给列表中的影片添加鼠标点击事件
                             $("a", $(elems[i])).first().mousedown((event) => {
                                 // 判断鼠标左键或中间才执行
@@ -1933,8 +1788,6 @@
                             // 提取评分数、评分人数
                             $(e).attr("score", $(e).find('.score>span').text().match(/-?(?:\d+(?:\.\d*)?|\.\d+)/g)[0]);
                             $(e).attr("usernum", $(e).find('.score>span').text().match(/-?(?:\d+(?:\.\d*)?|\.\d+)/g)[1]);
-                            // 已阅番号标色
-                            if (Common.browseJavidHasCache(avid)) $(e).find(".video-title,.score").css("background-color", "#ffe7d3");
                         }
                     });
                 }
@@ -2400,13 +2253,6 @@
                     });
                 },
             },
-            offline_sites: {
-                115: {
-                    name: '115离线',
-                    url: 'https://115.com/?tab=offline&mode=wangpan',
-                    enable: true,
-                },
-            },
             // 挊
             search_engines: {
                 cur_engine: (kw, callback) => {
@@ -2772,8 +2618,6 @@
         Jav.oneJavScript();
         Jav.jav321Script();
         Jav.javDBScript();
-        Jav.quarkScript();
-        thirdparty.login115Run();
     }
     mainRun();
 })();
