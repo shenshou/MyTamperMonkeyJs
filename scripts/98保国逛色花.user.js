@@ -4124,7 +4124,6 @@
       () => {
         let pid = getTableIdFromElement(post);
         if (pid) {
-                  // showWindow("reply", `forum.php?mod=post&action=reply&fid=${fid}&tid=${tid}&repquote=${pid}`);
           setanswer(pid, "");
         } else {
           showTooltip("未找到最佳答案");
