@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.14
+// @version      100.15
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -1216,8 +1216,10 @@
 
             `;
 
+    document.getElementById("bgsh-settings-styles")?.remove();
     const styleElement = document.createElement("style");
-    styleElement.innerHTML = style;
+    styleElement.id = "bgsh-settings-styles";
+    styleElement.textContent = style;
     document.head.appendChild(styleElement);
   }
 
@@ -1663,7 +1665,8 @@
   ) => {
     const button = document.createElement("button");
     button.id = id;
-    button.innerText = text;
+    button.type = "button";
+    button.textContent = text;
     button.className = className;
     button.style.backgroundColor = bgColor; // 设置背景颜色
     button.addEventListener("click", clickFunction);
