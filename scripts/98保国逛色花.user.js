@@ -1737,8 +1737,11 @@
       }
       // 更新和存储新的可见性状态
       GM_setValue("menuButtonIsVisible", isVisible);
-      const newsettings = getSettings();
-      setMenuButtonPosition(menuButton, container, newsettings);
+      // 隐藏时保留按钮当前位置；仅在重新显示容器后重新计算位置。
+      if (isVisible) {
+        const newsettings = getSettings();
+        setMenuButtonPosition(menuButton, container, newsettings);
+      }
     });
   }
 
@@ -4748,9 +4751,12 @@
   function setMenuButtonPosition(menuButton, container, settings) {
     // 重复调用时移动现有节点，不会创建新的按钮副本。
     document.body.appendChild(menuButton);
-    const containerTop = settings.menuButtonIsVisible
-      ? container.getBoundingClientRect().top
-      : 100;
+
+    // 容器隐藏时不再用隐藏元素的坐标计算按钮位置，保留其当前位置。
+    // 首次加载且容器默认隐藏时，沿用 createMenuButton() 设置的视口居中位置。
+    if (!settings.menuButtonIsVisible) return;
+
+    const containerTop = container.getBoundingClientRect().top;
     menuButton.style.top = `${containerTop - menuButton.offsetHeight - 50}px`;
   }
 
