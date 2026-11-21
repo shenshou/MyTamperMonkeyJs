@@ -1575,100 +1575,6 @@
   // #region UI组件创建
 
   /**
-   * 创建一个汇率显示窗口。
-   */
-  function createFloatingWindow() {
-    if (document.getElementById("currencyConverter")) {
-      return;
-    }
-    const floatingDiv = document.createElement("div");
-    floatingDiv.style.position = "fixed";
-    floatingDiv.style.top = "50%";
-    floatingDiv.style.left = "50%";
-    floatingDiv.style.transform = "translate(-50%, -50%)";
-    floatingDiv.style.backgroundColor = "#f9f9f9";
-    floatingDiv.style.border = "1px solid #ddd";
-    floatingDiv.style.boxShadow = "0 4px 8px rgba(0,0,0,0.05)";
-    floatingDiv.style.padding = "20px";
-    floatingDiv.style.borderRadius = "8px";
-    floatingDiv.style.zIndex = "1000";
-    floatingDiv.setAttribute("id", "currencyConverter");
-    floatingDiv.setAttribute("draggable", "true");
-    floatingDiv.innerHTML = `<div style="font-family: Arial, sans-serif; color: #333; text-align: center; margin-bottom: 15px; font-size: 18px; font-weight: bold;">保国带你逛算汇率</div><div><label>金钱:</label><input type="number"id="moneyInput"value="280"style="margin-bottom: 10px; border: 1px solid #ccc; padding: 2px;"/><br/><label>人民币:</label><input type="number"id="rmbInput"value="100"style="margin-bottom: 10px; border: 1px solid #ccc; padding: 2px;"/><br/><button id="convertButton"style="margin-right: 5px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">计算汇率</button><button id="closeButton"style="background-color: #f44336; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer;">关闭</button><div id="conversionResult"style="margin-top: 10px;"></div></div>`;
-    document.body.appendChild(floatingDiv);
-    enableDrag(floatingDiv);
-    document
-      .getElementById("convertButton")
-      .addEventListener("click", convertCurrency);
-    document.getElementById("closeButton").addEventListener("click", () => {
-      document.getElementById("currencyConverter").remove();
-    });
-  }
-
-  /**
-   * 启用拖动
-   * @param {string} elmnt - 组件。
-   */
-  function enableDrag(elmnt) {
-    var pos1 = 0,
-      pos2 = 0,
-      pos3 = 0,
-      pos4 = 0;
-    if (document.getElementById(elmnt.id + "header")) {
-      document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
-    } else {
-      elmnt.onmousedown = dragMouseDown;
-    }
-    function dragMouseDown(e) {
-      e = e || window.event;
-      if (e.target.tagName.toUpperCase() === "INPUT") {
-        return;
-      }
-      e.preventDefault();
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      document.onmousemove = elementDrag;
-    }
-    function elementDrag(e) {
-      e = e || window.event;
-      e.preventDefault();
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      elmnt.style.top = elmnt.offsetTop - pos2 + "px";
-      elmnt.style.left = elmnt.offsetLeft - pos1 + "px";
-    }
-    function closeDragElement() {
-      document.onmouseup = null;
-      document.onmousemove = null;
-    }
-  }
-
-  /**
-   * 计算汇率
-   */
-  function convertCurrency() {
-    const moneyInput = document.getElementById("moneyInput").value;
-    const rmbInput = document.getElementById("rmbInput").value;
-    if (!moneyInput || !rmbInput || moneyInput <= 0 || rmbInput <= 0) {
-      document.getElementById("conversionResult").innerHTML =
-        "请输入有效的金钱和人民币值";
-      return;
-    }
-
-    const baseRate = rmbInput / (moneyInput * 1.2);
-    const normalUserCost = ((200 * rmbInput) / (moneyInput * 1.2)).toFixed(4);
-    const eliteUserCost = ((180 * rmbInput) / (moneyInput * 1.2)).toFixed(4);
-    document.getElementById("conversionResult").innerHTML = `1金钱=${(
-      1 * baseRate
-    ).toFixed(4)}元<br/>1元=${(1 / baseRate).toFixed(
-      4
-    )}金钱<br/>普通用户兑换邀请码需要:${normalUserCost}元<br/>精英用户兑换邀请码需要:${eliteUserCost}元`;
-  }
-
-  /**
    * 创建一个多选框组。
    * @param {string} id - 组件的ID。
    * @param {string} title - 多选框组的标题。
@@ -2668,7 +2574,7 @@
       const actions = [
         //屏蔽帖子列表页
         createBlockAction(
-          `//table//tr[1]/td[2]//cite/a[text()="${userID}"]/ancestor::tbody[1]`,
+          `//table//tr[1]/td[2]//cite/a[text()=${xpathLiteral(userID)}]/ancestor::tbody[1]`,
           `<tr>
                   <td class='icn'>
                     <img src='static/image/common/folder_common.gif' />
@@ -2676,7 +2582,7 @@
                   <th class='common'>
                     <b>已屏蔽主题 <font color=grey></th>
                   <td class='by'>
-                    <cite><font color=grey>${userID}</font></cite>
+                    <cite><font color=grey>${escapeHTML(userID)}</font></cite>
                   </td>
                   <td class='num'></td>
                   <td class='by'></td>
@@ -2685,12 +2591,12 @@
         //屏蔽搜索列表页
 
         createBlockAction(
-          `//ul/li[p[3]/span[2]/a[text()='${userID}']]`,
+          `//ul/li[p[3]/span[2]/a[text()=${xpathLiteral(userID)}]]`,
           `
                   <li class="pbw" >
                   <p>
                   <span>
-                  已屏蔽"${userID}"
+                  已屏蔽"${escapeHTML(userID)}"
                   </span>
                   </p>
                   </li>
@@ -2716,13 +2622,13 @@
         //屏蔽帖子列表页
         // /table/tbody[12]/tr/th/a[2]
         createBlockAction(
-          `//table/tbody/tr/th/a[2][contains(text(),'${keyword}')]/ancestor::tbody[1]`,
+          `//table/tbody/tr/th/a[2][contains(text(),${xpathLiteral(keyword)})]/ancestor::tbody[1]`,
           `<tr>
                     <td class='icn'>
                       <img src='static/image/common/folder_common.gif' />
                     </td>
                     <th class='common'>
-                      <b>已屏蔽主题关键词:${keyword} <font color=grey></th>
+                      <b>已屏蔽主题关键词:${escapeHTML(keyword)} <font color=grey></th>
                     <td class='by'>
                       <cite><font color=grey></font></cite>
                     </td>
@@ -2734,6 +2640,18 @@
 
       actions.forEach(applyBlockAction(displayBlockedTips));
     });
+  }
+
+  /**
+   * 将任意字符串转换为安全的 XPath 字符串字面量。
+   * @param {string} value - 原始字符串
+   * @returns {string} XPath 字符串字面量
+   */
+  function xpathLiteral(value) {
+    const text = String(value);
+    if (!text.includes("'")) return "'" + text + "'";
+    if (!text.includes('"')) return '"' + text + '"';
+    return "concat(" + text.split("'").map((part) => "'" + part + "'").join(", \"'\", ") + ")";
   }
 
   /**
@@ -4706,82 +4624,6 @@
     });
   }
 
-  /**
-   * 创建挑选女友的按钮
-   * @param {Element} buttonContainer - 按钮容器元素
-   */
-  function createGirlFriendButton(buttonContainer) {
-    var girlFriendButton = createButton("girlFriendButton", "挑选女友", () =>
-      createPopup()
-    );
-    buttonContainer.appendChild(girlFriendButton);
-  }
-
-
-  /**
-   * 挑选女友的style。
-   */
-
-  function addGirlFriendStyles() {
-    var style = document.createElement("style");
-    style.id = "popupStyle_baoguo";
-    style.innerHTML = `
-            .app_baoguo{width:500px;height:500px;overflow:hidden;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background-color:#fff8f8;border:1px solid #000;box-shadow:0 4px 8px rgba(0,0,0,0.1);z-index:10000}.word-content_baoguo,.cloudword_baoguo,.title_baoguo,.btn-content_baoguo{position:relative;max-width:100%;max-height:100%;overflow:hidden}.word-content_baoguo{position:absolute;left:50%;top:50%;width:100%;z-index:2;transform:translate(-50%,-50%)}.title_baoguo{display:flex;justify-content:center;font-size:40px;font-weight:bold;color:red}.cloudword_baoguo{position:absolute;width:100%;height:100%;z-index:1}.btn-content_baoguo{margin:50px 0;display:flex;justify-content:center}.btn_baoguo{width:140px;height:50px;font-size:16px;background-color:#007BFF;color:white;border:none;border-radius:5px;box-shadow:0 2px 4px rgba(0,0,0,0.2);cursor:pointer;transition:background-color 0.3s,box-shadow 0.3s}@keyframes complexMoveFade_baoguo{0%{opacity:0;transform:scale(0.5) translate(0,0);font-weight:normal}25%{opacity:0.5;transform:scale(0.8) translate(-10px,10px)}50%{opacity:1;transform:scale(1.1) translate(10px,-10px);font-weight:bold}75%{opacity:0.5;transform:scale(0.8) translate(-10px,10px)}100%{opacity:0;transform:scale(0.5) translate(0,0);font-weight:normal}}.text-popup_baoguo{animation:complexMoveFade_baoguo 1s forwards}.text-popup_baoguo{font-size:30px} @media (max-width:600px){.app_baoguo{width:300px;height:500px}}`;
-    document.head.appendChild(style);
-  }
-
-  /**
-   * 挑选女友的script。
-   */
-  function addGirlFriendScript() {
-    var script = document.createElement("script");
-    script.id = "popupScript_baoguo";
-    script.textContent = `var displayTextElement=document.getElementById("displayText_baoguo");var toggleButton_baoguo=document.getElementById("toggleButton_baoguo");var cloudwordElement=document.getElementById("cloudword_baoguo");var options=["大泽惠","美咲沙耶","石川铃华","早见琉璃","羽田未来","小泉梨菜","二宫沙树","星野明","椎名由奈","青木玲","星艾莉丝","鮎川奈绪","秋川露依","内山遥","香澄果穗","麻田有希","友崎玲","春菜花","神咲诗织","姬咲莉莉亚","AYA","佐藤美沙","天海翼","西田美沙","心有花","相户爱","平井绫","速水百花","小峰由衣","管野静香","香山圣","叶月奈穗","川嶋夏树","长泽筑实","樱井梨花","伊藤青叶","伊东遥","杏树纱奈","七咲枫花","爱川香织","黑泽英里奈","星野飞鸟","原明奈","辻沙耶香","原田明绘","北川绘美","小林爱弓","大泽美加","吉冈美奈","铃木里美","北条麻妃","神谷姬","神河美音","筱惠美","大浦安娜","三浦亚沙妃","ASUKA","泽木树里","周防雪子","波多野结衣","冬月枫","大冢咲","天宫真奈美","原千寻","叶志穗","濑奈凉","相泽唯衣","广濑由奈","小坂惠","翼裕香","叶山润子","绫濑美音","朝日奈明","青空小夏","麻仓忧","木村那美","村上里沙","田中亚弥","泷泽萝拉","花鸟丽","小向美奈子","天衣美津","JULIA","早坂瞳","樱井莉亚","横山美雪","相田纱耶香","青山雪菜","大岛理子","松本麻里奈","纱仓真菜","渡濑晶","若菜光","日向真昼","平泽里菜子","绫波优","小峰日向","羽田爱","水城奈绪","红音萤","新村爱","伊泽千夏","加护范子","长泽梓","乙音奈奈","白咲舞","希美真由","黑木麻衣","爱音真寻","松野由井","和叶美玲","麻美由真","日野雫","爱泽莲","早川濑里奈","铃木茶织","阿立未来","筱原凉","雨宫琴音","初美理音","一条爱美","青木莉子","高原智美","朝河兰","桃子美优","坂田美影","樱心美","范田纱纱","中岛京子","种村美咲","草莓牛奶","天海丽","相崎琴音","神谷美雪","高树圣良","北岛玲","原小雪","朝比奈琉依","水元优奈","松生彩","小日向优","若宫莉那","上原瑞穗","若林树里","爱川美里菜","芹泽直美","唯川纯","黑川绮罗","大桥未久","星崎杏里","幸田李梨","星乃星爱","藤本莉娜","姬野爱","铃香音色","@YOU","青木琳","糸矢芽衣","若叶久留美","妃乃光","新垣圣那","北原多香子","遥惠美","栗林里莉","古都光","水菜丽","岬里沙","爱原翼","加藤莉娜","吉泽明步","濑名步","岛田阳子","夏目奈奈","堀口奈津美","折笠弥生","翔田千里","木下柚花","春咲和津实","卯月麻衣","希志爱野","弘前亮子","松下怜","早乙女露依","赤西凉","桐生樱","晶爱丽","舞咲美娜","北原夏美","明日花绮罗","茉莉花","小林初花","辰巳唯","安西琉菜","月野姬","藤原瞳","叶山丽子","恋小夜","安达有里","橘日向","紫彩乃","星崎未来","麻生岬","滨崎里绪","佐藤江梨花","村上丽奈","蓝山南","青山由衣","木内美保","水朝美树","藤泽美羽","高濑七海","樱田樱","香坂百合","大槻响","大泽佳那","麻川丽","樱木凛","堀咲莉亚","樱朱音","绘色千佳","音羽奏","成濑心美","长谷川理穗","安倍夏树","飞鸟伊央","真白希实","立花美凉","叶不二子","宫川怜","泷泽优奈","立花里子","浅田琪琪","早乙女优","森美咲","原更纱","爱内梨花","野宫凛子","西野翔","爱海一夏","朝香凉","小泉彩","山口玲子","爱田由","明佐奈","爱原理彩","小泉优香","及川奈央","福山沙耶香","前嶋美步","竹内爱","真田春香","美知广子","橘未稀","藤井雪莉","田畑百子","吉崎直绪","爱叶渚","直嶋爱","菅野亚梨沙","秋元美由","莲井志帆","铃木杏里","妃悠爱","小樱沙树","桐岛葵","美优千奈","并木优","藤井彩","南沙也香","前田香织","藤崎里绪","观月雏乃","青山沙希","浅乃晴美","仁科沙也加","石原莉奈","杉浦美由","小森美树","长谷川美红","前田优希","原纱央莉","羽月希","濑户由衣","朝田芭娜娜","石黑京香","麻生希"];var timer=null;var btnText="点击我";toggleButton_baoguo.addEventListener("click",function(){if(btnText==="点击我"||btnText==="再来一次"){startRandomSelection()}else{stopRandomSelection()}});function startRandomSelection(){if(timer)return;timer=setInterval(updateRandomOption,50);btnText="选择";toggleButton_baoguo.textContent=btnText}function stopRandomSelection(){clearInterval(timer);timer=null;btnText="再来一次";toggleButton_baoguo.textContent=btnText;displayTextElement.textContent="今天冲"+displayTextElement.textContent;var floatingTexts=cloudwordElement.querySelectorAll(".text-popup_baoguo");floatingTexts.forEach(function(textElement){textElement.remove()})}function updateRandomOption(){var randomIndex=getRandomNumber(0,options.length-1);displayTextElement.textContent=options[randomIndex]+"!";createFloatingText()}function getRandomNumber(min,max){return Math.floor(Math.random()*(max-min+1))+min}function createFloatingText(){var textElement=document.createElement("span");textElement.className="text-popup_baoguo";textElement.textContent=options[getRandomNumber(0,options.length-1)];var maxWidth=cloudwordElement.clientWidth;var maxHeight=cloudwordElement.clientHeight;textElement.style.left=getRandomNumber(0,maxWidth-20)+"px";textElement.style.top=getRandomNumber(0,maxHeight-20)+"px";textElement.style.position="absolute";textElement.addEventListener("animationend",function(){textElement.remove()});cloudwordElement.appendChild(textElement)}`;
-    document.body.appendChild(script);
-  }
-
-  /**
-   * 挑选女友的弹出窗体。
-   */
-  function createPopup() {
-    var popup = document.createElement("div");
-    popup.className = "app_baoguo";
-    popup.innerHTML = `<div class="word-content_baoguo"><div class="title_baoguo"><span id="displayText_baoguo">今天冲哪个?</span></div><div class="btn-content_baoguo"><button class="btn_baoguo"id="toggleButton_baoguo">点击我</button></div></div><div class="cloudword_baoguo"id="cloudword_baoguo"></div>`;
-    var closeButton = document.createElement("button");
-    closeButton.textContent = "X";
-    closeButton.style.position = "absolute";
-    closeButton.style.top = "5px";
-    closeButton.style.right = "5px";
-    closeButton.style.zIndex = "100001";
-    closeButton.style.padding = "5px 10px";
-    closeButton.style.border = "none";
-    closeButton.style.borderRadius = "50%";
-    closeButton.style.backgroundColor = "#ff4545";
-    closeButton.style.color = "white";
-    closeButton.style.fontSize = "16px";
-    closeButton.style.cursor = "pointer";
-    closeButton.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.2)";
-    closeButton.style.transition = "background-color 0.2s, box-shadow 0.2s";
-    closeButton.addEventListener("click", function () {
-      stopRandomSelection();
-      var popup = document.querySelector(".app_baoguo");
-      if (popup) {
-        popup.remove();
-      }
-      var styleElement = document.getElementById("popupStyle_baoguo");
-      var scriptElement = document.getElementById("popupScript_baoguo");
-      if (styleElement) {
-        styleElement.remove();
-      }
-      if (scriptElement) {
-        scriptElement.remove();
-      }
-    });
-    popup.appendChild(closeButton);
-    document.body.appendChild(popup);
-    addGirlFriendStyles();
-    addGirlFriendScript();
-  }
   function setMenuButtonPosition(menuButton, container, settings) {
     // 添加按钮到页面以获取其高度
     document.body.appendChild(menuButton);
@@ -4875,20 +4717,6 @@
     } else if (isMyfavoritePage()) {
       initInfiniteScroll("isMyfavoritePage");
     }
-  }
-
-  /**
-   * 创建汇率计算按钮
-   * @param {Object} settings - 用户的设置
-   * @param {Element} buttonContainer - 按钮容器元素
-   */
-  function createExchangeRateButton(buttonContainer) {
-    var exchangeRateButton = createButton(
-      "exchangeRateButton",
-      "金钱汇率",
-      () => createFloatingWindow()
-    );
-    buttonContainer.appendChild(exchangeRateButton);
   }
 
   /**
