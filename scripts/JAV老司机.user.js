@@ -2270,6 +2270,7 @@
                     create_head: () => {
                         const row = document.createElement('tr'); row.className = 'jav-nong-row'; row.id = 'jav-nong-head';
                         const first = document.createElement('th'), select = document.createElement('select');
+                        const sourceLabel = document.createElement('span'); sourceLabel.textContent = '来源：'; first.appendChild(sourceLabel);
                         const hosts = enabledMagnetSources();
                         for (const host of hosts) { const option = document.createElement('option'); option.value = host; option.textContent = magnetSourceLabel(host) + ' · ' + host; select.appendChild(option); }
                         const selected = GM_getValue('search_index', hosts[0] || '');
@@ -2281,7 +2282,7 @@
                         const searchPage = document.createElement('a'); searchPage.className = 'nong-search-page'; searchPage.href = '#';
                         searchPage.target = '_blank'; searchPage.rel = 'noopener noreferrer'; searchPage.textContent = '搜索页'; searchPage.style.marginLeft = '8px';
                         first.appendChild(searchPage); row.appendChild(first);
-                        for (const title of ['来源', '文件名', '大小', '磁链']) { const cell = document.createElement('th'); cell.textContent = title; row.appendChild(cell); }
+                        for (const title of ['文件名', '大小', '磁链']) { const cell = document.createElement('th'); cell.textContent = title; row.appendChild(cell); }
                         select.addEventListener('change', () => {
                             GM_setValue('search_index', select.value);
                             const old = document.getElementById('nong-table-new'); if (old) old.remove();
@@ -2321,7 +2322,7 @@
                     },
                     create_loading: () => {
                         const row = document.createElement('tr'); row.className = 'jav-nong-row';
-                        const cell = document.createElement('td'); cell.colSpan = 5; cell.id = 'notice';
+                        const cell = document.createElement('td'); cell.colSpan = 4; cell.id = 'notice';
                         cell.textContent = '正在搜索磁力资源…'; row.appendChild(cell); return row;
                     }
                 },
@@ -2381,7 +2382,11 @@
                                 `);
                                 main.cur_tab = thirdparty.nong.magnet_table.full();
                                 v.proc(main);
-
+                                if (!enabledMagnetSources().length) {
+                                    const notice=document.querySelector('#nong-table-new #notice');
+                                    if(notice)notice.textContent='没有启用任何磁力搜索源，请点击设置并至少启用一个来源。';
+                                    return;
+                                }
                                 thirdparty.nong.search_engines.cur_engine(main.cur_vid, (src, data) => { //callback
                                     if (data.length === 0) {
                                         let url = thirdparty.nong.search_engines.full_url;
