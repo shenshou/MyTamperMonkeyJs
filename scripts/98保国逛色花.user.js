@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.12
+// @version      100.13
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -1372,7 +1372,9 @@
                             d="M729.047155 553.52312a739.28266 739.28266 0 0 0-87.001799 0 1777.255987 1777.255987 0 0 0-226.576875 58.621533c0 7.444004 13.492257 17.67951 113.055812 26.984515a1599.530388 1599.530388 0 0 0 200.522862 4.187252 1460.885811 1460.885811 0 0 0 201.453362-2.791501c99.563555-9.770255 113.521063-19.540511 113.521063-26.984515a1759.576477 1759.576477 0 0 0-227.042126-59.086783c-26.054014-2.791502-87.932299-0.930501-87.932299-0.930501z"
                             fill="#F2C330" p-id="15007"></path>
                         </svg>`;
-      watermarkText.innerHTML = `${kissIcon}${escapeHTML(settings.logoText)}${kissIcon}`;
+      const iconDocument = new DOMParser().parseFromString(kissIcon, "image/svg+xml");
+      const icon = iconDocument.documentElement;
+      watermarkText.append(icon.cloneNode(true), document.createTextNode(settings.logoText), icon.cloneNode(true));
 
       let attempts = 0;
       let overlap = false;
@@ -1579,32 +1581,32 @@
     groupDiv.className = "bgsh-forget";
     groupDiv.id = id;
 
-    let innerHTML = `<strong>${escapeHTML(title)}</strong><br>`;
+    const heading = document.createElement("strong");
+    heading.textContent = title;
+    groupDiv.append(heading, document.createElement("br"));
 
-    // 添加一个'全选'复选框
-    const selectAllId = `bgsh-${id}-select-all`;
-    innerHTML += `
-              <label class="bgsh-checkbox-label">
-                  <input type="checkbox" id="${selectAllId}" class="select-all">
-                  <span class="bgsh-checkbox-custom"></span>
-                  <span class="bgsh-label-text">全选</span>
-              </label>
-          `;
+    const createCheckboxLabel = (checkboxId, value, labelText, extraClass = "") => {
+      const label = document.createElement("label");
+      label.className = "bgsh-checkbox-label";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = checkboxId;
+      checkbox.value = value;
+      if (extraClass) checkbox.classList.add(extraClass);
+      const custom = document.createElement("span");
+      custom.className = "bgsh-checkbox-custom";
+      const text = document.createElement("span");
+      text.className = "bgsh-label-text";
+      text.textContent = labelText;
+      label.append(checkbox, custom, text);
+      return label;
+    };
 
+    groupDiv.appendChild(createCheckboxLabel("bgsh-" + id + "-select-all", "all", "全选", "select-all"));
     options.forEach((option) => {
-      const safeValue = escapeHTML(option.value);
-      const safeLabel = escapeHTML(option.label);
-      const checkboxId = `bgsh-${escapeHTML(id)}-${safeValue}`;
-      innerHTML += `
-                  <label class="bgsh-checkbox-label">
-                      <input type="checkbox" id="${checkboxId}" value="${safeValue}">
-                      <span class="bgsh-checkbox-custom"></span>
-                      <span class="bgsh-label-text">${safeLabel}</span>
-                  </label>
-          `;
+      const value = String(option.value);
+      groupDiv.appendChild(createCheckboxLabel("bgsh-" + id + "-" + value, value, String(option.label)));
     });
-
-    groupDiv.innerHTML = innerHTML;
 
     // 添加事件监听
     const selectAllCheckbox = groupDiv.querySelector(".select-all");
@@ -2671,7 +2673,7 @@
       );
       for (let i = 0; i < elements.snapshotLength; i++) {
         if (displayBlockedTips) {
-          elements.snapshotItem(i).innerHTML = action.message;
+          elements.snapshotItem(i).textContent = action.message;
         } else {
           elements.snapshotItem(i).style.display = "none";
         }
@@ -4210,7 +4212,7 @@
       const existingButton = postContainer.parentNode.querySelector(
         "#quickTopicadminToPost"
       );
-      if (existingButton) {
+      if (postContainer.dataset.bgshActionsInitialized === "true" || existingButton) {
         // 如果已存在按钮，则直接返回
         return;
       }
@@ -4222,6 +4224,7 @@
         parentTbody.querySelector('img[src="static/image/common/settop.png"]')
           ? "0"
           : "1";
+      postContainer.dataset.bgshActionsInitialized = "true";
       const quickTopicadminToPostButton = createQuickTopicadminToPostButton(
         postContainer,
         stickreply
