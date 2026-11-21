@@ -2268,48 +2268,90 @@
             magnet_table: {
                 template: {
                     create_head: () => {
-                        const row=document.createElement('tr');row.className='jav-nong-row';row.id='jav-nong-head';
-                        const first=document.createElement('th'),select=document.createElement('select'),hosts=enabledMagnetSources();
-                        const sourceLabel=document.createElement('span');sourceLabel.textContent='来源：';first.appendChild(sourceLabel);
-                        select.className='nong-source-select';
-                        for(const host of hosts){const option=document.createElement('option');option.value=host;option.textContent=magnetSourceLabel(host)+' · '+host;select.appendChild(option);}
-                        const selected=GM_getValue('search_index',hosts[0]||'');select.value=hosts.includes(selected)?selected:(hosts[0]||'');first.appendChild(select);
-                        const settings=document.createElement('a');settings.href='#';settings.textContent='设置';settings.style.marginLeft='8px';settings.addEventListener('click',event=>{event.preventDefault();Common.openSystemConfig();});first.appendChild(settings);
-                        const search=document.createElement('a');search.className='nong-search-page';search.href='#';search.target='_blank';search.rel='noopener noreferrer';search.textContent='搜索页';search.style.marginLeft='8px';first.appendChild(search);row.appendChild(first);
-                        for(const label of ['文件名','大小','磁链']){const th=document.createElement('th');th.textContent=label;row.appendChild(th);}
-                        select.addEventListener('change',()=>{GM_setValue('search_index',select.value);document.getElementById('nong-table-new')?.remove();thirdparty.nong.searchMagnetRun();});return row;
+                        const row = document.createElement('tr'); row.className = 'jav-nong-row'; row.id = 'jav-nong-head';
+                        const first = document.createElement('th'), select = document.createElement('select');
+                        const hosts = enabledMagnetSources();
+                        for (const host of hosts) { const option = document.createElement('option'); option.value = host; option.textContent = magnetSourceLabel(host) + ' · ' + host; select.appendChild(option); }
+                        const selected = GM_getValue('search_index', hosts[0] || '');
+                        select.value = hosts.includes(selected) ? selected : (hosts[0] || '');
+                        first.appendChild(select);
+                        const settings = document.createElement('a'); settings.href = '#'; settings.textContent = '设置'; settings.style.marginLeft = '8px';
+                        settings.addEventListener('click', event => { event.preventDefault(); Common.openSystemConfig(); });
+                        first.appendChild(settings);
+                        const searchPage = document.createElement('a'); searchPage.className = 'nong-search-page'; searchPage.href = '#';
+                        searchPage.target = '_blank'; searchPage.rel = 'noopener noreferrer'; searchPage.textContent = '搜索页'; searchPage.style.marginLeft = '8px';
+                        first.appendChild(searchPage); row.appendChild(first);
+                        for (const title of ['来源', '文件名', '大小', '磁链']) { const cell = document.createElement('th'); cell.textContent = title; row.appendChild(cell); }
+                        select.addEventListener('change', () => {
+                            GM_setValue('search_index', select.value);
+                            const old = document.getElementById('nong-table-new'); if (old) old.remove();
+                            thirdparty.nong.searchMagnetRun();
+                        });
+                        return row;
                     },
                     create_row: data => {
-                        const row=document.createElement('tr');row.className='jav-nong-row';row.setAttribute('maglink',data.maglink||'');
-                        const src=data.src||'';let host='';try{host=new URL(src,location.href).hostname;}catch(error){}
-                        const sourceCell=document.createElement('td'),sourceLink=document.createElement('a');sourceLink.href=src||'#';sourceLink.target='_blank';sourceLink.rel='noopener noreferrer';sourceLink.textContent=magnetSourceLabel(host);sourceLink.title=host||src;sourceCell.appendChild(sourceLink);
-                        const nameCell=document.createElement('td');nameCell.textContent=data.title||'未命名资源';nameCell.title=data.title||'';
-                        const sizeCell=document.createElement('td');sizeCell.textContent=data.size||'未知';
-                        const magnetCell=document.createElement('td'),magnetLink=document.createElement('a');magnetLink.className='nong-magnet-link';magnetLink.href=data.maglink||'#';magnetLink.textContent=data.maglink?'打开磁链':'等待解析';magnetCell.appendChild(magnetLink);
-                        const copy=document.createElement('button');copy.type='button';copy.className='nong-copy';copy.textContent='复制完整磁链';copy.disabled=!/^magnet:\?xt=urn:btih:/i.test(data.maglink||'');magnetCell.appendChild(copy);row.append(sourceCell,nameCell,sizeCell,magnetCell);
-                        if(data.maglink&&data.maglink.includes('#magnetlink'))Common.request(data.maglink+'?hobbyId='+encodeURIComponent(data.id||'')).then(result=>{
-                            const marker='#website#infohash#',index=result.responseText.indexOf(marker);if(index<0)return;
-                            const hash=result.responseText.substring(index+marker.length,index+marker.length+40);if(!/^[a-f0-9]{40}$/i.test(hash))return;
-                            const magnet='magnet:?xt=urn:btih:'+hash;row.setAttribute('maglink',magnet);magnetLink.href=magnet;magnetLink.textContent='打开磁链';copy.disabled=false;
-                        }).catch(()=>{});
-                        copy.addEventListener('click',thirdparty.nong.magnet_table.handle_event,false);return row;
+                        const row = document.createElement('tr'); row.className = 'jav-nong-row';
+                        const magnet = String(data.maglink || ''); row.setAttribute('maglink', magnet);
+                        const sourceCell = document.createElement('td'), sourceLink = document.createElement('a');
+                        const sourceUrl = String(data.src || ''); let host = '';
+                        try { host = new URL(sourceUrl, location.href).hostname; } catch (error) {}
+                        sourceLink.href = sourceUrl || '#'; sourceLink.target = '_blank'; sourceLink.rel = 'noopener noreferrer';
+                        sourceLink.textContent = magnetSourceLabel(host); sourceLink.title = host || sourceUrl; sourceCell.appendChild(sourceLink);
+                        const nameCell = document.createElement('td'); nameCell.textContent = data.title || '未命名资源'; nameCell.title = data.title || '';
+                        const sizeCell = document.createElement('td'); sizeCell.textContent = data.size || '未知';
+                        const magnetCell = document.createElement('td'), magnetLink = document.createElement('a');
+                        const isMagnet = /^magnet:\?xt=urn:btih:/i.test(magnet);
+                        magnetLink.className = 'nong-magnet-link'; magnetLink.href = isMagnet ? magnet : '#';
+                        magnetLink.textContent = isMagnet ? '打开磁链' : '等待解析'; magnetCell.appendChild(magnetLink);
+                        const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'nong-copy';
+                        copy.textContent = '复制完整磁链'; copy.setAttribute('data-magnet', isMagnet ? magnet : '');
+                        copy.disabled = !isMagnet; magnetCell.appendChild(copy);
+                        if (magnet.indexOf('#magnetlink') >= 0) {
+                            Common.request(magnet + '?hobbyId=' + encodeURIComponent(data.id || '')).then(result => {
+                                const marker = '#website#infohash#', index = result.responseText.indexOf(marker);
+                                if (index < 0) return;
+                                const hash = result.responseText.substring(index + marker.length, index + marker.length + 40);
+                                if (!/^[a-f0-9]{40}$/i.test(hash)) return;
+                                const fullMagnet = 'magnet:?xt=urn:btih:' + hash;
+                                row.setAttribute('maglink', fullMagnet); magnetLink.href = fullMagnet;
+                                magnetLink.textContent = '打开磁链'; copy.setAttribute('data-magnet', fullMagnet); copy.disabled = false;
+                            }, () => {});
+                        }
+                        row.append(sourceCell, nameCell, sizeCell, magnetCell); return row;
                     },
-                    create_loading: () => {const row=document.createElement('tr'),cell=document.createElement('td');row.className='jav-nong-row';cell.colSpan=4;cell.id='notice';cell.textContent='正在搜索磁力资源…';row.appendChild(cell);return row;}
+                    create_loading: () => {
+                        const row = document.createElement('tr'); row.className = 'jav-nong-row';
+                        const cell = document.createElement('td'); cell.colSpan = 5; cell.id = 'notice';
+                        cell.textContent = '正在搜索磁力资源…'; row.appendChild(cell); return row;
+                    }
                 },
-                create_empty_table: () => {const table=document.createElement('table');table.id='nong-table-new';return table;},
-                updata_table: (src,data) => {
-                    const table=document.getElementById('nong-table-new');if(!table)return;const notice=table.querySelector('#notice');if(notice)notice.parentElement.remove();
-                    for(const item of data)table.appendChild(thirdparty.nong.magnet_table.template.create_row(item));
-                    const link=document.querySelector('#jav-nong-head .nong-search-page');if(link&&src)link.href=src;
+                create_empty_table: () => { const table = document.createElement('table'); table.id = 'nong-table-new'; return table; },
+                updata_table: (src, data) => {
+                    const table = document.getElementById('nong-table-new'); if (!table) return;
+                    const notice = table.querySelector('#notice'); if (notice) notice.parentElement.remove();
+                    for (const item of data) table.appendChild(thirdparty.nong.magnet_table.template.create_row(item));
+                    const searchPage = table.querySelector('.nong-search-page'); if (searchPage && src) searchPage.href = src;
+                    thirdparty.nong.magnet_table.reg_event();
                 },
-                full: () => {const table=thirdparty.nong.magnet_table.create_empty_table();table.appendChild(thirdparty.nong.magnet_table.template.create_head());table.appendChild(thirdparty.nong.magnet_table.template.create_loading());return table;},
+                full: () => {
+                    const table = thirdparty.nong.magnet_table.create_empty_table();
+                    table.appendChild(thirdparty.nong.magnet_table.template.create_head());
+                    table.appendChild(thirdparty.nong.magnet_table.template.create_loading()); return table;
+                },
                 handle_event: event => {
-                    const button=event.target.closest('.nong-copy');if(!button)return;const row=button.closest('tr');
-                    const magnet=row?row.getAttribute('maglink'):button.getAttribute('data-magnet');
-                    if(!/^magnet:\?xt=urn:btih:/i.test(magnet||'')){button.textContent='磁链尚未就绪';return;}
-                    GM_setClipboard(magnet);button.textContent='已复制';setTimeout(()=>{button.textContent='复制完整磁链';},1000);event.preventDefault();
+                    const button = event.target.closest('.nong-copy'); if (!button) return;
+                    const magnet = button.getAttribute('data-magnet') || (button.closest('tr') ? button.closest('tr').getAttribute('maglink') : '') || '';
+                    if (!/^magnet:\?xt=urn:btih:/i.test(magnet)) { button.textContent = '磁链尚未就绪'; return; }
+                    GM_setClipboard(magnet); button.textContent = '已复制';
+                    setTimeout(() => { button.textContent = '复制完整磁链'; }, 1000); event.preventDefault();
                 },
-                reg_event: () => {}
+                reg_event: () => {
+                    document.querySelectorAll('#nong-table-new .nong-copy').forEach(button => {
+                        if (button.dataset.bound === '1') return;
+                        button.dataset.bound = '1';
+                        button.addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
+                    });
+                }
             },
             // 挊
             searchMagnetRun: () => {
