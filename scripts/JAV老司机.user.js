@@ -109,12 +109,12 @@
     function escapeSiteHtml(value) {
         return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
     }
-    function buildSiteUrl(siteOrId, avid) {
+    function buildSiteUrl(siteOrId, avid, templateOverride) {
         const site=typeof siteOrId==='string'?readSiteConfig().find(item=>item.id===siteOrId):siteOrId;
         if(!site||!site.enabled||!site.host||!site.template) return '';
         const full=String(avid||'').trim();
         const code=full.replace(/-/g,'');
-        const path=String(site.template).trim();
+        const path=String(templateOverride||site.template).trim();
         if(!path.startsWith('/')||path.startsWith('//')||/[\u0000-\u001f]/.test(path)) return '';
         const expanded=path.replace(/\{(id|code)\}/g,(_,key)=>encodeURIComponent(key==='code'?code:full));
         try {
@@ -129,7 +129,7 @@
     }
     function getSiteDomain(key, fallback) {
         const id=LEGACY_SITE_KEYS[key],site=id&&readSiteConfig().find(item=>item.id===id);
-        return site?site.host:String(GM_getValue(key,fallback)||fallback).trim().replace(/^https?:\/\//i,'').split('/')[0];
+        return id?(site&&site.enabled?site.host:''):String(GM_getValue(key,fallback)||fallback).trim().replace(/^https?:\/\//i,'').split('/')[0];
     }
     const JAVLIB_DOMAIN = 's87n.com';
     const MAGNET_SOURCES = [
@@ -541,7 +541,7 @@
         static getOneJavSearchUrl(avid) {
             //FC2-PPV-9999999 => 9999999 , ABP-999 => ABP999
             avid = avid.replace(/-|FC2|PPV/g, "");
-            return "https://" + getSiteDomain("onejav_url", "onejav.com") + "/search/" + avid;
+            return buildSiteUrl('onejav', avid);
         }
         /**
          * 获取查询blogjav的番号处理过后的查询字符
@@ -572,11 +572,11 @@
             return new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
                     method: "POST",
-                    url: 'https://' + getSiteDomain('jav321_url', 'www.jav321.com') + '/search',
+                    url: buildSiteUrl('jav321', avid),
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    data: "sn=" + avid,
+                    data: "sn=" + encodeURIComponent(avid),
                     timeout: 20000,
                     onload: (r) => resolve(r.finalUrl),
                     onerror: (r) => reject(`查找jav321的 ${avid} 出错了`),
@@ -590,7 +590,9 @@
          * @returns {Promise}  返回符合JavStore查询番号参数的url
          */
         static getJavStoreSearchUrl(avid) {
-            let promise1 = Common.request(`https://${getSiteDomain('javstore_url', 'javstore.net')}/search/${avid}.html`);
+            const searchUrl = buildSiteUrl('javstore', avid);
+            if (!searchUrl) return Promise.resolve(null);
+            let promise1 = Common.request(searchUrl);
             return promise1.then((result) => {
                 if (!result.loadstuts) return;
                 let doc = Common.parsetext(result.responseText);
@@ -611,7 +613,11 @@
                     }
                 }
 
-                return a ? `https://${getSiteDomain('javstore_url', 'javstore.net')}${a.pathname}` : null;
+                if (!a) return null;
+                try {
+                    const resultUrl = new URL(a.getAttribute('href'), searchUrl);
+                    return resultUrl.protocol === 'https:' ? resultUrl.href : null;
+                } catch (error) { return null; }
             });
         }
         /**
@@ -624,6 +630,7 @@
             $ele.mousedown((e) => {
                 //鼠标左键 0  鼠标中键滚轮 1
                 if (e.button < 2) {
+                    if (!buildSiteUrl('jav321', avid)) return;
                     Common.getJav321SearchUrl(avid).then((url) => {
                         if (url && !(/\/search\/?$/.test(new URL(url).pathname))) {
                             GM_openInTab(url, { active: !e.button, insert: true, setParent: true });
@@ -647,6 +654,7 @@
                 if (e.button < 2) {
                     //FC2-PPV-9999999 => FC2+PPV+9999999 , HEYZO-9999 => HEYZO+9999
                     avid = avid.replace(/-/g, "+");
+                    if (!buildSiteUrl('javstore', avid)) return;
                     Common.getJavStoreSearchUrl(avid).then((url) => {
                         if (url) {
                             GM_setValue(url, avid);
@@ -1060,7 +1068,8 @@
                 }
                 //JavWebSql.DBinit();
                 // 新增VR发行、FC2发行菜单入口
-                $('.menul1 ul li:contains("新发行")').after('<li><a href="https://' + getSiteDomain('onejav_url', 'onejav.com') + '/popular/?amateur=1" target="_blank" style="color: red;">FC2发行</a></li>');
+                const oneJavPopularUrl = buildSiteUrl('onejav', '', '/popular/?amateur=1');
+                if (oneJavPopularUrl) $('.menul1 ul li:contains("新发行")').after('<li><a href="' + escapeSiteHtml(oneJavPopularUrl) + '" target="_blank" rel="noopener noreferrer" style="color: red;">FC2发行</a></li>');
                 $('.menul1 ul li:contains("新发行")').after('<li><a href="vl_genre.php?g=aaua" style="color: red;">VR发行</a></li>');
 
 
@@ -1153,15 +1162,7 @@
                             </tr></tbody></table>
                         </div>
                     `);
-                    // JavBus 由 Tampermonkey 在用户点击事件中打开，避免普通弹窗拦截
-                    const javbusJumpLink = document.getElementById('javbus_jump_link');
-                    if (javbusJumpLink) {
-                        javbusJumpLink.addEventListener('click', (event) => {
-                            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-                            event.preventDefault();
-                            GM_openInTab(javbusJumpLink.href, { active: true, insert: true, setParent: true });
-                        });
-                    }
+                    bindTampermonkeyOpenLinks(document.getElementById('javweb_jump'));
                     // javstoreLink
                     let $span = $(`<span class="genre"><a href="javascript:void(0);">JavStore</a></span>`);
                     $('#linkJump').prepend(Common.javstoreLinkMousedown($span, AVID));
@@ -1204,7 +1205,8 @@
                     .screencap img{	width:100%;	max-width: 1000px;}
                 `);
                 // 新增FC2菜单入口
-                $('#navbar ul.nav.navbar-nav li:eq(0)').after(`<li><a href="https://${getSiteDomain('onejav_url', 'onejav.com')}/popular/?amateur=1" target="_blank" style="color: red;">FC2</a></li>`);
+                const oneJavPopularUrl = buildSiteUrl('onejav', '', '/popular/?amateur=1');
+                if (oneJavPopularUrl) $('#navbar ul.nav.navbar-nav li:eq(0)').after('<li><a href="' + escapeSiteHtml(oneJavPopularUrl) + '" target="_blank" rel="noopener noreferrer" style="color: red;">FC2</a></li>');
                 // 新增VR菜单入口
                 $('#navbar ul.nav.navbar-nav li:eq(0)').after('<li><a href="/search/VR&type=1" style="color: red;">VR</a></li>');
                 // 指定站点页面加入瀑布流控制按钮
