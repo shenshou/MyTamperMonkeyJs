@@ -1999,7 +1999,8 @@
                         // 延迟1秒运行定时循环函数
                         setTimeout(() => {
                             // 判断域名是否当前页
-                            if (new RegExp(JAVLIB_DOMAIN).test(domain)) {
+                            const javlibSite = readSiteConfig().find(site => site.id === 'javlib' && site.enabled);
+                            if (javlibSite && domain.split(':')[0] === javlibSite.host.split(':')[0]) {
                                 // 定时循环函数,当队列执行完成时结束
                                 var s4 = setInterval(() => {
                                     if (this.queue.taskList.length == 0) {
