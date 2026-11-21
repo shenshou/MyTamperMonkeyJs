@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.31
+// @version      100.32
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -577,7 +577,7 @@
                         <br>
                         <!--勋章隐藏设置-->
                         <fieldset>
-                            <label>隐藏勋章</label>
+                            <legend>隐藏勋章</legend>
                             <br>
                             <label>
                                 <input type="radio" name="blockMedals" value="0" ${
@@ -600,7 +600,7 @@
                         </fieldset>
                         <!--勋章尺寸修改设置-->
                         <fieldset>
-                            <label>修改勋章尺寸</label>
+                            <legend>修改勋章尺寸</legend>
                             <br>
                             <label>
                                 <input type="radio" name="resizeMedals" value="0" ${
@@ -623,7 +623,7 @@
                         </fieldset>
                         <!--勋章替换设置-->
                         <fieldset>
-                            <label>替换勋章</label>
+                            <legend>替换勋章</legend>
                             <br>
                             <label>
                                 <input type="radio" name="replaceMedals" value="0" ${
