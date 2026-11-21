@@ -242,7 +242,10 @@
     class Common {
 
         static init() {
-            if(GM_getValue(SITE_CONFIG_KEY,undefined)===undefined) GM_setValue(SITE_CONFIG_KEY,readSiteConfig());
+            if(GM_getValue(SITE_CONFIG_KEY,undefined)===undefined) {
+                GM_setValue(SITE_CONFIG_KEY,readSiteConfig());
+                for(const legacyKey of Object.keys(LEGACY_SITE_KEYS)) GM_deleteValue(legacyKey);
+            }
             const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN};
             for(const [key,value] of Object.entries(defaults))if(GM_getValue(key,undefined)===undefined)GM_setValue(key,value);
             for(const source of MAGNET_SOURCES)if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
