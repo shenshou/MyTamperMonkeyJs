@@ -273,15 +273,15 @@
                 '#jav-old-driver-settings-overlay .jod-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:5px;}',
                 '#jav-old-driver-settings-overlay h3{margin:0;color:#111827;font-size:15px;font-weight:650;}',
                 '#jav-old-driver-settings-overlay .jod-help{margin:4px 0 12px;color:#6b7280;font-size:12px;}',
-                '#jav-old-driver-settings-overlay .jod-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.2fr) minmax(180px,2fr) auto;gap:10px;align-items:end;padding:11px 0;border-top:1px solid #f1f5f9;}',
+                '#jav-old-driver-settings-overlay .jod-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.2fr) minmax(180px,2fr) auto auto;gap:10px;align-items:end;padding:11px 0;border-top:1px solid #f1f5f9;}',
                 '#jav-old-driver-settings-overlay .jod-fields{display:contents;}',
                 '#jav-old-driver-settings-overlay .jod-field{display:flex;min-width:0;flex-direction:column;gap:5px;color:#4b5563;font-size:12px;}',
-                '#jav-old-driver-settings-overlay input[type=text]{width:100%;min-width:0;height:36px;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;outline:none;background:#fff;color:#111827;font:13px inherit;}',
+                '#jav-old-driver-settings-overlay input[type=text]{width:100%;min-width:0;height:36px;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;outline:none;background:#fff;color:#111827;font:13px Arial,sans-serif;}',
                 '#jav-old-driver-settings-overlay input[type=text]:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.13);}',
                 '#jav-old-driver-settings-overlay .jod-flags{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-height:36px;padding-bottom:2px;}',
                 '#jav-old-driver-settings-overlay .jod-check{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:#4b5563;font-size:12px;}',
                 '#jav-old-driver-settings-overlay input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:#2563eb;}',
-                '#jav-old-driver-settings-overlay button{min-height:34px;padding:7px 11px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#374151;font:600 12px inherit;cursor:pointer;transition:background .15s,border-color .15s;}',
+                '#jav-old-driver-settings-overlay button{min-height:34px;padding:7px 11px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#374151;font:600 12px Arial,sans-serif;cursor:pointer;transition:background .15s,border-color .15s;}',
                 '#jav-old-driver-settings-overlay button:hover{border-color:#9ca3af;background:#f3f4f6;}',
                 '#jav-old-driver-settings-overlay button:focus-visible{outline:3px solid rgba(59,130,246,.28);outline-offset:1px;}',
                 '#jav-old-driver-settings-overlay .jod-danger{color:#b91c1c;}',
@@ -488,23 +488,6 @@
 
             const footer = document.createElement('footer');
             footer.className = 'jod-footer';
-            const restoreAll = document.createElement('button');
-            restoreAll.type = 'button';
-            restoreAll.textContent = '恢复默认配置';
-            restoreAll.addEventListener('click', () => {
-                if (!confirm('恢复默认配置会重置内置站点清单、瀑布流选项和磁力搜索源。是否继续？')) return;
-                siteList.replaceChildren();
-                siteRows.length = 0;
-                for (const site of DEFAULT_SITE_CONFIG) makeSiteRow({ ...site });
-                scroll.checked = true;
-                for (const row of magnetRows) {
-                    row.name.value = row.source.defaultName;
-                    row.host.value = row.source.defaultDomain;
-                    row.template.value = row.source.defaultTemplate;
-                    row.enabled.checked = true;
-                }
-                notice.classList.remove('is-visible');
-            });
             const footerActions = document.createElement('div');
             footerActions.className = 'jod-footer-actions';
             const cancel = document.createElement('button');
@@ -577,7 +560,7 @@
                 }
             });
             footerActions.append(cancel, save);
-            footer.append(restoreAll, footerActions);
+            footer.appendChild(footerActions);
 
             const closePanel = () => overlay.remove();
             close.addEventListener('click', closePanel);
