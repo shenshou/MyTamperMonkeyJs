@@ -1694,8 +1694,7 @@
                         function getMovieInfo() {
                             w.queue.push(() => {
                                 let defer = $.Deferred();
-                                const infoUrl = buildSiteUrl('javlib', _vid, '/ja/?v={id}');
-                                if (!infoUrl) { defer.resolve(); return defer.promise(); }
+                                const infoUrl = location.origin + '/ja/?v=' + encodeURIComponent(_vid);
                                 const promise = Common.request(infoUrl);
                                 promise.then(result => {
                                     if (result.loadstuts && result.status < 300) {
@@ -1738,6 +1737,7 @@
                         if (!(/^FC2(-)/g).test(avid)) {
                             // Javlib的跳转链接
                             $(aEle.parentElement).append(renderSiteLinks(avid, 'jump'));
+                            bindTampermonkeyOpenLinks(aEle.parentElement);
                         }
                         // 番号预览大图
                         Common.addAvImg(avcd, ($img) => {
@@ -1789,6 +1789,7 @@
                             $div.append(`
                                         ${renderSiteLinks(avid, "jump")}
                                     `);
+                            bindTampermonkeyOpenLinks($div[0]);
                             let $a = $(`
                                         <a title="素人 JAV资源站" href="javascript:void(0);">
                                             <span class="tag hobby" style="margin-right: 0px;background-color:#418fa7;">Jav321</span>
@@ -1999,8 +2000,7 @@
                         // 延迟1秒运行定时循环函数
                         setTimeout(() => {
                             // 判断域名是否当前页
-                            const javlibSite = readSiteConfig().find(site => site.id === 'javlib' && site.enabled);
-                            if (javlibSite && domain.split(':')[0] === javlibSite.host.split(':')[0]) {
+                            if (document.title.search(/JAVLibrary/) > 0) {
                                 // 定时循环函数,当队列执行完成时结束
                                 var s4 = setInterval(() => {
                                     if (this.queue.taskList.length == 0) {
