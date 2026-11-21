@@ -4582,12 +4582,12 @@
       let imageCountStr = imageCount ? `${imageCount}P` : "";
       let quotaStr = quota ? `${quota}配额` : "";
       const content = `
-                      【资源名称】：${resourceName}<br>
-                      【资源类型】：${resourceType}<br>
-                      【是否有码】：${censorship} @ ${watermark} @ ${subtitle}<br>
-                      【资源大小】：${resourceSizeStr}/${videoCountStr}/${imageCountStr}/${quotaStr}<br>
+                      【资源名称】：${escapeHTML(resourceName)}<br>
+                      【资源类型】：${escapeHTML(resourceType)}<br>
+                      【是否有码】：${escapeHTML(censorship)} @ ${escapeHTML(watermark)} @ ${escapeHTML(subtitle)}<br>
+                      【资源大小】：${escapeHTML(resourceSizeStr)}/${escapeHTML(videoCountStr)}/${escapeHTML(imageCountStr)}/${escapeHTML(quotaStr)}<br>
                       【资源预览】：<br>
-                      【资源链接】：<div class="blockcode"><blockquote>${resourceLink}</blockquote></div><br>
+                      【资源链接】：<div class="blockcode"><blockquote>${escapeHTML(resourceLink)}</blockquote></div><br>
                   `;
       const iframe = document.querySelector(".area iframe");
       if (iframe && iframe.contentDocument) {
@@ -5076,9 +5076,9 @@
    */
   function initCheckboxGroupWithSettings(div, settings) {
     const setCheckboxes = (group, values) => {
-      values.forEach((value) => {
-        const checkbox = div.querySelector(`#${group} input[value="${value}"]`);
-        if (checkbox) checkbox.checked = true;
+      const selectedValues = new Set(values.map(String));
+      div.querySelectorAll(`#${group} input[type="checkbox"]`).forEach((checkbox) => {
+        checkbox.checked = selectedValues.has(checkbox.value);
       });
     };
 
