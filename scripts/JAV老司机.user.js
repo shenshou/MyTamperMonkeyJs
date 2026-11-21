@@ -127,11 +127,6 @@
         return readSiteConfig().filter(site=>site.enabled&&!site.dynamic&&Array.isArray(site.groups)&&site.groups.includes(group))
             .map(site=>{const url=buildSiteUrl(site,avid);return url?'<a href="'+escapeSiteHtml(url)+'" target="_blank" rel="noopener noreferrer" title="'+escapeSiteHtml(site.name)+'">'+escapeSiteHtml(site.name)+'&nbsp;</a>':'';}).join('');
     }
-    function getSiteDomain(key, fallback) {
-        const id=LEGACY_SITE_KEYS[key],site=id&&readSiteConfig().find(item=>item.id===id);
-        return id?(site&&site.enabled?site.host:''):String(GM_getValue(key,fallback)||fallback).trim().replace(/^https?:\/\//i,'').split('/')[0];
-    }
-    const JAVLIB_DOMAIN = 's87n.com';
     const MAGNET_SOURCES = [
         {label:'JavDB', domainKey:'javdb_url', enabledKey:'javdb_magnet_enabled', defaultDomain:JAVDB_DOMAIN},
         {label:'BTSOW', domainKey:'btsow_url', enabledKey:'btsow_magnet_enabled', defaultDomain:BTSOW_DOMAIN},
@@ -616,7 +611,8 @@
                 if (!a) return null;
                 try {
                     const resultUrl = new URL(a.getAttribute('href'), searchUrl);
-                    return resultUrl.protocol === 'https:' ? resultUrl.href : null;
+                    const searchOrigin = new URL(searchUrl).origin;
+                    return resultUrl.protocol === 'https:' && resultUrl.origin === searchOrigin ? resultUrl.href : null;
                 } catch (error) { return null; }
             });
         }
