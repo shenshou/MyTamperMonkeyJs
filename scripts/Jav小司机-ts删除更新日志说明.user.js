@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jav小司机-ts删除更新日志说明
 // @namespace    wddd
-// @version      1.1.7
+// @version      1.1.8
 // @author       wddd
 // @license      MIT
 // @match        *://*.javlibrary.com/*
@@ -275,6 +275,291 @@ function addStyle() {
     }
 }
 
+const RESOURCE_CONFIG_KEY = 'mdResourceConfig';
+const DEFAULT_RESOURCE_CONFIG = {
+    jumpLinks: [],
+    torrentSites: [
+        { id: 'sukebei', name: 'Sukebei', host: 'sukebei.nyaa.si', template: '/?f=0&c=0_0&q={id}', enabled: true },
+        { id: 'btsow', name: 'BTSOW', host: 'btos.pw', template: '/search/{id}', enabled: true },
+        { id: 'javbus', name: 'JavBus', host: 'www.javbus.com', template: '/{id}', enabled: true },
+        { id: 'torrentkitty', name: 'TorrentKitty', host: 'www.torrentkitty.tv', template: '/search/{id}', enabled: true },
+        { id: 'tokyotosho', name: 'TokyoTosho', host: 'www.tokyotosho.info', template: '/search.php?terms={id}', enabled: true },
+        { id: 'biedian', name: 'Biedian', host: 'biedian.me', template: '/search?source=%E7%A7%8D%E5%AD%90%E6%90%9C&s=time&p=1&k={id}', enabled: true },
+        { id: 'btdig', name: 'BTDig', host: 'btdig.com', template: '/search?q={id}', enabled: true },
+        { id: 'idope', name: 'iDope', host: 'idope.se', template: '/torrent-list/{id}/', enabled: true }
+    ]
+};
+
+function cloneResourceConfig(config) {
+    return JSON.parse(JSON.stringify(config));
+}
+
+function initializeResourceConfig() {
+    if (GM_getValue(RESOURCE_CONFIG_KEY, undefined) !== undefined) return;
+    const config = cloneResourceConfig(DEFAULT_RESOURCE_CONFIG);
+    const legacyKeys = {
+        sukebei: 'sukebei',
+        btsow: 'btsow',
+        javbus: 'javbus',
+        torrentkitty: 'torrentKitty',
+        tokyotosho: 'tokyotosho',
+        biedian: 'biedian',
+        btdig: 'btDigg',
+        idope: 'idope'
+    };
+    for (const site of config.torrentSites) {
+        const legacyKey = legacyKeys[site.id];
+        const legacyValue = legacyKey ? GM_getValue('mdTorrentSite_' + legacyKey, undefined) : undefined;
+        if (legacyValue !== undefined) site.enabled = !!legacyValue;
+    }
+    GM_setValue(RESOURCE_CONFIG_KEY, config);
+}
+
+function getResourceConfig() {
+    const saved = GM_getValue(RESOURCE_CONFIG_KEY, undefined);
+    if (!saved || typeof saved !== 'object') return cloneResourceConfig(DEFAULT_RESOURCE_CONFIG);
+    return {
+        jumpLinks: Array.isArray(saved.jumpLinks) ? saved.jumpLinks : [],
+        torrentSites: Array.isArray(saved.torrentSites) ? saved.torrentSites : []
+    };
+}
+
+function normalizeResourceHost(value) {
+    const host = String(value || '').trim().replace(/^https?:\/\//i, '').split('/')[0].toLowerCase();
+    if (!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host) || host.includes('..') || host.startsWith('.') || host.endsWith('.')) return '';
+    return host;
+}
+
+function buildResourceUrl(resource, editionNumber) {
+    if (!resource || resource.enabled === false) return '';
+    const host = normalizeResourceHost(resource.host);
+    const template = String(resource.template || '').trim() || '/';
+    if (!host || !template.startsWith('/') || template.startsWith('//') || /[\u0000-\u001f]/.test(template)) return '';
+    const fullId = String(editionNumber || '').trim();
+    const code = fullId.replace(/-/g, '');
+    const path = template.replace(/\{id\}/g, encodeURIComponent(fullId)).replace(/\{code\}/g, encodeURIComponent(code));
+    try {
+        const url = new URL('https://' + host + path);
+        return url.protocol === 'https:' && url.hostname === host.split(':')[0] ? url.href : '';
+    } catch (error) {
+        return '';
+    }
+}
+
+function openResourceManager() {
+    const existing = document.getElementById('md-resource-manager-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'md-resource-manager-overlay';
+    overlay.setAttribute('role', 'presentation');
+    const dialog = document.createElement('section');
+    dialog.className = 'md-resource-dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'md-resource-title');
+
+    const style = document.createElement('style');
+    style.id = 'md-resource-manager-style';
+    style.textContent = [
+        '#md-resource-manager-overlay{position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;font:14px/1.5 Arial,sans-serif;color:#222;}',
+        '#md-resource-manager-overlay *{box-sizing:border-box;}',
+        '#md-resource-manager-overlay .md-resource-dialog{width:min(960px,100%);max-height:calc(100vh - 28px);display:flex;flex-direction:column;background:#fff;border-radius:10px;box-shadow:0 12px 48px rgba(0,0,0,.35);overflow:hidden;}',
+        '#md-resource-manager-overlay .md-resource-header,#md-resource-manager-overlay .md-resource-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid #ddd;}',
+        '#md-resource-manager-overlay .md-resource-header h2{margin:0;font-size:18px;}',
+        '#md-resource-manager-overlay .md-resource-body{padding:14px 16px;overflow:auto;}',
+        '#md-resource-manager-overlay .md-resource-note{margin:0 0 14px;color:#666;font-size:12px;}',
+        '#md-resource-manager-overlay h3{margin:18px 0 6px;font-size:16px;}',
+        '#md-resource-manager-overlay .md-resource-help{margin:0 0 10px;color:#666;font-size:12px;}',
+        '#md-resource-manager-overlay .md-resource-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.2fr) minmax(180px,2fr) auto auto;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid #eee;}',
+        '#md-resource-manager-overlay .md-resource-field{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:#555;}',
+        '#md-resource-manager-overlay input[type=text]{width:100%;min-width:0;height:34px;padding:6px 8px;border:1px solid #bbb;border-radius:5px;font-size:13px;color:#222;}',
+        '#md-resource-manager-overlay .md-resource-enabled{display:flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:8px;font-size:12px;}',
+        '#md-resource-manager-overlay button{border:1px solid #aaa;border-radius:5px;background:#f7f7f7;color:#222;padding:7px 11px;cursor:pointer;font-size:13px;}',
+        '#md-resource-manager-overlay button:hover{background:#eaeaea;}',
+        '#md-resource-manager-overlay .md-resource-delete{color:#a22;}',
+        '#md-resource-manager-overlay .md-resource-add{margin-top:10px;}',
+        '#md-resource-manager-overlay .md-resource-footer{border-top:1px solid #ddd;border-bottom:0;justify-content:flex-end;flex-wrap:wrap;}',
+        '#md-resource-manager-overlay .md-resource-primary{background:#1677d2;color:#fff;border-color:#1677d2;}',
+        '#md-resource-manager-overlay .md-resource-primary:hover{background:#0867bd;}',
+        '@media(max-width:680px){#md-resource-manager-overlay .md-resource-row{grid-template-columns:1fr 1fr;}#md-resource-manager-overlay .md-resource-row .md-resource-field:nth-child(3){grid-column:1/-1;}#md-resource-manager-overlay .md-resource-row .md-resource-enabled{padding-bottom:0;}#md-resource-manager-overlay .md-resource-delete{justify-self:start;}}'
+    ].join('\n');
+
+    const header = document.createElement('header');
+    header.className = 'md-resource-header';
+    const title = document.createElement('h2');
+    title.id = 'md-resource-title';
+    title.textContent = '站点与资源管理';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = '关闭';
+    close.addEventListener('click', () => overlay.remove());
+    header.append(title, close);
+
+    const body = document.createElement('div');
+    body.className = 'md-resource-body';
+    const note = document.createElement('p');
+    note.className = 'md-resource-note';
+    note.textContent = '管理脚本生成的普通跳转链接和种子搜索入口。路径模板支持 {id}（完整番号）与 {code}（去掉连字符的番号）。这里修改的是浏览器打开的链接；截图、JavTrailers 等跨域请求受脚本 @connect 授权限制，JavLibrary 运行域名受 @match 限制，新增或更换这些请求/运行域名需要更新脚本元数据。';
+    body.appendChild(note);
+
+    function makeField(labelText, value, placeholder) {
+        const label = document.createElement('label');
+        label.className = 'md-resource-field';
+        const caption = document.createElement('span');
+        caption.textContent = labelText;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value || '';
+        input.placeholder = placeholder || '';
+        input.autocomplete = 'off';
+        label.append(caption, input);
+        return { label, input };
+    }
+
+    function makeResourceRow(resource, list, type) {
+        const row = document.createElement('div');
+        row.className = 'md-resource-row';
+        row.dataset.resourceId = resource.id || ('custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7));
+        const name = makeField('名称', resource.name, '网站名称');
+        const host = makeField('域名', resource.host, '例如 www.example.com');
+        const template = makeField(type === 'torrent' ? '搜索路径模板' : '跳转路径模板', resource.template, '/search/{id}');
+        const enabledLabel = document.createElement('label');
+        enabledLabel.className = 'md-resource-enabled';
+        const enabled = document.createElement('input');
+        enabled.type = 'checkbox';
+        enabled.checked = resource.enabled !== false;
+        const enabledText = document.createElement('span');
+        enabledText.textContent = '启用';
+        enabledLabel.append(enabled, enabledText);
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'md-resource-delete';
+        remove.textContent = '删除';
+        remove.addEventListener('click', () => row.remove());
+        row.append(name.label, host.label, template.label, enabledLabel, remove);
+        list.appendChild(row);
+        return row;
+    }
+
+    function makeResourceSection(titleText, helpText, type, items) {
+        const section = document.createElement('section');
+        const heading = document.createElement('h3');
+        heading.textContent = titleText;
+        const help = document.createElement('p');
+        help.className = 'md-resource-help';
+        help.textContent = helpText;
+        const list = document.createElement('div');
+        list.className = 'md-resource-list';
+        for (const item of items) makeResourceRow(item, list, type);
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'md-resource-add';
+        add.textContent = type === 'torrent' ? '＋ 添加种子搜索网站' : '＋ 添加跳转资源';
+        add.addEventListener('click', () => {
+            const row = makeResourceRow({
+                id: 'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                name: '自定义网站',
+                host: 'example.com',
+                template: '/{id}',
+                enabled: true
+            }, list, type);
+            row.querySelector('input').focus();
+        });
+        section.append(heading, help, list, add);
+        body.appendChild(section);
+        return list;
+    }
+
+    const config = getResourceConfig();
+    const jumpList = makeResourceSection(
+        '普通跳转资源',
+        '可添加任意通过浏览器打开的站点。域名与路径模板分开填写；不需要请求解析器。',
+        'jump',
+        config.jumpLinks
+    );
+    const torrentList = makeResourceSection(
+        '种子搜索网站',
+        '这些入口只负责打开对应网站的搜索页面，因此可以直接新增、删除或修改域名和搜索模板。',
+        'torrent',
+        config.torrentSites
+    );
+
+    const footer = document.createElement('footer');
+    footer.className = 'md-resource-footer';
+    const restore = document.createElement('button');
+    restore.type = 'button';
+    restore.textContent = '恢复脚本内置默认配置';
+    restore.addEventListener('click', () => {
+        if (!confirm('恢复默认会清除自定义跳转资源，并重置种子搜索网站清单。是否继续？')) return;
+        jumpList.replaceChildren();
+        torrentList.replaceChildren();
+        for (const item of DEFAULT_RESOURCE_CONFIG.jumpLinks) makeResourceRow(item, jumpList, 'jump');
+        for (const item of DEFAULT_RESOURCE_CONFIG.torrentSites) makeResourceRow(item, torrentList, 'torrent');
+    });
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = '取消';
+    cancel.addEventListener('click', () => overlay.remove());
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'md-resource-primary';
+    save.textContent = '保存并应用';
+    save.addEventListener('click', () => {
+        function collect(list, type) {
+            const result = [];
+            for (const row of list.querySelectorAll('.md-resource-row')) {
+                const fields = row.querySelectorAll('input');
+                const name = fields[0].value.trim();
+                const host = normalizeResourceHost(fields[1].value);
+                const template = fields[2].value.trim() || '/';
+                const enabled = fields[3].checked;
+                if (!name || !host) throw new Error('名称和有效域名不能为空。');
+                if (!template.startsWith('/') || template.startsWith('//') || /[\u0000-\u001f]/.test(template)) {
+                    throw new Error('路径模板必须以 / 开头，不能以 // 开头，也不能包含控制字符。');
+                }
+                if (type === 'torrent' && !/\{(?:id|code)\}/.test(template)) {
+                    throw new Error('种子搜索模板必须包含 {id} 或 {code} 占位符。');
+                }
+                const testUrl = buildResourceUrl({ host, template, enabled: true }, 'ABC-123');
+                if (!testUrl) throw new Error('域名或路径模板无效：' + name);
+                result.push({
+                    id: row.dataset.resourceId || ('custom-' + Date.now()),
+                    name,
+                    host,
+                    template,
+                    enabled
+                });
+            }
+            return result;
+        }
+
+        try {
+            const nextConfig = {
+                jumpLinks: collect(jumpList, 'jump'),
+                torrentSites: collect(torrentList, 'torrent')
+            };
+            GM_setValue(RESOURCE_CONFIG_KEY, nextConfig);
+            overlay.remove();
+            alert('资源配置已保存，页面将刷新以应用更改。');
+            location.reload();
+        } catch (error) {
+            alert(error.message || '配置无效，请检查后重试。');
+        }
+    });
+    footer.append(restore, cancel, save);
+    dialog.append(header, body, footer);
+    overlay.append(style, dialog);
+    overlay.addEventListener('click', event => {
+        if (event.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+    const firstInput = dialog.querySelector('input');
+    if (firstInput) firstInput.focus();
+}
+
+initializeResourceConfig();
+
 if (typeof GM_registerMenuCommand === 'function') {
     GM_registerMenuCommand('设置 JavTrailers API Token', () => {
         const current = GM_getValue('javTrailersApiToken', '');
@@ -299,16 +584,7 @@ if (typeof GM_registerMenuCommand === 'function') {
         if (['both', 'javscreens', 'japanese', 'off'].includes(normalized)) GM_setValue('mdScreenshotSource', normalized);
         else alert('无效选项，请输入 both、javscreens、japanese 或 off。');
     });
-    const torrentSites = [
-        ['sukebei', 'Sukebei'], ['btsow', 'BTSOW'], ['javbus', 'JavBus'],
-        ['torrentKitty', 'TorrentKitty'], ['tokyotosho', 'TokyoTosho'],
-        ['biedian', 'Biedian'], ['btDigg', 'BTDigg'], ['idope', 'iDope']
-    ];
-    for (const [key, label] of torrentSites) {
-        GM_registerMenuCommand(`${GM_getValue('mdTorrentSite_' + key, true) ? '隐藏' : '显示'}种子搜索入口：${label}`, () => {
-            GM_setValue('mdTorrentSite_' + key, !GM_getValue('mdTorrentSite_' + key, true));
-        });
-    }
+    GM_registerMenuCommand('站点与资源管理', openResourceManager);
 }
 
 // Thumbnail
@@ -534,6 +810,7 @@ class MiniDriver {
             this.setEditionNumber();
             this.updateTitle();
             this.addScreenshot();
+            this.addJumpLinks();
             this.addTorrentLinks();
             this.updateReviews();
             this.updateComments();
@@ -686,23 +963,44 @@ class MiniDriver {
         });
     }
 
+    addJumpLinks() {
+        const config = getResourceConfig();
+        const enabledLinks = config.jumpLinks.filter(item => item && item.enabled !== false);
+        const links = enabledLinks.map(item => ({ item, url: buildResourceUrl(item, this.editionNumber) })).filter(entry => entry.url);
+        if (!links.length) return;
+        const container = document.createElement('div');
+        container.id = 'md-custom-jump-links';
+        const table = document.createElement('table');
+        const row = table.insertRow();
+        const heading = row.insertCell();
+        const strong = document.createElement('strong');
+        strong.textContent = '跳转:';
+        heading.appendChild(strong);
+        for (const entry of links) {
+            const cell = row.insertCell();
+            const link = document.createElement('a');
+            link.href = entry.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = entry.item.name;
+            link.title = entry.item.host;
+            cell.appendChild(link);
+        }
+        container.appendChild(table);
+        const anchor = document.getElementById('video_favorite_edit');
+        if (anchor) insertAfter(container, anchor);
+    }
+
     addTorrentLinks() {
-        const id = encodeURIComponent(this.editionNumber);
-        const sites = [
-            ['sukebei', 'sukebei', `https://sukebei.nyaa.si/?f=0&c=0_0&q=${id}`],
-            ['btsow', 'btsow', `https://btos.pw/search/${id}`],
-            ['javbus', 'javbus', `https://www.javbus.com/${id}`],
-            ['torrentKitty', 'torrentKitty', `https://www.torrentkitty.tv/search/${id}`],
-            ['tokyotosho', 'tokyotosho', `https://www.tokyotosho.info/search.php?terms=${id}`],
-            ['biedian', 'biedian', `https://biedian.me/search?source=%E7%A7%8D%E5%AD%90%E6%90%9C&s=time&p=1&k=${id}`],
-            ['btDigg', 'btDigg', `https://btdig.com/search?q=${id}`],
-            ['idope', 'idope', `https://idope.se/torrent-list/${id}/`]
-        ];
-        const enabledSites = sites.filter(([key]) => GM_getValue('mdTorrentSite_' + key, true));
+        const config = getResourceConfig();
+        const enabledSites = config.torrentSites
+            .filter(site => site && site.enabled !== false)
+            .map(site => ({ site, url: buildResourceUrl(site, this.editionNumber) }))
+            .filter(entry => entry.url);
         const torrents = document.createElement('div');
         torrents.id = 'torrents';
         if (!enabledSites.length) {
-            torrents.textContent = '种子搜索入口已全部隐藏，可在油猴菜单中重新启用。';
+            torrents.textContent = '没有启用的种子搜索入口，可在油猴菜单「站点与资源管理」中配置。';
         } else {
             const table = document.createElement('table');
             const row = table.insertRow();
@@ -710,21 +1008,21 @@ class MiniDriver {
             const strong = document.createElement('strong');
             strong.textContent = '种子:';
             heading.appendChild(strong);
-            for (const [, label, url] of enabledSites) {
+            for (const entry of enabledSites) {
                 const cell = row.insertCell();
                 const link = document.createElement('a');
-                link.href = url;
+                link.href = entry.url;
                 link.target = '_blank';
                 link.rel = 'noopener noreferrer';
-                link.textContent = label;
+                link.textContent = entry.site.name;
+                link.title = entry.site.host;
                 cell.appendChild(link);
             }
             torrents.appendChild(table);
         }
-        const anchor = document.getElementById('video_favorite_edit');
+        const anchor = document.getElementById('md-custom-jump-links') || document.getElementById('video_favorite_edit');
         if (anchor) insertAfter(torrents, anchor);
     }
-
     updateReviews() {
         this.addDeferredLoadButton('video_reviews', 'md-load-rating-trigger', '加载评价', 'reviews');
     }
