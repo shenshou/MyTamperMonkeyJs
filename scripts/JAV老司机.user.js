@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
-// @version      3.8.16
+// @version      3.8.17
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
@@ -9,7 +9,6 @@
 // @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
 // @author       MyTamperMonkeyJs
 // @require      https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @require      https://cdn.jsdelivr.net/npm/sweetalert2@9.17.2/dist/sweetalert2.all.min.js
 // @include      *://*javlibrary.com/*
 // @include      *://*javlib.com/*
 // @include      *://*r86m.com/*
@@ -248,103 +247,345 @@
             GM_registerMenuCommand('设置',()=>Common.openSystemConfig());
         }
         static openSystemConfig() {
-            const dom=document.createElement('div');
-            dom.id='tm-site-config';
-            const siteList=document.createElement('div');
-            const controls=document.createElement('div');
-            const makeInput=(value,placeholder)=>{const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=value||'';input.placeholder=placeholder||'';return input;};
-            const makeCheck=(checked)=>{const input=document.createElement('input');input.type='checkbox';input.className='tm-checkbox';input.checked=!!checked;return input;};
-            const makeSiteRow=(site)=>{
-                const row=document.createElement('section');row.className='tm-site-row';row.dataset.siteId=site.id||'';
-                const title=makeInput(site.name,'站点名称');title.setAttribute('aria-label','站点名称');
-                const host=makeInput(site.host,'域名，例如 www.example.com');host.setAttribute('aria-label','域名');
-                const template=makeInput(site.template,'路径模板，例如 /search/{id}');template.setAttribute('aria-label','URL 路径模板');
-                const enabled=makeCheck(site.enabled!==false);
-                const jump=makeCheck(!!site.dynamic||(site.groups||[]).includes('jump'));
-                const preview=makeCheck(!site.dynamic&&(site.groups||[]).includes('preview'));
-                if(site.dynamic){jump.disabled=true;preview.disabled=true;}
-                const top=document.createElement('div');top.className='tm-site-row-top';
-                const fields=document.createElement('div');fields.className='tm-site-fields';
-                const named=(label,node)=>{const wrap=document.createElement('label');wrap.className='tm-site-field';const caption=document.createElement('span');caption.textContent=label;wrap.append(caption,node);return wrap;};
-                fields.append(named('站点名称',title),named('域名',host),named('URL 路径模板',template));
-                const flags=document.createElement('div');flags.className='tm-site-flags';
-                const addFlag=(label,input)=>{const wrap=document.createElement('label');wrap.append(input,document.createTextNode(label));flags.appendChild(wrap);};
-                addFlag('启用',enabled);addFlag('JAV 跳转',jump);addFlag('在线预览',preview);
-                if(site.dynamic){const note=document.createElement('small');note.textContent='专用搜索流程，仅用于 JAV 跳转';note.style.color='#888';flags.appendChild(note);}
-                const remove=document.createElement('button');remove.type='button';remove.className='tm-site-remove';remove.textContent='删除站点';
-                remove.addEventListener('click',()=>row.remove());
-                top.append(fields,flags,remove);row.appendChild(top);
-                return {row,title,host,template,enabled,jump,preview,original:site};
-            };
-            const siteRows=[];
-            const heading=document.createElement('h3');heading.textContent='统一资源站跳转配置';dom.appendChild(heading);
-            const help=document.createElement('p');help.className='tm-setting-help';help.textContent='修改、新增或删除后会应用到对应的全站跳转入口。路径模板使用 {id} 表示完整番号，{code} 表示去掉连字符的番号；例如 /cn/search/{id}。路径模板可以留空，留空时跳转到站点首页。域名与路径分开填写。';dom.appendChild(help);
-            const renderRows=()=>{siteList.replaceChildren();siteRows.length=0;for(const site of readSiteConfig()){const row=makeSiteRow(site);siteList.appendChild(row.row);siteRows.push(row);}};
-            renderRows();dom.appendChild(siteList);
-            const add=document.createElement('button');add.type='button';add.className='tm-site-add';add.textContent='＋ 添加自定义站点';
-            add.addEventListener('click',()=>{const row=makeSiteRow({id:'custom-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name:'自定义站点',host:'example.com',template:'/{id}',groups:['jump'],enabled:true});siteList.appendChild(row.row);siteRows.push(row);row.title.focus();});
-            const restore=document.createElement('button');restore.type='button';restore.className='tm-site-restore';restore.textContent='恢复默认内置站点';
-            restore.addEventListener('click',()=>{if(!confirm('恢复默认站点会覆盖当前站点清单，是否继续？'))return;siteList.replaceChildren();siteRows.length=0;for(const site of DEFAULT_SITE_CONFIG){const row=makeSiteRow({...site});siteList.appendChild(row.row);siteRows.push(row);}});
-            controls.className='tm-site-controls';controls.append(add,restore);dom.appendChild(controls);
-            const scrollRow=document.createElement('label');scrollRow.className='tm-setting';scrollRow.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
-            const scroll=makeCheck(GM_getValue('scroll_status',1)!==0);scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
-            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源配置';dom.appendChild(magnetHeading);
-            const magnetHelp=document.createElement('p');magnetHelp.className='tm-setting-help';magnetHelp.textContent='可修改现有搜索源的名称、域名和搜索路径模板。模板必须包含 {query}，用于填入搜索关键词。每个来源使用专用结果解析器，因此这里不能仅通过填写域名新增一个全新的搜索引擎。';dom.appendChild(magnetHelp);
-            const magnetRows=[];
-            for(const source of MAGNET_SOURCES){
-                const row=document.createElement('section');row.className='tm-site-row';
-                const name=makeInput(magnetSourceName(source),'来源名称');
-                const host=makeInput(magnetSourceHost(source),'域名，例如 example.com');
-                const template=makeInput(magnetSourceTemplate(source),'搜索模板，例如 /search?q={query}');
-                const enabled=makeCheck(GM_getValue(source.enabledKey,true));
-                const fields=document.createElement('div');fields.className='tm-site-fields';
-                const named=(caption,node)=>{const wrap=document.createElement('label');wrap.className='tm-site-field';const label=document.createElement('span');label.textContent=caption;wrap.append(label,node);return wrap;};
-                fields.append(named('来源名称',name),named('域名',host),named('搜索 URL 路径模板',template));
-                const flags=document.createElement('div');flags.className='tm-site-flags';
-                const flag=document.createElement('label');flag.append(enabled,document.createTextNode('启用'));flags.appendChild(flag);
-                row.append(fields,flags);dom.appendChild(row);
-                magnetRows.push({source,name,host,template,enabled});
-            }
-            const collectSites=()=>{
-                const result=[];
-                for(const row of siteRows){
-                    if(!row.row.isConnected)continue;
-                    const name=row.title.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim()||'/';
-                    const groups=row.original&&row.original.dynamic?['jump']:[];
-                    if(!(row.original&&row.original.dynamic)){if(row.jump.checked)groups.push('jump');if(row.preview.checked)groups.push('preview');}
-                    if(!name||!host||!template.startsWith('/')||template.startsWith('//')||/[\u0000-\u001f]/.test(template)||!groups.length)throw new Error('站点名称、有效域名及至少一个适用场景为必填项；路径模板可以留空（留空时使用站点首页）。');
-                    const original=row.original||{};
-                    result.push({id:original.id||row.row.dataset.siteId||('custom-'+Date.now()),name,host,template,groups,enabled:row.enabled.checked,dynamic:!!original.dynamic});
-                }
-                return result;
-            };
-            Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存',showCancelButton:true,cancelButtonText:'取消',
-                onOpen:popup=>{popup.style.width='min(920px, calc(100vw - 24px))';popup.style.maxHeight='calc(100vh - 24px)';popup.style.display='flex';popup.style.flexDirection='column';const content=popup.querySelector('.swal2-content');if(content){content.style.overflow='hidden';content.style.display='flex';content.style.minHeight='0';content.style.flex='1 1 auto';}const config=popup.querySelector('#tm-site-config');if(config){config.style.maxHeight='70vh';config.style.overflowY='auto';}const actions=popup.querySelector('.swal2-actions');if(actions)actions.style.flexShrink='0';}
-            }).then(result=>{
-                if(!result.value)return;
-                let sites;
-                try{sites=collectSites();}catch(error){Swal.fire('配置有误',error.message,'error');return;}
-                const magnetValues=[];
-                for(const row of magnetRows){
-                    const name=row.name.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim();
-                    if(!name||!host){Swal.fire('磁力源配置有误','磁力源名称和有效域名不能为空。','error');return;}
-                    if(!template.startsWith('/')||template.startsWith('//')||!template.includes('{query}')||/[\u0000-\u001f]/.test(template)){Swal.fire('搜索模板有误','磁力搜索模板必须以 / 开头，并且包含 {query}。','error');return;}
-                    magnetValues.push({source:row.source,name,host,template,enabled:row.enabled.checked});
-                }
-                GM_setValue(SITE_CONFIG_KEY,sites);
-                GM_setValue('scroll_status',scroll.checked?1:0);
-                for(const item of magnetValues){
-                    GM_setValue(item.source.nameKey,item.name);
-                    GM_setValue(item.source.domainKey,item.host);
-                    GM_setValue(item.source.templateKey,item.template);
-                    GM_setValue(item.source.enabledKey,item.enabled);
-                }
-                const enabled=enabledMagnetSources(),selected=GM_getValue('search_index','');
-                if(enabled.length&&!enabled.includes(selected))GM_setValue('search_index',enabled[0]);
-                history.go(0);
-            });
-        }
+            const existing = document.getElementById('jav-old-driver-settings-overlay');
+            if (existing) existing.remove();
 
+            const overlay = document.createElement('div');
+            overlay.id = 'jav-old-driver-settings-overlay';
+            const dialog = document.createElement('section');
+            dialog.className = 'jod-settings-dialog';
+            dialog.setAttribute('role', 'dialog');
+            dialog.setAttribute('aria-modal', 'true');
+            dialog.setAttribute('aria-labelledby', 'jod-settings-title');
+
+            const style = document.createElement('style');
+            style.textContent = [
+                '#jav-old-driver-settings-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(15,23,42,.62);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#1f2937;}',
+                '#jav-old-driver-settings-overlay *{box-sizing:border-box;}',
+                '#jav-old-driver-settings-overlay .jod-settings-dialog{display:flex;flex-direction:column;width:min(980px,100%);max-height:calc(100vh - 32px);overflow:hidden;border:1px solid rgba(148,163,184,.28);border-radius:14px;background:#fff;box-shadow:0 24px 70px rgba(0,0,0,.32);}',
+                '#jav-old-driver-settings-overlay .jod-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 20px;border-bottom:1px solid #e5e7eb;background:#fff;}',
+                '#jav-old-driver-settings-overlay .jod-title{margin:0;font-size:18px;font-weight:650;letter-spacing:.2px;color:#111827;}',
+                '#jav-old-driver-settings-overlay .jod-subtitle{margin:3px 0 0;color:#6b7280;font-size:12px;}',
+                '#jav-old-driver-settings-overlay .jod-body{min-height:0;padding:18px 20px;overflow:auto;background:#f8fafc;}',
+                '#jav-old-driver-settings-overlay .jod-note{margin:0 0 16px;padding:10px 12px;border:1px solid #dbeafe;border-radius:8px;background:#eff6ff;color:#475569;font-size:12px;}',
+                '#jav-old-driver-settings-overlay .jod-section{margin:0 0 18px;padding:15px 16px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;}',
+                '#jav-old-driver-settings-overlay .jod-section:last-child{margin-bottom:0;}',
+                '#jav-old-driver-settings-overlay .jod-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:5px;}',
+                '#jav-old-driver-settings-overlay h3{margin:0;color:#111827;font-size:15px;font-weight:650;}',
+                '#jav-old-driver-settings-overlay .jod-help{margin:4px 0 12px;color:#6b7280;font-size:12px;}',
+                '#jav-old-driver-settings-overlay .jod-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.2fr) minmax(180px,2fr) auto auto;gap:10px;align-items:end;padding:11px 0;border-top:1px solid #f1f5f9;}',
+                '#jav-old-driver-settings-overlay .jod-fields{display:contents;}',
+                '#jav-old-driver-settings-overlay .jod-field{display:flex;min-width:0;flex-direction:column;gap:5px;color:#4b5563;font-size:12px;}',
+                '#jav-old-driver-settings-overlay input[type=text]{width:100%;min-width:0;height:36px;padding:7px 9px;border:1px solid #d1d5db;border-radius:7px;outline:none;background:#fff;color:#111827;font:13px Arial,sans-serif;}',
+                '#jav-old-driver-settings-overlay input[type=text]:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.13);}',
+                '#jav-old-driver-settings-overlay .jod-flags{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-height:36px;padding-bottom:2px;}',
+                '#jav-old-driver-settings-overlay .jod-check{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:#4b5563;font-size:12px;}',
+                '#jav-old-driver-settings-overlay input[type=checkbox]{width:15px;height:15px;margin:0;accent-color:#2563eb;}',
+                '#jav-old-driver-settings-overlay button{min-height:34px;padding:7px 11px;border:1px solid #d1d5db;border-radius:7px;background:#fff;color:#374151;font:600 12px Arial,sans-serif;cursor:pointer;transition:background .15s,border-color .15s;}',
+                '#jav-old-driver-settings-overlay button:hover{border-color:#9ca3af;background:#f3f4f6;}',
+                '#jav-old-driver-settings-overlay button:focus-visible{outline:3px solid rgba(59,130,246,.28);outline-offset:1px;}',
+                '#jav-old-driver-settings-overlay .jod-danger{color:#b91c1c;}',
+                '#jav-old-driver-settings-overlay .jod-add{margin-top:10px;border-style:dashed;color:#2563eb;}',
+                '#jav-old-driver-settings-overlay .jod-muted{color:#9ca3af;font-size:11px;}',
+                '#jav-old-driver-settings-overlay .jod-setting-line{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid #f1f5f9;color:#374151;font-size:13px;}',
+                '#jav-old-driver-settings-overlay .jod-setting-line:first-of-type{margin-top:10px;}',
+                '#jav-old-driver-settings-overlay .jod-notice{display:none;margin:0 0 14px;padding:10px 12px;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;color:#991b1b;font-size:13px;}',
+                '#jav-old-driver-settings-overlay .jod-notice.is-visible{display:block;}',
+                '#jav-old-driver-settings-overlay .jod-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 20px;border-top:1px solid #e5e7eb;background:#fff;}',
+                '#jav-old-driver-settings-overlay .jod-footer-actions{display:flex;gap:8px;margin-left:auto;}',
+                '#jav-old-driver-settings-overlay .jod-primary{border-color:#2563eb;background:#2563eb;color:#fff;}',
+                '#jav-old-driver-settings-overlay .jod-primary:hover{border-color:#1d4ed8;background:#1d4ed8;}',
+                '#jav-old-driver-settings-overlay .jod-close{width:34px;height:34px;padding:0;font-size:20px;line-height:1;}',
+                '@media(max-width:700px){#jav-old-driver-settings-overlay{padding:8px;}#jav-old-driver-settings-overlay .jod-settings-dialog{max-height:calc(100vh - 16px);border-radius:10px;}#jav-old-driver-settings-overlay .jod-header,#jav-old-driver-settings-overlay .jod-footer{padding:12px 14px;}#jav-old-driver-settings-overlay .jod-body{padding:12px;}#jav-old-driver-settings-overlay .jod-section{padding:12px;}#jav-old-driver-settings-overlay .jod-row{grid-template-columns:1fr 1fr;gap:8px;}#jav-old-driver-settings-overlay .jod-row .jod-field:nth-child(3){grid-column:1/-1;}#jav-old-driver-settings-overlay .jod-flags{grid-column:1/-1;}#jav-old-driver-settings-overlay .jod-row>.jod-danger{justify-self:start;}#jav-old-driver-settings-overlay .jod-footer{align-items:stretch;flex-wrap:wrap;}#jav-old-driver-settings-overlay .jod-footer-actions{width:100%;}#jav-old-driver-settings-overlay .jod-footer-actions button{flex:1;}}'
+            ].join('\n');
+
+            const header = document.createElement('header');
+            header.className = 'jod-header';
+            const headingWrap = document.createElement('div');
+            const title = document.createElement('h2');
+            title.id = 'jod-settings-title';
+            title.className = 'jod-title';
+            title.textContent = 'JAV老司机设置';
+            const subtitle = document.createElement('p');
+            subtitle.className = 'jod-subtitle';
+            subtitle.textContent = '统一管理资源站点、磁力搜索来源与脚本显示选项';
+            headingWrap.append(title, subtitle);
+            const close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'jod-close';
+            close.setAttribute('aria-label', '关闭设置');
+            close.textContent = '×';
+            header.append(headingWrap, close);
+
+            const body = document.createElement('div');
+            body.className = 'jod-body';
+            const notice = document.createElement('div');
+            notice.className = 'jod-notice';
+            notice.setAttribute('role', 'alert');
+            body.appendChild(notice);
+            const note = document.createElement('p');
+            note.className = 'jod-note';
+            note.textContent = '配置仅影响脚本生成的跳转入口和页面功能。域名填写主机名，不要填写协议或路径；路径模板支持对应的占位符。';
+            body.appendChild(note);
+
+            const showError = message => {
+                notice.textContent = message;
+                notice.classList.add('is-visible');
+                body.scrollTop = 0;
+            };
+            const makeInput = (value, placeholder, labelText) => {
+                const label = document.createElement('label');
+                label.className = 'jod-field';
+                const caption = document.createElement('span');
+                caption.textContent = labelText;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = value || '';
+                input.placeholder = placeholder || '';
+                input.autocomplete = 'off';
+                label.append(caption, input);
+                return { label, input };
+            };
+            const makeCheck = (checked, labelText) => {
+                const label = document.createElement('label');
+                label.className = 'jod-check';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.checked = !!checked;
+                label.append(input, document.createTextNode(labelText));
+                return { label, input };
+            };
+            const makeSection = (titleText, helpText) => {
+                const section = document.createElement('section');
+                section.className = 'jod-section';
+                const heading = document.createElement('h3');
+                heading.textContent = titleText;
+                const help = document.createElement('p');
+                help.className = 'jod-help';
+                help.textContent = helpText;
+                section.append(heading, help);
+                body.appendChild(section);
+                return section;
+            };
+
+            const siteSection = makeSection(
+                '统一资源站跳转配置',
+                '修改、新增或删除后会应用到对应的全站跳转入口。{id} 表示完整番号，{code} 表示去掉连字符的番号；路径模板留空时使用站点首页。'
+            );
+            const siteList = document.createElement('div');
+            siteSection.appendChild(siteList);
+            const siteRows = [];
+            const makeSiteRow = site => {
+                const row = document.createElement('div');
+                row.className = 'jod-row';
+                row.dataset.siteId = site.id || '';
+                const titleField = makeInput(site.name, '站点名称', '站点名称');
+                const hostField = makeInput(site.host, '例如 www.example.com', '域名');
+                const templateField = makeInput(site.template, '例如 /search/{id}', 'URL 路径模板');
+                const flags = document.createElement('div');
+                flags.className = 'jod-flags';
+                const enabled = makeCheck(site.enabled !== false, '启用');
+                const jump = makeCheck(!!site.dynamic || (site.groups || []).includes('jump'), 'JAV 跳转');
+                const preview = makeCheck(!site.dynamic && (site.groups || []).includes('preview'), '在线预览');
+                if (site.dynamic) {
+                    jump.input.disabled = true;
+                    preview.input.disabled = true;
+                }
+                flags.append(enabled.label, jump.label, preview.label);
+                if (site.dynamic) {
+                    const hint = document.createElement('span');
+                    hint.className = 'jod-muted';
+                    hint.textContent = '专用搜索流程';
+                    flags.appendChild(hint);
+                }
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'jod-danger';
+                remove.textContent = '删除';
+                remove.addEventListener('click', () => row.remove());
+                row.append(titleField.label, hostField.label, templateField.label, flags, remove);
+                siteList.appendChild(row);
+                const record = {
+                    row,
+                    title: titleField.input,
+                    host: hostField.input,
+                    template: templateField.input,
+                    enabled: enabled.input,
+                    jump: jump.input,
+                    preview: preview.input,
+                    original: site
+                };
+                siteRows.push(record);
+                return record;
+            };
+            const renderSites = () => {
+                siteList.replaceChildren();
+                siteRows.length = 0;
+                for (const site of readSiteConfig()) makeSiteRow(site);
+            };
+            renderSites();
+            const siteActions = document.createElement('div');
+            const addSite = document.createElement('button');
+            addSite.type = 'button';
+            addSite.className = 'jod-add';
+            addSite.textContent = '＋ 添加自定义站点';
+            addSite.addEventListener('click', () => {
+                const row = makeSiteRow({
+                    id: 'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                    name: '自定义站点',
+                    host: 'example.com',
+                    template: '/{id}',
+                    groups: ['jump'],
+                    enabled: true
+                });
+                row.title.focus();
+            });
+            const restoreSites = document.createElement('button');
+            restoreSites.type = 'button';
+            restoreSites.textContent = '恢复默认内置站点';
+            restoreSites.addEventListener('click', () => {
+                if (!confirm('恢复默认站点会覆盖当前站点清单，是否继续？')) return;
+                siteList.replaceChildren();
+                siteRows.length = 0;
+                for (const site of DEFAULT_SITE_CONFIG) makeSiteRow({ ...site });
+            });
+            siteActions.append(addSite, restoreSites);
+            siteActions.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+            siteSection.appendChild(siteActions);
+
+            const settingsSection = makeSection(
+                '页面功能设置',
+                '这些选项保留原有配置键与行为，不会改变站点跳转或磁力搜索规则。'
+            );
+            const scrollLine = document.createElement('label');
+            scrollLine.className = 'jod-setting-line';
+            scrollLine.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
+            const scroll = document.createElement('input');
+            scroll.type = 'checkbox';
+            scroll.checked = GM_getValue('scroll_status', 1) !== 0;
+            scrollLine.appendChild(scroll);
+            settingsSection.appendChild(scrollLine);
+
+            const magnetSection = makeSection(
+                '磁力搜索源配置',
+                '可修改现有搜索源的名称、域名和搜索路径模板。模板必须包含 {query}。每个来源使用专用结果解析器，因此不能仅通过填写域名新增全新的搜索引擎。'
+            );
+            const magnetRows = [];
+            for (const source of MAGNET_SOURCES) {
+                const row = document.createElement('div');
+                row.className = 'jod-row';
+                const name = makeInput(magnetSourceName(source), '来源名称', '来源名称');
+                const host = makeInput(magnetSourceHost(source), '例如 example.com', '域名');
+                const template = makeInput(magnetSourceTemplate(source), '例如 /search?q={query}', '搜索 URL 路径模板');
+                const flags = document.createElement('div');
+                flags.className = 'jod-flags';
+                const enabled = makeCheck(GM_getValue(source.enabledKey, true), '启用');
+                flags.appendChild(enabled.label);
+                row.append(name.label, host.label, template.label, flags);
+                magnetSection.appendChild(row);
+                magnetRows.push({ source, name: name.input, host: host.input, template: template.input, enabled: enabled.input });
+            }
+
+            const footer = document.createElement('footer');
+            footer.className = 'jod-footer';
+            const footerActions = document.createElement('div');
+            footerActions.className = 'jod-footer-actions';
+            const cancel = document.createElement('button');
+            cancel.type = 'button';
+            cancel.textContent = '取消';
+            cancel.addEventListener('click', () => overlay.remove());
+            const save = document.createElement('button');
+            save.type = 'button';
+            save.className = 'jod-primary';
+            save.textContent = '保存并应用';
+            save.addEventListener('click', () => {
+                notice.classList.remove('is-visible');
+                let sites;
+                try {
+                    sites = [];
+                    for (const row of siteRows) {
+                        if (!row.row.isConnected) continue;
+                        const name = row.title.value.trim();
+                        const host = normalizeSiteHost(row.host.value);
+                        const template = row.template.value.trim() || '/';
+                        const groups = row.original && row.original.dynamic ? ['jump'] : [];
+                        if (!(row.original && row.original.dynamic)) {
+                            if (row.jump.checked) groups.push('jump');
+                            if (row.preview.checked) groups.push('preview');
+                        }
+                        if (!name || !host || !template.startsWith('/') || template.startsWith('//') ||
+                            /[\u0000-\u001f]/.test(template) || !groups.length) {
+                            throw new Error('站点配置有误：名称、有效域名和至少一个适用场景为必填项；路径模板必须以 / 开头，不能以 // 开头。');
+                        }
+                        const originalSite = row.original || {};
+                        sites.push({
+                            id: originalSite.id || row.row.dataset.siteId || ('custom-' + Date.now()),
+                            name,
+                            host,
+                            template,
+                            groups,
+                            enabled: row.enabled.checked,
+                            dynamic: !!originalSite.dynamic
+                        });
+                    }
+
+                    const magnetValues = [];
+                    for (const row of magnetRows) {
+                        const name = row.name.value.trim();
+                        const host = normalizeSiteHost(row.host.value);
+                        const template = row.template.value.trim();
+                        if (!name || !host) throw new Error('磁力源配置有误：来源名称和有效域名不能为空。');
+                        if (!template.startsWith('/') || template.startsWith('//') ||
+                            !template.includes('{query}') || /[\u0000-\u001f]/.test(template)) {
+                            throw new Error('磁力源「' + name + '」的搜索模板有误：必须以 / 开头，并且包含 {query}。');
+                        }
+                        magnetValues.push({ source: row.source, name, host, template, enabled: row.enabled.checked });
+                    }
+
+                    GM_setValue(SITE_CONFIG_KEY, sites);
+                    GM_setValue('scroll_status', scroll.checked ? 1 : 0);
+                    for (const item of magnetValues) {
+                        GM_setValue(item.source.nameKey, item.name);
+                        GM_setValue(item.source.domainKey, item.host);
+                        GM_setValue(item.source.templateKey, item.template);
+                        GM_setValue(item.source.enabledKey, item.enabled);
+                    }
+                    const enabled = enabledMagnetSources();
+                    const selected = GM_getValue('search_index', '');
+                    if (enabled.length && !enabled.includes(selected)) GM_setValue('search_index', enabled[0]);
+                    overlay.remove();
+                    history.go(0);
+                } catch (error) {
+                    showError(error.message || '配置无效，请检查后重试。');
+                }
+            });
+            footerActions.append(cancel, save);
+            footer.appendChild(footerActions);
+
+            const closePanel = () => overlay.remove();
+            close.addEventListener('click', closePanel);
+            overlay.addEventListener('click', event => {
+                if (event.target === overlay) closePanel();
+            });
+            const onKeyDown = event => {
+                if (event.key === 'Escape') {
+                    closePanel();
+                    document.removeEventListener('keydown', onKeyDown);
+                }
+            };
+            document.addEventListener('keydown', onKeyDown);
+            const originalRemove = overlay.remove.bind(overlay);
+            overlay.remove = () => {
+                document.removeEventListener('keydown', onKeyDown);
+                originalRemove();
+            };
+
+            dialog.append(header, body, footer);
+            overlay.append(style, dialog);
+            document.body.appendChild(overlay);
+            const firstInput = dialog.querySelector('input');
+            if (firstInput) firstInput.focus();
+        }
         /**
          * 设置cookie
          * @param {string} cname  名字
