@@ -1,16 +1,14 @@
 // ==UserScript==
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
-// @version      3.8.10
+// @version      3.8.11
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
 // @source       https://github.com/hobbyfang/javOldDriver
-// @description  JAV老司机神器,支持各Jav老司机站点。拥有高效浏览Jav的页面排版，JAV高清预览大图，JAV列表无限滚动自动加载，合成“挊”的自动获取JAV磁链接，一键自动115离线下载。。。。没时间解释了，快上车！
+// @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
 // @author       Hobby
 
 // @require      https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
-// @require      https://cdn.jsdelivr.net/npm/lovefield@2.1.12/dist/lovefield.min.js
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@9.17.2/dist/sweetalert2.all.min.js
-// @resource     icon https://cdn.jsdelivr.net/gh/hobbyfang/javOldDriver@master/115helper_icon_001.jpg
 
 // javlib主要有码jav资源、排行榜、点评，最新地址在github.com/javlibcom
 // @include      *://*javlibrary.com/*
@@ -39,8 +37,6 @@
 // @include      *://*javstore.*/*
 // @include      *://*avmoo.*/*
 // @include      *://tellme.pw/avmoo*
-// @include      *://115.com/*
-// @include      *://*.quark.cn/list*
 // @include      *://www.*dmm*/*
 
 // @run-at       document-idle
@@ -51,7 +47,6 @@
 // @grant        GM_deleteValue
 // @grant        GM_notification
 // @grant        GM_setClipboard
-// @grant        GM_getResourceURL
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // @grant        GM_openInTab
@@ -64,11 +59,6 @@
 // 大陆用户推荐Chrome(V52+) + Tampermonkey（必须扩展） + Clash/V2ray(代理) + Proxy SwitchyOmega（扩展）的环境下配合使用。
 // 上车请使用chrome浏览器，其他浏览器的问题本人不支持发现和修复相关问题。
 
-// 注意:2.0在每个版本号更新后,javlibrary每个不同域名站点在登录javlibrary的情况下，都会分别首次运行此脚本。
-// 根据电脑性能及访问网速情况不同,正常能在1分钟以内(以5000个车牌量为例)缓存个人数据到本地浏览器中.
-// 此目的用于过滤个人已阅览过的内容提供快速判断,目前个人图书馆账号的想要、看过、拥有及最新浏览过的番号为已阅数据依据。
-// 目前在同步过程中如果浏览器当前页面不在javlibrary站点或者浏览器在后台,同步会被暂停或中止,需注意.
-// 如果不登录javlibrary或同版本号已经同步过,就不会运行同步,那么则无此影响.
 
 // 油猴脚本技术交流：https://t.me/+TgfN6vLVRew7aMWt
 
@@ -79,13 +69,9 @@
 // v3.8.8  修复javlib加了Cloudflare防御导致列表功能失效问题。
 // v3.8.7  修复部分页面预览图失效的问题。javlib新增了FC2菜单跳转（onejav）。
 
-// v3.8.6  增加了115离线成功，3秒后刷新当前页面。修复了磁力列表下javdb查找问题。
-// v3.8.5  增加javdb影片详情页的115离线快捷键及115在线播放入口（by Stel000）。修复因新版chrome中DOMNodeInserted事件废弃导致无法离线下载问题。
-// v3.8.4  修复了javlib同步问题。修复了115网盘关联视频问题。
 // v3.8.3  修复javstore22年12月番号视频内容预览大图改版前后的图片获取及显示兼容问题。解决获取dmm评价数据受18岁询问限制。
 // v3.8.2  修复javstore番号页图片显示问题,修复javstore备用预览图失效的问题。
 // v3.8.1  javlib、javbus、javdb新增了VR菜单入口，javbus新增了FC2菜单跳转，javdb修改了FC2菜单内容（需登录）。修复了已知问题。
-// v3.8.0  增加各Jav站点番号浏览记录缓存。增加javbus、javdb列表阅览番号标色。增加夸克在线播放的关联入口，夸克在线播放页排版调整。
 //         优化dmm评分数据获取，多数番号突破dmm地区访问限制。代码调整优化。修复了已知问题。
 
 // v3.7.1  再优化blogjav预览图获取方式，优化预览图加载时间。修复了已知问题。
@@ -96,25 +82,20 @@
 
 // v3.5.2  修复部分地区无法访问脚本依赖库问题，重新梳理匹配脚本域名作用地址。
 // v3.5.1  修复javdb站源的磁力搜索，增加jav磁链地址的修改入口。
-// v3.5.0  图书馆jav列表“按评分排序”升级为“按【VR】+评分排序”，VR标题增加背景颜色区分。
 // v3.4.0  针对JVR影片查找资源的需求，结合javlib站的进阶搜寻中多重搜寻来过滤VR资源，增加了javdb站做为jav磁链接下载来源。
 //         修复了预览图失效的问题。
 // v3.3.3  预览图备用站更换成javstore。
-// v3.3.0  新增图书馆浏览时根据115在线播放来同步图书馆的已拥有功能（建议登录，不然会弹窗提示）。
 // v3.2.0  新增javarchive站的预览图做备用，当blogjav预览图无法正常读取时使用。
 //         优化图书馆缓存个人数据的同步效率(60秒内可完成)。优化图书馆站点瀑布流列表排版。修复了部分115在线播放查找识别问题。
 // v3.1.7  增加脚本设置功能，支持磁链地址失效可自己更换。更新最新磁链地址。
 // v3.1.6  更换失效的磁链地址。另btdig，nayy，torrentkitty站点需科学上网，其中btdig还需手工验证非机器访问。
 // v3.1.5  增加过滤评分及排序时排除10分的番号，更换失效的磁链地址。
 // v3.1.0  优化javbus/avmoo/avsox瀑布流排版。
-// v3.0.0  增加115在线播放的关联入口。同时本代码重新梳理及优化。
 
-// v2.3.0  增加jav321网站内容排版的支持，增加查找已登录115网盘是否拥有当前番号显示。
 // v2.2.0  增加onejav网站内容排版的支持，热门Jav预览搜集更省时省力。更换两个磁链资源新地址。
 // v2.1.5  增加点击番号完成复制功能。
 // v2.1.3  增加btdigg磁链资源站点。修复了已知问题。
 // v2.1.1  增加jav站点瀑布流控制按钮功能。
-// v2.1.0  增加javbus站内磁链列表的复制、115离线的快捷键功能。
 
 // v2.0.7  增加一种情况Jav列表排序功能支持(仅javlib)。
 // v2.0.5  增加Jav列表“按评分排序”、“按时间排序”功能(仅javlib)，及更新Jav站点域名。
@@ -140,19 +121,29 @@
     const TORRENTKITTY_DOMAIN = 'www.torrentkitty.one';
     const MMTV_DOMAIN = '7mmtv.sx';
     const JAVLIB_DOMAIN = 's87n.com';
+    const MAGNET_SOURCES = [
+        {label:'JavDB', domainKey:'javdb_url', enabledKey:'javdb_magnet_enabled', defaultDomain:JAVDB_DOMAIN},
+        {label:'BTSOW', domainKey:'btsow_url', enabledKey:'btsow_magnet_enabled', defaultDomain:BTSOW_DOMAIN},
+        {label:'BTDig', domainKey:'btdig_url', enabledKey:'btdig_magnet_enabled', defaultDomain:'www.btdig.com'},
+        {label:'Nyaa', domainKey:'nyaa_url', enabledKey:'nyaa_magnet_enabled', defaultDomain:'sukebei.nyaa.si'},
+        {label:'TorrentKitty', domainKey:'torrentkitty_url', enabledKey:'torrentkitty_magnet_enabled', defaultDomain:TORRENTKITTY_DOMAIN}
+    ];
+    function enabledMagnetSources() {
+        return MAGNET_SOURCES.filter(source => GM_getValue(source.enabledKey, true))
+            .map(source => String(GM_getValue(source.domainKey, source.defaultDomain) || '').trim())
+            .filter(Boolean);
+    }
+    function magnetSourceLabel(host) {
+        const value = String(host || '').toLowerCase();
+        const source = MAGNET_SOURCES.find(item =>
+            String(GM_getValue(item.domainKey, item.defaultDomain) || '').toLowerCase() === value);
+        return source ? source.label : (host || '未知来源');
+    }
 
-    // 115用户ID
-    let jav_userID = GM_getValue('jav_user_id', 0);
-    // icon图标
-    let icon = GM_getResourceURL('icon');
     // 瀑布流状态：1：开启、0：关闭
     let waterfallScrollStatus = GM_getValue('scroll_status', 1);
     // 当前网页域名
     let domain = location.host;
-    // 数据库
-    let javDb;
-    // 表
-    let myMovie;
 
     /**
      * 对Date的扩展，将 Date 转化为指定格式的String
@@ -250,93 +241,32 @@
      */
     class Common {
         static init() {
-            // 是否新版本
-            let isNewVersion = Common.compareVersions(GM_info.script.version, GM_getValue("javOldDriver_version", "0.0.1"));
-
-            // 磁链访问地址初始化
-            if (isNewVersion || GM_getValue('btsow_url', undefined) === undefined) {
-                GM_setValue('btsow_url', BTSOW_DOMAIN);
-            }
-            if (isNewVersion || GM_getValue('btdig_url', undefined) === undefined) {
-                GM_setValue('btdig_url', 'www.btdig.com');
-            }
-            if (isNewVersion || GM_getValue('nyaa_url', undefined) === undefined) {
-                GM_setValue('nyaa_url', 'sukebei.nyaa.si');
-            }
-            if (isNewVersion || GM_getValue('torrentkitty_url', undefined) === undefined) {
-                GM_setValue('torrentkitty_url', TORRENTKITTY_DOMAIN);
-            }
-            if (isNewVersion || GM_getValue('javdb_url', undefined) === undefined) {
-                GM_setValue('javdb_url', JAVDB_DOMAIN);
-            }
-            if (isNewVersion || GM_getValue('javlib_url', undefined) === undefined) {
-                GM_setValue('javlib_url', 'www.javlibrary.com');
-            }
-            if (isNewVersion || GM_getValue('javbus_url', undefined) === undefined) {
-                GM_setValue('javbus_url', 'www.javbus.com');
-            }
-            if (isNewVersion || GM_getValue('avsox_url', undefined) === undefined) {
-                GM_setValue('avsox_url', 'avsox.click');
-            }
-            GM_setValue("javOldDriver_version", GM_info.script.version);
-
-            GM_registerMenuCommand('设置', () => { Common.openSystemConfig() });
+            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN,javlib_url:'www.javlibrary.com',javbus_url:'www.javbus.com',avsox_url:'avsox.click'};
+            for(const [key,value] of Object.entries(defaults))if(GM_getValue(key,undefined)===undefined)GM_setValue(key,value);
+            for(const source of MAGNET_SOURCES)if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
+            GM_setValue('javOldDriver_version',GM_info.script.version);
+            GM_registerMenuCommand('设置',()=>Common.openSystemConfig());
         }
-
         static openSystemConfig() {
-            const dom = document.createElement('div');
-            const scrollLabel = document.createElement('label');
-            scrollLabel.className = 'tm-setting';
-            scrollLabel.appendChild(document.createTextNode('jav各站开启瀑布流(自动加载下一页)'));
-            const scrollInput = document.createElement('input');
-            scrollInput.type = 'checkbox';
-            scrollInput.id = 'scroll_true';
-            scrollInput.className = 'tm-checkbox';
-            scrollInput.checked = GM_getValue('scroll_status', 1) !== 0;
-            scrollLabel.appendChild(scrollInput);
-            dom.appendChild(scrollLabel);
-            const fields = [
-                ['javdb_url', 'javdb网址'], ['btsow_url', 'btsow网址'],
-                ['btdig_url', 'btdig网址'], ['nyaa_url', 'nyaa网址'],
-                ['torrentkitty_url', 'torrentkitty网址'], ['javlib_url', 'javlib网址'],
-                ['javbus_url', 'javbus网址'], ['avsox_url', 'avsox网址']
-            ];
-            const inputs = {};
-            for (const [key, labelText] of fields) {
-                const label = document.createElement('label');
-                label.className = 'tm-setting';
-                label.appendChild(document.createTextNode(labelText));
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.className = 'tm-text';
-                input.value = String(GM_getValue(key, '') || '');
-                inputs[key] = input;
-                label.appendChild(input);
-                dom.appendChild(label);
-            }
-            Swal.fire({ title: '脚本设置', html: dom, confirmButtonText: '保存' }).then(result => {
-                if (!result.value) return;
-                const values = {};
-                for (const [key] of fields) {
-                    const host = inputs[key].value.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
-                    if (!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host) || host.includes('..')) {
-                        Swal.fire('网址格式错误', '请只填写有效的域名，可包含端口，不要填写路径或脚本代码。', 'error');
-                        return;
-                    }
-                    values[key] = host.toLowerCase();
-                }
-                GM_setValue('scroll_status', scrollInput.checked ? 1 : 0);
-                for (const [key] of fields) GM_setValue(key, values[key]);
+            const dom=document.createElement('div'),inputs={},toggles={};
+            const fields=[['javdb_url','JavDB 域名'],['btsow_url','BTSOW 域名'],['btdig_url','BTDig 域名'],['nyaa_url','Nyaa 域名'],['torrentkitty_url','TorrentKitty 域名'],['javlib_url','JavLibrary 域名'],['javbus_url','JavBus 域名'],['avsox_url','AVSOX 域名']];
+            const scrollLabel=document.createElement('label');scrollLabel.className='tm-setting';scrollLabel.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
+            const scroll=document.createElement('input');scroll.type='checkbox';scroll.className='tm-checkbox';scroll.checked=GM_getValue('scroll_status',1)!==0;scrollLabel.appendChild(scroll);dom.appendChild(scrollLabel);
+            for(const [key,title] of fields){const label=document.createElement('label');label.className='tm-setting';label.appendChild(document.createTextNode(title));const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(key,'')||'');inputs[key]=input;label.appendChild(input);dom.appendChild(label);}
+            const heading=document.createElement('h3');heading.textContent='磁力搜索源（可独立启用/禁用）';dom.appendChild(heading);
+            for(const source of MAGNET_SOURCES){const label=document.createElement('label');label.className='tm-setting';label.appendChild(document.createTextNode(source.label+' 启用'));const toggle=document.createElement('input');toggle.type='checkbox';toggle.className='tm-checkbox';toggle.checked=GM_getValue(source.enabledKey,true);toggles[source.enabledKey]=toggle;label.appendChild(toggle);dom.appendChild(label);}
+            Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存'}).then(result=>{
+                if(!result.value)return;
+                const values={};
+                for(const [key] of fields){const host=inputs[key].value.trim().replace(/^https?:/i,'').split('/')[0];if(!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host)||host.includes('..')){Swal.fire('网址格式错误','请填写有效域名，可包含端口，不要填写路径。','error');return;}values[key]=host.toLowerCase();}
+                GM_setValue('scroll_status',scroll.checked?1:0);
+                for(const [key,value] of Object.entries(values))GM_setValue(key,value);
+                for(const source of MAGNET_SOURCES)GM_setValue(source.enabledKey,toggles[source.enabledKey].checked);
+                const enabled=enabledMagnetSources();if(enabled.length&&!enabled.includes(GM_getValue('search_index','')))GM_setValue('search_index',enabled[0]);
                 history.go(0);
             });
         }
-        /**
-         * 版本号比较方法
-         * 传入两个字符串，当前版本号：curV；比较版本号：reqV
-         * @param {string} curV 当前版本号
-         * @param {string} reqV 比较版本号
-         * @returns {boolean} 调用方法举例：compare("3.1.10","3.1.9")，将返回true
-         */
+
         static compareVersions(curV, reqV) {
             if (curV && reqV) {
                 //将两个版本号拆成数字
@@ -936,268 +866,12 @@
          * @param {string} javId 番号
          * @param {Function} callback 回调函数
          */
-        static search115Data(javId, callback) {
-            //异步请求搜索115番号 //115查询
-            let javId2 = javId.replace(/(-)/g, ""); //把番号-去除，例如ABC-123 =》 ABC123
-            let javId3 = javId.replace(/(-)/g, "00"); //把番号-替换为00，例如CCVR-065 =》 CCVR00065
-            let javId4 = javId.replace(/(-)/g, "-0"); //把番号-替换为-0，例如DSVR-584 =》 DSVR-0584
-            let javId5 = javId.replace(/(-0)/g, "-"); //把番号-替换为-0，例如VRKM-01057 =》 VRKM-1057
-            let javId6 = javId.replace(/(-)/g, "0"); //把番号-替换为0，例如VRKM-1192 =》 VRKM01192
-            let javId_Key = javId.replace(/(-)/g, "+"); //把番号-替换为+，例如VRKM-1192 =》 VRKM+1192
-
-            //保存查询关键词参数
-            GM_setValue("115_search_var", `${javId}|${javId2}|${javId3}|${javId4}|${javId5}|${javId6}`);
-            let promise1 = Common.request(`https://webapi.115.com/files/search?search_value=${encodeURIComponent(javId_Key)}&format=json&limit=100`,"",3000);
-            promise1.then((result) => {
-                if(result.loadstuts){
-                    let resultJson;
-                    try { resultJson = JSON.parse(result.responseText); } catch (error) { callback(false, null, null); return; }
-                    if (resultJson.count > 0 && Array.isArray(resultJson.data)) {
-                        let pickcode = '';
-                        let reg = new RegExp(GM_getValue("115_search_var"), "gi");
-                        for (let i = 0; i < resultJson.data.length; i++) {
-                            let row = resultJson.data[i];
-                            if (row.play_long && (row.n.search(reg) >= 0)) { //iv vdi ico play_long
-                                pickcode = row.pc;
-                                callback(true, `https://v.anxia.com/?pickcode=${pickcode}`, pickcode);
-                                return;
-                            }
-                        }
-                    }
-                }
-                callback(false, null, null);
-            });
-        }
-        /**
-         * 查询夸克网盘是否拥有番号
-         * @param {string} javId 番号
-         * @returns {Promise}  Promise内返回参数resultData
-         */
-        static searchQuarkData(javId) {
-            //异步请求搜索夸克番号
-            let javId2 = javId.replace(/(-)/g, " "); //把番号-去除，例如ABC-123 =》 ABC 123
-            let javId3 = javId.replace(/(-)/g, "00"); //把番号-替换为00，例如CCVR-065 =》 CCVR00065
-            let javId4 = javId.replace(/(-)/g, "-0"); //把番号-替换为-0，例如DSVR-584 =》 DSVR-0584
-            //保存查询关键词参数
-            GM_setValue("quark_search_var", `${javId}|${javId2}|${javId3}|${javId4}`);
-            let p1 = Common.request(`https://drive.quark.cn/1/clouddrive/file/search?pr=ucpro&fr=pc&q=${encodeURIComponent(javId2)}&_page=1&_size=50&_fetch_total=1&_sort=file_type:desc,updated_at:desc&_is_hl=1`,"",3000);
-            return p1.then((result) => {
-                if(result.loadstuts){
-                    let resultJson;
-                    try { resultJson = JSON.parse(result.responseText); } catch (error) { return { isHave: false }; }
-                    if (resultJson.status == 200 && resultJson.metadata && resultJson.data && Array.isArray(resultJson.data.list) && resultJson.metadata._count > 0) {
-                        let reg = new RegExp(GM_getValue("quark_search_var"), "gi");
-                        for (let i = 0; i < resultJson.data.list.length; i++) {
-                            let row = resultJson.data.list[i];
-                            if (row.duration && (row.file_name.search(reg) >= 0)) { //时长、文件名判断
-                                return Promise.resolve({
-                                    isHave: true,
-                                    playUrl: `https://pan.quark.cn/list#/video/${row.fid}`,
-                                    pickcode: row.fid
-                                });
-                            }
-                        }
-                    }
-                }
-                return Promise.resolve({ isHave: false });
-            });
-        }
-        /**
-         * 查找番号是否存在于缓存
-         * @param {string} javId 番号
-         * @returns {boolean}
-         */
-        static browseJavidHasCache(javId) {
-            return GM_getValue("myBrowseJavidArray", '[]').indexOf(javId) >= 0;
-        }
-        /**
-         * 保存番号到GM缓存
-         * @param {string} javId 番号
-         */
-        static addBrowseJavidCache(javId) {
-            if (!this.browseJavidHasCache(javId)) {
-                let myBrowseJavidArray = JSON.parse(GM_getValue("myBrowseJavidArray", '[]'));
-                myBrowseJavidArray.push(javId);
-                GM_setValue("myBrowseJavidArray", JSON.stringify(myBrowseJavidArray));
-            }
-        }
-        static getSchemaBuilder() {
-            // 构造jav库
-            let ds = lf.schema.create('jav_v3', 5);
-            // 创建MyMovie表
-            ds.createTable('MyMovie').
-                //addColumn('id', lf.Type.INTEGER).
-                //索引编码 如javlikqu54
-                addColumn('index_cd', lf.Type.STRING).
-                //识别编码 如CHN-141 番号
-                addColumn('code', lf.Type.STRING).
-                //缩略图路径
-                addColumn('thumbnail_url', lf.Type.STRING).
-                //片名
-                addColumn('movie_name', lf.Type.STRING).
-                //演员
-                addColumn('actor', lf.Type.STRING).
-                //封面图路径
-                addColumn('cover_img_url', lf.Type.STRING).
-                //预览图路径
-                addColumn('prev_img_url', lf.Type.STRING).
-                //发布日期
-                addColumn('release_date', lf.Type.STRING).
-                //评分
-                addColumn('score', lf.Type.STRING).
-                //片长(分钟)
-                addColumn('duration', lf.Type.INTEGER).
-                //导演
-                addColumn('director', lf.Type.STRING).
-                //制作商
-                addColumn('maker', lf.Type.STRING).
-                //发行商
-                addColumn('publisher', lf.Type.STRING).
-                //加入时间
-                addColumn('add_time', lf.Type.STRING).
-                //115的pickcode
-                addColumn('pick_code', lf.Type.STRING).
-                //是否已阅
-                addColumn('is_browse', lf.Type.BOOLEAN).
-                //是否想要 0:否 1：是 2：未知
-                addColumn('is_want', lf.Type.INTEGER).
-                //是否看过 0:否 1：是 2：未知
-                addColumn('is_seen', lf.Type.INTEGER).
-                //是否拥有 0:否 1：是 2：未知
-                addColumn('is_have', lf.Type.INTEGER).
-                //是否同步
-                addColumn('is_sync', lf.Type.BOOLEAN).
-                //定义主键
-                addPrimaryKey(['index_cd']).
-                //定义索引
-                addIndex('idxaddtime', ['add_time'], false, lf.Order.DESC);
-            return ds;
-        }
     };
 
     class Jav {
         /**
          * 加载数据  todo 改进
          * @param {String} pageName 访问网页名
-         */
-        static loadData(pageName, queue) {
-            Common.toString();// 无此步骤Common作用域失效,暂时未知原因
-            let todo = async () => {    // todo 190628
-                await this.loadPageNumData(pageName, 1);
-                for (let i = 2; i < GM_getValue(pageName + "_pageNum") + 1; i++) {
-                    queue.push(() => {
-                        let defer = $.Deferred();
-                        this.loadPageNumData(pageName, i).then(() => {
-                            defer.resolve();
-                        });
-                        return defer.promise();
-                    });
-                }
-            };
-            return todo();
-        }
-
-        static loadPageNumData(pageName, PageNum) {
-            let url = location.origin + "/cn/" + pageName + ".php?&sort=added&page=" + PageNum;
-            let commonClass = Common;// 无此步骤Common作用域失效,暂时未知原因
-            let promise1 = Common.request(url);
-            promise1.then((result) => {
-                return new Promise(resolve => {
-                    if ($.type(result) !== "function" && result.status !== 200) {
-                        return resolve();
-                    }
-                    let doc = result.responseText;
-                    //设置初始化总页数
-                    if (PageNum == 1) {
-                        let docArr = doc.split("的影片: ");
-                        let totalNum = parseInt(docArr[1].substring(0, docArr[1].search(/<\/div/)));
-                        GM_setValue(pageName + "_pageNum", parseInt((totalNum + 19) / 20));
-                    }
-                    let tableText = doc.substring(doc.search(/<table class="videotextlist">/), doc.search(/<table style="width: 95%; margin: 10px auto;">/));
-                    //<table class="videotextlist">  //<table style="width: 95%; margin: 10px auto;">
-                    let $movList = $(commonClass.parsetext(tableText)).find("tr");
-                    let indexArrStr = "0";
-                    let timeArrStr = "0";
-                    let myBrowseJson = "";
-                    for (let i = 1; i < $movList.length; i++) {
-                        let movie = $movList.get(i);
-                        let $aEle = $($(movie).children("td.title").find("a").get(0));
-                        // 索引编码
-                        let index_cd = $aEle.attr("href").split("=")[1];
-                        // 番号
-                        let code = $aEle.attr("title").match(/^[A-Za-z0-9-]+/g);
-                        // 创建时间
-                        let add_time = $($(movie).children("td").get(2)).text();
-                        indexArrStr = indexArrStr + index_cd + ',';
-                        timeArrStr = timeArrStr + add_time + "|";
-                        myBrowseJson = myBrowseJson + `{"index_cd":"${index_cd}","code":"${code}","add_time":"${add_time}"},`;
-                    }
-
-                    // 保存当前页的json格式数据
-                    GM_setValue(pageName + "_myBrowseJson" + result.finalUrl.split("page=")[1], myBrowseJson);
-                    resolve();
-                });
-            });
-            return promise1;
-        }
-
-        /**
-         * 合并json数据
-         * @param {string} pageName 访问网页名
-         */
-        static mergeJson(pageName) {
-            // 读取访问指定网页的页数量
-            var p = GM_getValue(pageName + "_pageNum");
-            if (p > 0) {
-                GM_setValue(pageName + "_myBrowseJsonAll", "");
-                // 循环合并Json,以同步方式保存.
-                let loopMerge = async () => {
-                    for (let i = 1; i < p; i++) {
-                        let tempJson = GM_getValue(pageName + "_myBrowseJson" + i);
-                        if (tempJson && tempJson !== "") {
-                            await new Promise(resolve => {
-                                GM_setValue(pageName + "_myBrowseJsonAll", GM_getValue(pageName + "_myBrowseJsonAll") + tempJson);
-                                resolve();
-                            })
-                        }
-                    }
-                };
-                return loopMerge().then(() => {
-                    GM_setValue("doNum", GM_getValue("doNum") + 1);
-                });
-            }
-        }
-
-        /**
-          * JSON数组去重
-          * @param {Array} array Array
-          * @param {string} key 唯一的key名，根据此键名进行去重
-          * @param {function} func
-          */
-        static uniqueArray(array, key, func) {
-            if (!Array.isArray(array) || array.length === 0) return [];
-            var result = [array[0]];
-            for (var i = 1; i < array.length; i++) {
-                var item = array[i];
-                var repeat = false;
-                for (var j = 0; j < result.length; j++) {
-                    if (item[key] == result[j][key]) {
-                        func(item, result[j]);
-                        repeat = true;
-                        break;
-                    }
-                }
-                if (!repeat) {
-                    result.push(item);
-                }
-            }
-            return result;
-        }
-
-
-
-        /**
-         * javbus详情页磁链列表增加复制、115离线快捷键功能函数
          */
         static javbusUs() {
             $('#magnet-table tbody tr td[colspan="4"]').attr("colspan", "5");
@@ -1216,141 +890,6 @@
 
         /**
          * 初始化同步保存数据方法
-         */
-        static syncSaveData() {
-            GM_setValue("doNum", 0);
-            let pm1 = this.mergeJson("mv_wanted");
-            let pm2 = this.mergeJson("mv_watched");
-            let pm3 = this.mergeJson("mv_owned");
-
-            Promise.all([pm1, pm2, pm3]).then(() => {
-                if (GM_getValue("doNum") === 3) {
-                    let j1 = GM_getValue("mv_wanted_myBrowseJsonAll");
-                    let j2 = GM_getValue("mv_watched_myBrowseJsonAll");
-                    let j3 = GM_getValue("mv_owned_myBrowseJsonAll");
-                    //let myBrowseAll = j3.substring(0, j3.length - 1);
-                    let myBrowseAll = j1 + j2 + j3.substring(0, j3.length - 1);
-                    let myBrowseArray = JSON.parse("[" + myBrowseAll + "]");
-
-                    //json数组去重
-                    myBrowseArray = this.uniqueArray(myBrowseArray, "index_cd", (item, resultObj) => {
-                        if (item["add_time"] < resultObj["add_time"]) {
-                            resultObj["add_time"] = item["add_time"];
-                        }
-                    });
-                    GM_setValue("myBrowseAllData", JSON.stringify(myBrowseArray));
-                    //应同步的总数
-                    GM_setValue("myBrowseAllNum", myBrowseArray.length);
-
-                    let b = GM_getValue(domain + "_stepTwo_V3", false);
-                    if (!b) {
-                        let jsonObj;
-                        let row;
-                        for (let i = 0; i < myBrowseArray.length; i++) {
-                            jsonObj = myBrowseArray[i];
-                            row = myMovie.createRow({
-                                'index_cd': jsonObj.index_cd,
-                                'code': jsonObj.code,
-                                'release_date': '',
-                                'duration': '',
-                                'director': '',
-                                'maker': '',
-                                'score': '',
-                                'actor': '',
-                                'cover_img_url': '',
-                                'thumbnail_url': '',
-                                'prev_img_url': '',
-                                'movie_name': '',
-                                'publisher': '',
-                                'add_time': jsonObj.add_time,
-                                'pick_code': '',
-                                'is_browse': true,
-                                'is_want': 2,
-                                'is_seen': 2,
-                                'is_have': 2,
-                                'is_sync': false
-                            });
-                            javDb.insertOrReplace().into(myMovie).values([row]).exec();
-                            Common.addBrowseJavidCache(jsonObj.code);
-                        }
-                        // 如果保存影片数量大于等于需同步总数，则同步完成
-                        if (GM_getValue(domain + "_saveMovieNum", 0) >= myBrowseArray.length) {
-                            GM_setValue(domain + "_stepTwo_V3", true);
-                            GM_setValue(domain + "_doDataSyncStepAll_V3", true);
-                        }
-                        return Promise.resolve();
-                    }
-                }
-            });
-        }
-
-        static getMovie($doc) {
-            return {
-                index_cd: $('#video_title a', $doc).attr('href').split("v=")[1],
-                code: $('.header', $doc)[0].nextElementSibling.textContent,
-                release_date: $('#video_date .text', $doc).text(),
-                duration: $('#video_length .text', $doc).text(),
-                director: $('#video_director .text', $doc).text(),
-                maker: $('#video_maker .text', $doc).text(),
-                score: $('#video_review .text .score', $doc).text(),
-                actor: $('#video_cast .text', $doc).text(),
-                cover_img_url: $('#video_jacket_img', $doc).attr("src").replace("http://", "").replace("https://", ""),
-                thumbnail_url: $('#video_jacket_img', $doc).attr("src").replace("http://", "").replace("https://", "").replace("pl", "ps"),
-                prev_img_url: "",
-                movie_name: $('#video_title a', $doc).text(),
-                publisher: $('#video_label .text a', $doc).text(),
-                add_time: (new Date()).Format("yyyy-MM-dd hh:mm:ss"),
-                pick_code: '',
-                is_browse: true,
-                is_want: ($('#subscribed .smallbutton.hidden', $doc).length > 0) ? 1 : 0,
-                is_seen: ($('#watched .smallbutton.hidden', $doc).length > 0) ? 1 : 0,
-                is_have: ($('#owned .smallbutton.hidden', $doc).length > 0) ? 1 : 0,
-                is_sync: true
-            }
-        }
-        /**
-         * 同步movie信息到myMovie表中
-         * @param result 页面响应结果
-         */
-        static syncMovie(result) {
-            let commonClass = Common;// 无此步骤Common作用域失效,暂时未知原因
-            let $doc = $(commonClass.parsetext(result.responseText));
-            let movie = Jav.getMovie($doc);
-            let myBrowseJsonArray = JSON.parse(GM_getValue("myBrowseAllData", "[]"));
-            if (myBrowseJsonArray.length > 0) {
-                let jsonObj = myBrowseJsonArray.filter((p) => {
-                    return p.index_cd == result.finalUrl.split("v=")[1];
-                });
-                if (jsonObj.length > 0) movie.add_time = jsonObj[0].add_time;
-            }
-            let row = myMovie.createRow(movie);
-            javDb.insertOrReplace().into(myMovie).values([row]).exec();
-        }
-
-        /**
-         * javlib记录已阅影片
-         */
-        static javlibSaveData(AVID, pickcode, pm_mater) {
-
-            let movie = Jav.getMovie($(document));
-            movie.pick_code = pickcode;
-            let newId = Common.getAvCode(AVID);
-            Common.addBrowseJavidCache(AVID);
-            if(AVID !== newId) Common.addBrowseJavidCache(newId);
-            pm_mater.then(() => {
-                //查找是否存在此番号数据
-                return javDb.select().from(myMovie).where(myMovie.index_cd.eq(movie.index_cd)).exec()
-                    .then((results) => {
-                        if (results.length > 0) movie.add_time = results[0].add_time;
-                        let row = myMovie.createRow(movie);
-                        javDb.insertOrReplace().into(myMovie).values([row]).exec();
-                    });
-            });
-        }
-
-        /**
-         * 针对页面的番号信息增加功能及样式修改. javlib和javbus共同使用
-         * @returns {string} 番号
          */
         static getAvidAndChgPage() {
             let AVID = $('.header')[0].nextElementSibling.textContent;
@@ -1392,14 +931,8 @@
             let a3 = this.waterfallButton();
             if ((/(JAVLibrary)/g).test(document.title)) {
                 //数据库初始化  start01
-                var pm_mater = Common.getSchemaBuilder().connect({
-                    storeType: lf.schema.DataStoreType.INDEXED_DB
-                }).then((database) => {
-                    javDb = database;
-                    myMovie = javDb.getSchema().table('MyMovie');
-                    //javDb.delete().from(myMovie).exec();// 清空MyMovie表数据.
-                    return javDb.select().from(myMovie).where(myMovie.is_browse.eq(true)).exec();
-                }).then((results) => {
+                // JavLibrary 列表增强。
+                {
                     GM_setValue(domain + "_saveMovieNum", results.length);
                     // results.forEach(function(row) {
 
@@ -1490,63 +1023,8 @@
                         $(".displaymode .right").prepend($(a2));
                         $(".displaymode .right").prepend($(a1));
                     }
-                });
-                //JavWebSql.DBinit();
-                if ($('a[href="myaccount.php"]').length) {
-                    // 已经登录
-                    // 从未同步过,同步云数据到本地数据库
-                    let isSync = GM_getValue(domain + "_doDataSyncStepAll_V3", false);
-                    if (!isSync) {
-                        pm_mater.then(() => {
-                            return new Promise(resolve => {
-                                var hasStepOne = GM_getValue(domain + "_stepOne_V3", false);
-
-                                if (!hasStepOne) {
-                                    // 立即下载数据
-                                    GM_setValue("mv_wanted_pageNum", 0);
-                                    GM_setValue("mv_watched_pageNum", 0);
-                                    GM_setValue("mv_owned_pageNum", 0);
-
-                                    //start02 todo lovefieldDB
-                                    // 创建请求队列  //浏览器对同一域名进行请求的最大并发连接数:chrome为6
-                                    let queue = new Queue(7);
-                                    // 读取想要的影片
-                                    this.loadData("mv_wanted", queue);
-                                    // 读取看过的影片
-                                    this.loadData("mv_watched", queue);
-                                    // 读取拥有的影片
-                                    this.loadData("mv_owned", queue);
-                                    // 延迟1秒运行定时循环函数
-                                    setTimeout(() => {
-                                        // 定时循环函数,当队列执行完成时结束
-                                        var s4 = setInterval(() => {
-
-                                            if (queue.taskList.length == 0) {
-                                                let end_num = 0;
-                                                for (let i = 0, l = queue.threads.length; i < l; i++) {
-                                                    if (queue.threads[i].promise.state() === 'resolved') {
-                                                        end_num++;
-                                                    }
-                                                }
-                                                if (end_num == queue.threads.length) {
-                                                    GM_setValue(domain + "_stepOne_V3", true);  // todo 需打开
-                                                    clearInterval(s4);
-                                                    return resolve();
-                                                }
-                                            }
-                                        }, 300);
-                                    }, 1000);
-                                } else {
-                                    return resolve();
-                                }
-                            });
-                        }).then(() => {
-                            this.syncSaveData();
-                        });
-                    }
-                    // 增加同步数据到本地的触发按钮
                 }
-
+                //JavWebSql.DBinit();
                 // 新增VR发行、FC2发行菜单入口
                 $('.menul1 ul li:contains("新发行")').after('<li><a href="https://onejav.com/popular/?amateur=1" target="_blank" style="color: red;">FC2发行</a></li>');
                 $('.menul1 ul li:contains("新发行")').after('<li><a href="vl_genre.php?g=aaua" style="color: red;">VR发行</a></li>');
@@ -2137,47 +1615,10 @@
             }
         }
 
-        static quarkScript() {
-            if ($('.VideoDetail--content-body--1KZ6K00').length) {
-                GM_addStyle(`
-                    .DetailLayout--content--14Z28Ay {width: 100%;margin-top: auto;}
-                    .VideoDetail--content--1LYsa87 {width: 100%;}
-                    .VideoDetail--content-body--1KZ6K00 {height: 920px;}
-                    .AnthologyList--anthology-list--Vlx6xtN {height: auto;}
-                    .VideoDetail--content-header--2Cto_s7 {height: auto;padding-top: 0px;}
-                `);
-                $('.DetailLayout--header-wrap--3cP6QaP').remove();
-                $('.VideoDetail--content--1LYsa87').append($('.VideoDetail--content-header--2Cto_s7'));
-                $('.VideoDetail--content--1LYsa87').append($('.VideoDetail--content-footer--3sQbRiy'));
-
-                let loop = setInterval(() => {
-                    if ($('.AnthologyList--anthology-title--1uEdKDT').length) {
-                        $('.AnthologyList--anthology-title--1uEdKDT').remove();
-                        clearInterval(loop);
-                    }
-                }, 500);
-            }
-        }
     }
 
     // 第三方脚本调用
     var thirdparty = {
-        // 登录115执行脚本，自动离线下载准备步骤
-        login115Run: () => {
-            if (domain.indexOf('115.com') < 0) return false;
-            jav_userID = GM_getValue('jav_user_id', 0);
-            if (jav_userID && jav_userID !== '0') return false;
-            if (window.wrappedJSObject && typeof window.wrappedJSObject.user_id !== 'undefined') {
-                jav_userID = window.wrappedJSObject.user_id;
-            } else {
-                const cookieMatch = document.cookie.match(/(?:^|;\s*)OOFL=([^;]+)/);
-                jav_userID = cookieMatch ? decodeURIComponent(cookieMatch[1]) : 0;
-            }
-            if (!jav_userID || jav_userID === '0') return false;
-            GM_setValue('jav_user_id', jav_userID);
-            Common.notifiy('老司机自动开车', '115登录初始化成功。', icon, 'https://115.com/');
-            return false;
-        },
         // 瀑布流脚本
         waterfallScrollInit: () => {
             var w = new thirdparty.waterfall({});
