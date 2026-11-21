@@ -1694,7 +1694,9 @@
                         function getMovieInfo() {
                             w.queue.push(() => {
                                 let defer = $.Deferred();
-                                const promise = Common.request("https://" + JAVLIB_DOMAIN + "/ja/?v=" + _vid);
+                                const infoUrl = buildSiteUrl('javlib', _vid, '/ja/?v={id}');
+                                if (!infoUrl) { defer.resolve(); return defer.promise(); }
+                                const promise = Common.request(infoUrl);
                                 promise.then(result => {
                                     if (result.loadstuts && result.status < 300) {
                                         indexCd_id = "#vid_" + result.finalUrl.split("=")[1];
