@@ -953,7 +953,8 @@
          */
         static getJavDbData(avid) {
             return new Promise((resolve, reject) => {
-                let promise = Common.request("https://" + GM_getValue('javdb_url') + "/search?f=all&q=" + avid);
+                const javdbHost=magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='javdb'));
+                let promise = Common.request("https://" + javdbHost + "/search?f=all&q=" + encodeURIComponent(avid));
                 promise.then((result) => {
                     if (!result.loadstuts) {
                     }
@@ -962,11 +963,8 @@
                     if (a.length) {
                         let javdbData = {};
                         javdbData.score = $(a[0].parentElement).find('.score>span').text();
-                        if(a[0].parentElement.href.indexOf("http") >= 0) {
-                            javdbData.url = a[0].parentElement.href.replace(location.origin, 'https://' + [GM_getValue('javdb_url')]);
-                        } else {
-                            javdbData.url = 'https://' + [GM_getValue('javdb_url')] + a[0].parentElement.href;
-                        }
+                        try { javdbData.url = new URL(a[0].parentElement.getAttribute('href'),"https://"+javdbHost+"/").href; }
+                        catch(error) { reject(error);return; }
                         resolve(javdbData);
                     } else {
                         reject("javdb没查找到此番号");
