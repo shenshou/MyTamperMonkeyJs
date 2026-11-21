@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.13
+// @version      100.14
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -134,7 +134,8 @@
       const value = GM_getValue(key, fallback);
       if (typeof value === "boolean") return value;
       if (value === 1 || value === "1" || value === "true") return true;
-      if (value === 0 || value === "0" || value === "false" || value == null) return false;
+      if (value == null) return fallback;
+      if (value === 0 || value === "0" || value === "false") return false;
       return fallback;
     };
     const readNumber = (key, fallback) => {
@@ -1815,21 +1816,30 @@
    * 提供一个链接供用户点击以更新脚本。
    */
   function showUpdateDialog() {
-    // 更新对话框的HTML内容
-    const dialogHTML = `
-            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
-                <div style="background: #fff; padding: 20px; border-radius: 5px;">
-                    <p>有新版本的保国逛色花脚本可用！</p>
-                    <a href="https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E4%BF%9D%E5%9B%BD%E9%80%9B%E8%89%B2%E8%8A%B1.user.js" target="_blank" rel="noopener noreferrer">点击这里更新</a>
-                    <button style="margin-top: 10px;" onclick="this.closest('.updateDialog').remove();">关闭</button>
-                </div>
-            </div>`;
-
-    // 插入到页面中
-    const tempDiv = document.createElement("div");
-    tempDiv.className = "updateDialog";
-    tempDiv.innerHTML = dialogHTML;
-    document.body.appendChild(tempDiv);
+    if (document.querySelector(".updateDialog")) return;
+    const overlay = document.createElement("div");
+    overlay.className = "updateDialog";
+    Object.assign(overlay.style, {
+      position: "fixed", inset: "0", background: "rgba(0, 0, 0, 0.7)",
+      zIndex: "9999", display: "flex", justifyContent: "center", alignItems: "center",
+    });
+    const panel = document.createElement("div");
+    Object.assign(panel.style, { background: "#fff", padding: "20px", borderRadius: "5px" });
+    const message = document.createElement("p");
+    message.textContent = "有新版本的保国逛色花脚本可用！";
+    const updateLink = document.createElement("a");
+    updateLink.href = "https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E4%BF%9D%E5%9B%BD%E9%80%9B%E8%89%B2%E8%8A%B1.user.js";
+    updateLink.target = "_blank";
+    updateLink.rel = "noopener noreferrer";
+    updateLink.textContent = "点击这里更新";
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.textContent = "关闭";
+    closeButton.style.marginTop = "10px";
+    closeButton.addEventListener("click", () => overlay.remove());
+    panel.append(message, updateLink, closeButton);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
   }
 
   // #endregion
@@ -2892,6 +2902,10 @@
     if (!settings.autoPagination) {
       return;
     }
+    if (document.documentElement.dataset.bgshInfiniteScrollInitialized === pageName) {
+      return;
+    }
+    document.documentElement.dataset.bgshInfiniteScrollInitialized = pageName;
 
     /**
      * 加载下一个页面的内容。
@@ -3040,7 +3054,7 @@
       }
     }
 
-    window.addEventListener("scroll", () => {
+    const handleScroll = () => {
       if (scrollScheduled) return;
       scrollScheduled = true;
       requestAnimationFrame(() => {
@@ -3054,7 +3068,11 @@
           loadNextPage();
         }
       });
-    }, { passive: true });
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("pagehide", () => {
+      window.removeEventListener("scroll", handleScroll);
+    }, { once: true });
 
     checkAndLoadIfContentNotEnough();
   }
