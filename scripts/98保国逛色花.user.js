@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.18
+// @version      100.19
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -2072,8 +2072,13 @@
     showWatermarkMessage();
     // 从当前页面URL中获取帖子的tid
     const tid = extractTid(window.location.href);
+    const formHashInput = document.querySelector('input[name="formhash"]');
+    if (!tid || !formHashInput) {
+      showTooltip("无法获取帖子编号或表单校验信息，未执行收藏。");
+      return;
+    }
     // 获取formhash，用于验证请求
-    const formHash = document.querySelector('input[name="formhash"]').value;
+    const formHash = formHashInput.value;
 
     // 构造收藏URL
     const starUrl = `/home.php?mod=spacecp&ac=favorite&type=thread&id=${tid}&formhash=${formHash}&infloat=yes&handlekey=k_favorite&inajax=1&ajaxtarget=fwin_content_k_favorite`;
@@ -2085,15 +2090,14 @@
       const text = await response.text();
 
       // 根据响应内容提供相应的提示
-    if (text.includes("抱歉，您已收藏，请勿重复收藏")) {
-      return showTooltip("抱歉，您已收藏，请勿重复收藏");
-    }
+      if (text.includes("抱歉，您已收藏，请勿重复收藏")) {
+        return showTooltip("抱歉，您已收藏，请勿重复收藏");
+      }
 
-    if (text.includes("信息收藏成功")) {
-      return showTooltip("信息收藏成功");
-    }
+      if (text.includes("信息收藏成功")) {
+        return showTooltip("信息收藏成功");
+      }
 
-    // 如果既没有成功消息也没有重复收藏消息，视为出错并在控制台记录
       showTooltip("信息收藏出现问题！！！");
       console.error("收藏请求返回了未识别的响应。");
     } catch (error) {
@@ -2134,7 +2138,9 @@
       // 解析服务器返回的XML数据
       const text = await response.text();
       const xml = new DOMParser().parseFromString(text, "text/xml");
-      const htmlContent = xml.querySelector("root").textContent;
+      const root = xml.querySelector("root");
+      if (!root) throw new Error("服务器返回了无法解析的评分/购买记录数据。");
+      const htmlContent = root.textContent;
       const doc = new DOMParser().parseFromString(htmlContent, "text/html");
 
       // 检查是否存在错误
