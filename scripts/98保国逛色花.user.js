@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.20
+// @version      100.21
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -2971,8 +2971,7 @@
         const response = await fetch(nextPageURL.href);
         if (!response.ok) throw new Error(`加载下一页失败：HTTP ${response.status}`);
 
-        const div = document.createElement("div");
-        div.innerHTML = await response.text();
+        const div = parseContent(await response.text());
         const newNextPageLink = div.querySelector(".nxt");
         if (newNextPageLink) {
           const nextHref = newNextPageLink.getAttribute("href");
@@ -4299,7 +4298,7 @@
           createQuickReplyEditToPostButton(postContainer);
         postContainer.appendChild(quickReplyEditToPostButton);
       }
-      if (postContainer && postContainer.innerHTML.includes("setanswer(")) {
+      if (postContainer.querySelector('[onclick*="setanswer("], [href*="setanswer("]')) {
         postContainer.appendChild(setAnswerToPostButton);
       }
     });
@@ -4518,17 +4517,10 @@
       return; // 如果没有找到这个div，直接返回
     }
 
-    // 定义需要查找的forum ID
-    const forumTexts = ["fid=166", "fid=97", "forum-166", "forum-97"];
-    let found = false; // 用于标记是否找到匹配的文本
-
-    // 检查div的文本内容中是否包含任一指定的forum ID
-    const textContent = divPt.innerHTML; // 获取div的全部文本内容
-    forumTexts.forEach((text) => {
-      if (textContent.includes(text)) {
-        found = true;
-      }
-    });
+    const forumPatterns = ["fid=166", "fid=97", "forum-166", "forum-97"];
+    const found = Array.from(divPt.querySelectorAll("a[href]")).some((link) =>
+      forumPatterns.some((pattern) => link.getAttribute("href").includes(pattern))
+    );
 
     // 根据结果执行操作
     if (found) {
