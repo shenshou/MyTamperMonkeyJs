@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
-// @version      3.8.17
+// @version      3.8.18
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
@@ -36,7 +36,28 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // @grant        GM_openInTab
-// @connect      *
+// @connect      bing.com
+// @connect      blogjav.net
+// @connect      javstore.net
+// @connect      jav321.com
+// @connect      dmm.co.jp
+// @connect      pixhost.to
+// @connect      pixhost.org
+// @connect      imagetwist.com
+// @connect      javlibrary.com
+// @connect      javlib.com
+// @connect      javbus.com
+// @connect      avsox.click
+// @connect      onejav.com
+// @connect      missav.com
+// @connect      7mmtv.sx
+// @connect      supjav.com
+// @connect      njav.tv
+// @connect      javdb368.com
+// @connect      btsow.motorcycles
+// @connect      btdig.com
+// @connect      nyaa.si
+// @connect      torrentkitty.one
 // @copyright    hobby 2016-12-18
 // @license      GPL-3.0
 // @compatible   chrome V52+ & Tampermonkey
@@ -139,6 +160,63 @@
         const value=String(host||'').toLowerCase();
         const source=MAGNET_SOURCES.find(item=>magnetSourceHost(item).toLowerCase()===value);
         return source?magnetSourceName(source):(host||'未知来源');
+    }
+
+    // GM_xmlhttpRequest 的授权域名必须与元数据 @connect 保持一致。
+    const CONNECT_ALLOWED_DOMAINS = [
+        'bing.com','blogjav.net','javstore.net','jav321.com','dmm.co.jp',
+        'pixhost.to','pixhost.org','imagetwist.com','javlibrary.com','javlib.com',
+        'javbus.com','avsox.click','onejav.com','missav.com','7mmtv.sx',
+        'supjav.com','njav.tv','javdb368.com','btsow.motorcycles','btdig.com',
+        'nyaa.si','torrentkitty.one'
+    ];
+    const IMAGE_VALIDATION_DOMAINS = ['pixhost.to','pixhost.org','imagetwist.com'];
+    const notifiedUnauthorizedHosts = new Set();
+
+    function parseHttpUrl(value) {
+        try {
+            const url = new URL(String(value || ''), location.href);
+            if ((url.protocol !== 'http:' && url.protocol !== 'https:') || url.username || url.password) return null;
+            if (url.port && url.port !== '80' && url.port !== '443') return null;
+            return url;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function hostMatchesDomain(host, domain) {
+        const normalizedHost = String(host || '').toLowerCase().replace(/\.$/, '');
+        const normalizedDomain = String(domain || '').toLowerCase().replace(/^\./, '');
+        return !!normalizedHost && !!normalizedDomain &&
+            (normalizedHost === normalizedDomain || normalizedHost.endsWith('.' + normalizedDomain));
+    }
+
+    function isAuthorizedRequestUrl(value) {
+        const url = parseHttpUrl(value);
+        if (!url) return false;
+        if (url.origin === location.origin) return true;
+        return CONNECT_ALLOWED_DOMAINS.some(domain => hostMatchesDomain(url.hostname, domain));
+    }
+
+    function isSafeImageUrl(value) {
+        return !!parseHttpUrl(value);
+    }
+
+    function shouldValidateImageUrl(value) {
+        const url = parseHttpUrl(value);
+        return !!url && IMAGE_VALIDATION_DOMAINS.some(domain => hostMatchesDomain(url.hostname, domain));
+    }
+
+    function notifyUnauthorizedRequest(value) {
+        const url = parseHttpUrl(value);
+        const host = url ? url.hostname : String(value || '无效 URL');
+        if (notifiedUnauthorizedHosts.has(host)) return;
+        notifiedUnauthorizedHosts.add(host);
+        GM_notification({
+            title: 'JAV老司机：跨域请求被拦截',
+            text: host + ' 未列入脚本 @connect 授权白名单。请更新脚本授权名单后再使用该站点。',
+            timeout: 8000
+        });
     }
 
     function bindTampermonkeyOpenLinks(root) {
@@ -675,8 +753,14 @@
          */
         static request(url, referrerStr, timeoutInt) {
             return new Promise((resolve, reject) => {
+                const requestUrl = parseHttpUrl(url);
+                if (!requestUrl || !isAuthorizedRequestUrl(requestUrl.href)) {
+                    notifyUnauthorizedRequest(url);
+                    resolve({loadstuts:false, status:0, finalUrl:String(url || ''), responseText:''});
+                    return;
+                }
                 GM_xmlhttpRequest({
-                    url,
+                    url: requestUrl.href,
                     method: 'GET',
                     headers: {
                         "Cache-Control": "no-cache",
@@ -684,6 +768,12 @@
                     },
                     timeout: timeoutInt > 0 ? timeoutInt : 20000,
                     onload: response => {
+                        if (response.finalUrl && !isAuthorizedRequestUrl(response.finalUrl)) {
+                            response.loadstuts = false;
+                            notifyUnauthorizedRequest(response.finalUrl);
+                            resolve(response);
+                            return;
+                        }
                         response.loadstuts = true;
                         resolve(response);
                     },
@@ -711,9 +801,15 @@
          */
         static requestGM_XHR(details) {
             return new Promise((resolve, reject) => {
+                const requestUrl = parseHttpUrl(details.url);
+                if (!requestUrl || !isAuthorizedRequestUrl(requestUrl.href)) {
+                    notifyUnauthorizedRequest(details.url);
+                    reject(new Error('请求域名未获脚本 @connect 授权：' + String(details.url || '')));
+                    return;
+                }
                 let req = GM_xmlhttpRequest({
                     method: details.method ? details.method : "GET",
-                    url: details.url,
+                    url: requestUrl.href,
                     headers: details.headers,
                     timeout: details.timeout > 0 ? details.timeout : 20000,
                     onprogress: rsp => {
@@ -722,7 +818,14 @@
                             req.abort();
                         }
                     },
-                    onload: rsp => resolve(rsp),
+                    onload: rsp => {
+                        if (rsp.finalUrl && !isAuthorizedRequestUrl(rsp.finalUrl)) {
+                            notifyUnauthorizedRequest(rsp.finalUrl);
+                            reject(new Error('请求重定向到未授权域名：' + rsp.finalUrl));
+                            return;
+                        }
+                        resolve(rsp);
+                    },
                     onerror: rsp => {
                         reject(`error`);
                     },
@@ -828,15 +931,28 @@
         static getJav321SearchUrl(avid) {
             // 测试 todo
             return new Promise((resolve, reject) => {
+                const requestUrl = buildSiteUrl('jav321', avid);
+                if (!requestUrl || !isAuthorizedRequestUrl(requestUrl)) {
+                    notifyUnauthorizedRequest(requestUrl || 'JAV321 配置地址');
+                    reject(new Error('JAV321 域名未获脚本 @connect 授权，请更新脚本授权名单。'));
+                    return;
+                }
                 GM_xmlhttpRequest({
                     method: "POST",
-                    url: buildSiteUrl('jav321', avid),
+                    url: requestUrl,
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
                     data: "sn=" + encodeURIComponent(avid),
                     timeout: 20000,
-                    onload: (r) => resolve(r.finalUrl),
+                    onload: (r) => {
+                        if (r.finalUrl && !isAuthorizedRequestUrl(r.finalUrl)) {
+                            notifyUnauthorizedRequest(r.finalUrl);
+                            reject(new Error('JAV321 请求重定向到未授权域名：' + r.finalUrl));
+                            return;
+                        }
+                        resolve(r.finalUrl);
+                    },
                     onerror: (r) => reject(`查找jav321的 ${avid} 出错了`),
                     ontimeout: (r) => reject(`查找jav321的 ${avid} 超时了`)
                 });
@@ -951,6 +1067,14 @@
                     return;
                 }
 
+                if (!isSafeImageUrl(imgUrl)) {
+                    addJavArchiveImg.call(this);
+                    return;
+                }
+                if (!shouldValidateImageUrl(imgUrl)) {
+                    addImg(imgUrl, func, isZoom);
+                    return;
+                }
                 Common.requestGM_XHR({
                     method: 'HEAD',
                     url: imgUrl,
@@ -1019,6 +1143,7 @@
             .then(url => {
                 let targetImgUrl = "";
                 if (url.length > 0) {
+                    if (!hostMatchesDomain((parseHttpUrl(url) || {}).hostname, 'blogjav.net')) return null;
                     //请求调用内页详情的访问地址
                     return Common.request(url, "https://pixhost.to/", 15000).then((result) => {
                         if (!result.loadstuts) return null;
@@ -1054,6 +1179,7 @@
             GM_setValue(`temp_img_url_${avid}`, "");
             return Common.searchBing(avid,"javstore.net","&mkt=ja-JP").then(javUrl => {
                 if (javUrl.length > 0) {
+                    if (!hostMatchesDomain((parseHttpUrl(javUrl) || {}).hostname, 'javstore.net')) return null;
                     //异步请求调用内页详情的访问地址
                     return Common.request(javUrl, "http://pixhost.to/").then((result) => {
                         if (!result.loadstuts) return;
@@ -1068,6 +1194,11 @@
                                     .replace('thumbs', 'images').replace('//t', '//img').replace(/[\?*\"*]/, '');
                             }
 
+                            if (!isSafeImageUrl(imgUrl)) return Promise.resolve(null);
+                            if (!shouldValidateImageUrl(imgUrl)) {
+                                GM_setValue(`temp_img_url_${avid}`, imgUrl);
+                                return Promise.resolve(imgUrl);
+                            }
                             return Common.requestGM_XHR({
                                 method: 'HEAD',
                                 url: imgUrl,
@@ -1118,6 +1249,7 @@
                         }
                     }
                 };
+                if (url && !hostMatchesDomain((parseHttpUrl(url) || {}).hostname, site)) url = "";
                 return new Promise(resolve => { resolve(url)});
             });
         }
@@ -2388,7 +2520,10 @@
                             let a = $(doc).find(`.box .video-title:contains('${kw.toUpperCase().replace("+", "-")}')`);
                             if (a) {
                                 let url;
-                                try { url=new URL(a[0].parentElement.getAttribute('href'),"https://"+searchHost+"/").href; }
+                                try {
+                                    url=new URL(a[0].parentElement.getAttribute('href'),"https://"+searchHost+"/").href;
+                                    if (new URL(url).hostname !== searchHost) { reject(new Error('JavDB 详情页域名与当前搜索源不一致'));return; }
+                                }
                                 catch(error) { reject(error);return; }
                                 resolve(url);
                             }
