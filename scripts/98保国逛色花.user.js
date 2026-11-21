@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.11
+// @version      100.12
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -4515,131 +4515,169 @@
    * 综合区快速发帖
    */
   function PostContent() {
-    if (!window.location.href.includes("forum.php?mod=post&action=newthread")) {
-      return;
-    }
+    if (!window.location.href.includes("forum.php?mod=post&action=newthread")) return;
+    const ulElement = document.querySelector(".tb.cl.mbw");
+    if (!ulElement || document.getElementById("organizeModal")) return;
+
     const link = document.createElement("a");
-    link.href =
-      "/forum.php?mod=redirect&goto=findpost&ptid=1708826&pid=16039784";
+    link.href = "/forum.php?mod=redirect&goto=findpost&ptid=1708826&pid=16039784";
     link.textContent = "发帖须知";
     link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
     const organizeButton = document.createElement("li");
     organizeButton.className = "a";
-    organizeButton.innerHTML =
-      '<button id="organizeBtn" type="button">整理</button>';
+    const organizeControl = document.createElement("button");
+    organizeControl.id = "organizeBtn";
+    organizeControl.type = "button";
+    organizeControl.textContent = "整理";
+    organizeButton.appendChild(organizeControl);
 
     const shareButton = document.createElement("li");
     shareButton.className = "a";
-    shareButton.innerHTML = '<button id="shareBtn" type="button">自转</button>';
-    const ulElement = document.querySelector(".tb.cl.mbw");
-    if (ulElement) {
-      ulElement.appendChild(link);
-      ulElement.appendChild(organizeButton);
-      ulElement.appendChild(shareButton);
-    } else {
-      console.warn("未找到指定的ul元素");
-      return;
-    }
-    var ttttype = "";
-    const modalContent = `<div id="organizeModal"style="display:none; position:fixed; z-index:1000; left:50%; top:50%; transform:translate(-50%, -50%); background-color:white; padding:20px; border-radius:10px;"><div><strong>【资源名称】：</strong><input type="text"id="resourceName"/></div><div><strong>【资源类型】：</strong><label><input type="radio"name="resourceType"value="影片"/>影片</label><label><input type="radio"name="resourceType"value="视频"checked/>视频</label><label><input type="radio"name="resourceType"value="动漫"/>动漫</label><label><input type="radio"name="resourceType"value="套图"/>套图</label><label><input type="radio"name="resourceType"value="游戏"/>游戏</label></div><div><strong>【是否有码】：</strong><label><input type="radio"name="censorship"value="有码"/>有码</label><label><input type="radio"name="censorship"value="无码"checked/>无码</label></div><div><strong>【是否水印】：</strong><label><input type="radio"name="watermark"value="有水印"/>有水印</label><label><input type="radio"name="watermark"value="无水印"checked/>无水印</label></div><div><strong>【字幕】：</strong><label><input type="radio"name="subtitle"value="中文字幕"/>中文字幕</label><label><input type="radio"name="subtitle"value="日文字幕"/>日文字幕</label><label><input type="radio"name="subtitle"value="英文字幕"/>英文字幕</label><label><input type="radio"name="subtitle"value="无字幕"checked/>无字幕</label></div><div><strong>【资源大小】：</strong><input type="text"id="resourceSize"placeholder="大小"/><label><input type="radio"name="sizeUnit"value="M"checked/>M</label><label><input type="radio"name="sizeUnit"value="G"/>G</label><label><input type="radio"name="sizeUnit"value="T"/>T</label><br><div><strong>【下载类型】：</strong><label><input type="radio"name="downType"value="115ED2K"checked/>115ED2K</label><label><input type="radio"name="downType"value="BT/磁链"/>BT/磁链</label><label><input type="radio"name="downType"value="ED2K"/>ED2K</label><label><input type="radio"name="downType"value="夸克网盘"/>夸克网盘</label><label><input type="radio"name="downType"value="百度网盘"/>百度网盘</label><label><input type="radio"name="downType"value="PikPak网盘"/>PikPak网盘</label><label><input type="radio"name="downType"value="其它网盘"/>其它网盘</label></div>视频数量:<input type="text"id="videoCount"placeholder="视频数量"/><br>图片数量:<input type="text"id="imageCount"placeholder="图片数量"/><br>配额数量:<input type="text"id="quota"placeholder="配额数量"/></div><div><strong>【资源预览】：</strong></div><div><strong>【资源链接】：</strong><input type="text"id="resourceLink"/></div><button id="insetBtn"type="button">插入</button></div>`;
-    document.body.insertAdjacentHTML("beforeend", modalContent);
-    document
-      .getElementById("organizeBtn")
-      .addEventListener("click", function () {
-        showModal("整理");
-      });
-    document.getElementById("shareBtn").addEventListener("click", function () {
-      showModal("自转");
+    const shareControl = document.createElement("button");
+    shareControl.id = "shareBtn";
+    shareControl.type = "button";
+    shareControl.textContent = "自转";
+    shareButton.appendChild(shareControl);
+    ulElement.append(link, organizeButton, shareButton);
+
+    const modal = document.createElement("div");
+    modal.id = "organizeModal";
+    Object.assign(modal.style, {
+      display: "none",
+      position: "fixed",
+      zIndex: "1000",
+      left: "50%",
+      top: "50%",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: "white",
+      padding: "20px",
+      borderRadius: "10px",
+      maxHeight: "85vh",
+      overflowY: "auto",
     });
-    function showModal(param) {
-        ttttype = param;
-      document.getElementById("organizeModal").style.display = "block";
-    }
-    document.getElementById("insetBtn").addEventListener("click", function () {
-      const resourceName = document.getElementById("resourceName").value;
-      const resourceType = document.querySelector(
-        'input[name="resourceType"]:checked'
-      )?.value;
-      const censorship = document.querySelector(
-        'input[name="censorship"]:checked'
-      )?.value;
-      const watermark = document.querySelector(
-        'input[name="watermark"]:checked'
-      )?.value;
-      const subtitle = document.querySelector(
-        'input[name="subtitle"]:checked'
-      )?.value;
-      const resourceLink = document.getElementById("resourceLink").value;
-      const downType = document.querySelector(
-        'input[name="downType"]:checked'
-      )?.value;
-      const resourceSize = document.getElementById("resourceSize").value;
-      const sizeUnit = document.querySelector(
-        'input[name="sizeUnit"]:checked'
-      ).value;
-      const videoCount = document.getElementById("videoCount").value;
-      const imageCount = document.getElementById("imageCount").value;
-      const quota = document.getElementById("quota").value;
-      let resourceSizeStr = resourceSize ? `${resourceSize}${sizeUnit}` : "";
-      let videoCountStr = videoCount ? `${videoCount}V` : "";
-      let imageCountStr = imageCount ? `${imageCount}P` : "";
-      let quotaStr = quota ? `${quota}配额` : "";
-      const content = `
-                      【资源名称】：${escapeHTML(resourceName)}<br>
-                      【资源类型】：${escapeHTML(resourceType)}<br>
-                      【是否有码】：${escapeHTML(censorship)} @ ${escapeHTML(watermark)} @ ${escapeHTML(subtitle)}<br>
-                      【资源大小】：${escapeHTML(resourceSizeStr)}/${escapeHTML(videoCountStr)}/${escapeHTML(imageCountStr)}/${escapeHTML(quotaStr)}<br>
-                      【资源预览】：<br>
-                      【资源链接】：<div class="blockcode"><blockquote>${escapeHTML(resourceLink)}</blockquote></div><br>
-                  `;
-      const iframe = document.querySelector(".area iframe");
-      if (iframe && iframe.contentDocument) {
-        const body = iframe.contentDocument.body;
-        if (body && body.isContentEditable) {
-          body.innerHTML = content;
-        } else {
-          console.warn("在iframe中未找到可编辑的body元素");
-        }
+
+    const addField = (labelText, id, placeholder = "") => {
+      const wrapper = document.createElement("div");
+      const label = document.createElement("strong");
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.id = id;
+      input.placeholder = placeholder;
+      wrapper.append(label, input);
+      modal.appendChild(wrapper);
+    };
+    const addRadioGroup = (labelText, name, options, defaultValue) => {
+      const wrapper = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = labelText;
+      wrapper.appendChild(title);
+      options.forEach((option) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = name;
+        input.value = option;
+        input.checked = option === defaultValue;
+        label.append(input, document.createTextNode(option));
+        wrapper.appendChild(label);
+      });
+      modal.appendChild(wrapper);
+    };
+
+    addField("【资源名称】：", "resourceName");
+    addRadioGroup("【资源类型】：", "resourceType", ["影片", "视频", "动漫", "套图", "游戏"], "视频");
+    addRadioGroup("【是否有码】：", "censorship", ["有码", "无码"], "无码");
+    addRadioGroup("【是否水印】：", "watermark", ["有水印", "无水印"], "无水印");
+    addRadioGroup("【字幕】：", "subtitle", ["中文字幕", "日文字幕", "英文字幕", "无字幕"], "无字幕");
+    addField("【资源大小】：", "resourceSize", "大小");
+    addRadioGroup("【大小单位】：", "sizeUnit", ["M", "G", "T"], "M");
+    addRadioGroup("【下载类型】：", "downType", ["115ED2K", "BT/磁链", "ED2K", "夸克网盘", "百度网盘", "PikPak网盘", "其它网盘"], "115ED2K");
+    addField("视频数量：", "videoCount", "视频数量");
+    addField("图片数量：", "imageCount", "图片数量");
+    addField("配额数量：", "quota", "配额数量");
+    addField("【资源链接】：", "resourceLink");
+
+    const insertButton = document.createElement("button");
+    insertButton.id = "insetBtn";
+    insertButton.type = "button";
+    insertButton.textContent = "插入";
+    modal.appendChild(insertButton);
+    document.body.appendChild(modal);
+
+    let postActionType = "";
+    const showModal = (type) => {
+      postActionType = type;
+      modal.style.display = "block";
+    };
+    organizeControl.addEventListener("click", () => showModal("整理"));
+    shareControl.addEventListener("click", () => showModal("自转"));
+
+    insertButton.addEventListener("click", () => {
+      const value = (id) => modal.querySelector("#" + id).value.trim();
+      const selected = (name) => modal.querySelector('input[name="' + name + '"]:checked')?.value || "";
+      const resourceName = value("resourceName");
+      const censorship = selected("censorship");
+      const watermark = selected("watermark");
+      const subtitle = selected("subtitle");
+      const downType = selected("downType");
+      const resourceSize = value("resourceSize");
+      const sizeUnit = selected("sizeUnit");
+      const videoCount = value("videoCount");
+      const imageCount = value("imageCount");
+      const quota = value("quota");
+      const resourceLink = value("resourceLink");
+      const resourceSizeStr = resourceSize ? resourceSize + sizeUnit : "";
+      const videoCountStr = videoCount ? videoCount + "V" : "";
+      const imageCountStr = imageCount ? imageCount + "P" : "";
+      const quotaStr = quota ? quota + "配额" : "";
+      const sizeSummary = [resourceSizeStr, videoCountStr, imageCountStr, quotaStr].join("/");
+
+      const body = document.querySelector(".area iframe")?.contentDocument?.body;
+      if (body && body.isContentEditable) {
+        body.replaceChildren();
+        const addLine = (labelText, text) => {
+          const strong = document.createElement("strong");
+          strong.textContent = labelText;
+          body.append(strong, document.createTextNode(text), document.createElement("br"));
+        };
+        addLine("【资源名称】：", resourceName);
+        addLine("【资源类型】：", selected("resourceType"));
+        addLine("【是否有码】：", censorship + " @ " + watermark + " @ " + subtitle);
+        addLine("【资源大小】：", sizeSummary);
+        addLine("【资源预览】：", "");
+        const linkLabel = document.createElement("strong");
+        linkLabel.textContent = "【资源链接】：";
+        const codeBlock = document.createElement("div");
+        codeBlock.className = "blockcode";
+        const quote = document.createElement("blockquote");
+        quote.textContent = resourceLink;
+        codeBlock.appendChild(quote);
+        body.append(linkLabel, codeBlock, document.createElement("br"));
       } else {
-        console.warn("未找到class为area的div中的iframe");
+        console.warn("未找到可编辑的资源内容区域");
       }
-      const title = `【${ttttype}】【${downType}】${resourceName}【${resourceSizeStr}/${videoCountStr}/${imageCountStr}/${quotaStr}】
-                  `;
+
       const subjectInput = document.getElementById("subject");
       if (subjectInput) {
-        subjectInput.value = title;
+        subjectInput.value = "【" + postActionType + "】【" + downType + "】" + resourceName + "【" + sizeSummary + "】";
       } else {
         console.warn("未找到ID为'subject'的input元素");
       }
-      var selectElement = document.getElementById("typeid");
-      if (selectElement) {
-        selectElement.setAttribute("selecti", "8");
-      } else {
-        console.warn("未找到ID为'typeid'的select元素");
-      }
-      var aElement = document.querySelector(".ftid a#typeid_ctrl");
-      if (aElement) {
-        aElement.textContent = "情色分享";
-        aElement.setAttribute("initialized", "true");
+      const selectElement = document.getElementById("typeid");
+      if (selectElement) selectElement.setAttribute("selecti", "8");
+      else console.warn("未找到ID为'typeid'的select元素");
+      const typeLink = document.querySelector(".ftid a#typeid_ctrl");
+      if (typeLink) {
+        typeLink.textContent = "情色分享";
+        typeLink.setAttribute("initialized", "true");
       } else {
         console.warn("未找到对应的a元素");
       }
-      document.getElementById("organizeModal").style.display = "none";
+      modal.style.display = "none";
     });
-  }
-
-  function setMenuButtonPosition(menuButton, container, settings) {
-    // 添加按钮到页面以获取其高度
-    document.body.appendChild(menuButton);
-
-    const containerRect = settings.menuButtonIsVisible
-      ? container.getBoundingClientRect()
-      : 100;
-
-    // 设置按钮的顶部位置为容器的顶部位置减去按钮的高度再减去一些间隔
-    menuButton.style.top = `${
-      containerRect.top - menuButton.offsetHeight - 50
-    }px`;
   }
 
   /**
