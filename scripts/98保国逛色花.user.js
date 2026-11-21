@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.15
+// @version      100.16
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -210,11 +210,12 @@
    */
 
   function addStyles() {
-    // 创建一个新的<style>元素
+    document.getElementById("bgsh-main-styles")?.remove();
     const style = document.createElement("style");
+    style.id = "bgsh-main-styles";
 
     // 定义我们需要的自定义样式
-    style.innerHTML = `
+    style.textContent = `
 
             /* --- 通用自定义按钮的样式 --- */
             .bgsh-customBtn, .bgsh-searchBtn, .bgsh-quickTopicadminToPostBtn, .bgsh-quickReplyToPostBtn,.bgsh-QuickMiscReportBtn,.bgsh-quickReportadToPostBtn,.bgsh-quickGradeToPostBtn ,.bgsh-openAllUrlBtn,.bgsh-fastPMButtonBtn,.bgsh-quickReplyEditToPostBtn,.bgsh-setAnswerToPostBtn {
