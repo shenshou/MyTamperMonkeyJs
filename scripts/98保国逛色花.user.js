@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.21
+// @version      100.22
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -2564,9 +2564,17 @@
    * @param {string} newUrl - 新的图片URL
    */
   function replaceMedal(img, targetMatch, setting, newUrl) {
-    if (shouldApplySetting(setting, targetMatch)) {
-      img.src = newUrl;
+    if (!shouldApplySetting(setting, targetMatch)) return;
+    try {
+      const imageURL = new URL(newUrl, window.location.href);
+      if (imageURL.protocol !== "http:" && imageURL.protocol !== "https:") {
+        console.warn("已跳过不安全的勋章图片地址。");
+        return;
+      }
+      img.src = imageURL.href;
       img.style.width = "50px";
+    } catch {
+      console.warn("已跳过无效的勋章图片地址。");
     }
   }
 
@@ -4738,6 +4746,15 @@
    *
    * @param {Object} settings - 用户的设置
    */
+  function setMenuButtonPosition(menuButton, container, settings) {
+    // 重复调用时移动现有节点，不会创建新的按钮副本。
+    document.body.appendChild(menuButton);
+    const containerTop = settings.menuButtonIsVisible
+      ? container.getBoundingClientRect().top
+      : 100;
+    menuButton.style.top = `${containerTop - menuButton.offsetHeight - 50}px`;
+  }
+
   async function baseFunction(settings) {
     removeAD();
     if (settings.blockingIndex) {
