@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         JAV老司机（测试版）
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/test
-// @version      3.8.14
+// @version      3.8.15
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
@@ -111,10 +111,10 @@
     }
     function buildSiteUrl(siteOrId, avid, templateOverride) {
         const site=typeof siteOrId==='string'?readSiteConfig().find(item=>item.id===siteOrId):siteOrId;
-        if(!site||!site.enabled||!site.host||!site.template) return '';
+        if(!site||!site.enabled||!site.host) return '';
         const full=String(avid||'').trim();
         const code=site.id==='onejav'?full.replace(/-|FC2|PPV/g,''):full.replace(/-/g,'');
-        const path=String(templateOverride||site.template).trim();
+        const path=String(templateOverride!==undefined?templateOverride:(site.template||'')).trim()||'/';
         if(!path.startsWith('/')||path.startsWith('//')||/[\u0000-\u001f]/.test(path)) return '';
         const expanded=path.replace(/\{(id|code)\}/g,(_,key)=>encodeURIComponent(key==='code'?code:full));
         try {
@@ -123,31 +123,60 @@
             return url.href;
         } catch(error) { return ''; }
     }
+    function isCurrentConfiguredSite(site) {
+        if(!site) return false;
+        const canonical=value=>String(value||'').toLowerCase().replace(/^www\./,'').split(':')[0];
+        if(canonical(site.host)===canonical(location.hostname)) return true;
+        const title=document.title||'';
+        const titleMatchers={
+            javlib:/JAVLibrary/i,javbus:/JavBus/i,avsox:/AVSOX|AVMOO/i,onejav:/OneJAV/i,
+            jav321:/JAV321/i,javstore:/JavStore/i,missav:/MissAV/i,mmtv:/7mmtv|MMTV/i,
+            supjav:/SupJav/i,njav:/NJAV/i
+        };
+        return !!(titleMatchers[site.id]&&titleMatchers[site.id].test(title));
+    }
     function isSiteEnabled(id, group) {
         const site=readSiteConfig().find(item=>item.id===id);
-        return !!(site&&site.enabled&&Array.isArray(site.groups)&&site.groups.includes(group));
+        return !!(site&&site.enabled&&!isCurrentConfiguredSite(site)&&Array.isArray(site.groups)&&site.groups.includes(group));
     }
     function renderSiteLinks(avid, group) {
-        return readSiteConfig().filter(site=>site.enabled&&!site.dynamic&&Array.isArray(site.groups)&&site.groups.includes(group))
+        return readSiteConfig().filter(site=>site.enabled&&!site.dynamic&&!isCurrentConfiguredSite(site)&&Array.isArray(site.groups)&&site.groups.includes(group))
             .map(site=>{const url=buildSiteUrl(site,avid);return url?'<a href="'+escapeSiteHtml(url)+'" target="_blank" rel="noopener noreferrer" title="'+escapeSiteHtml(site.name)+'">'+escapeSiteHtml(site.name)+'&nbsp;</a>':'';}).join('');
     }
     const MAGNET_SOURCES = [
-        {label:'JavDB', domainKey:'javdb_url', enabledKey:'javdb_magnet_enabled', defaultDomain:JAVDB_DOMAIN},
-        {label:'BTSOW', domainKey:'btsow_url', enabledKey:'btsow_magnet_enabled', defaultDomain:BTSOW_DOMAIN},
-        {label:'BTDig', domainKey:'btdig_url', enabledKey:'btdig_magnet_enabled', defaultDomain:'www.btdig.com'},
-        {label:'Nyaa', domainKey:'nyaa_url', enabledKey:'nyaa_magnet_enabled', defaultDomain:'sukebei.nyaa.si'},
-        {label:'TorrentKitty', domainKey:'torrentkitty_url', enabledKey:'torrentkitty_magnet_enabled', defaultDomain:TORRENTKITTY_DOMAIN}
+        {id:'javdb', label:'JavDB', nameKey:'javdb_magnet_name', domainKey:'javdb_url', enabledKey:'javdb_magnet_enabled', templateKey:'javdb_search_template', defaultName:'JavDB', defaultDomain:JAVDB_DOMAIN, defaultTemplate:'/search?f=download&q={query}'},
+        {id:'btsow', label:'BTSOW', nameKey:'btsow_magnet_name', domainKey:'btsow_url', enabledKey:'btsow_magnet_enabled', templateKey:'btsow_search_template', defaultName:'BTSOW', defaultDomain:BTSOW_DOMAIN, defaultTemplate:'/search/{query}'},
+        {id:'btdig', label:'BTDig', nameKey:'btdig_magnet_name', domainKey:'btdig_url', enabledKey:'btdig_magnet_enabled', templateKey:'btdig_search_template', defaultName:'BTDig', defaultDomain:'www.btdig.com', defaultTemplate:'/search?q={query}'},
+        {id:'nyaa', label:'Nyaa', nameKey:'nyaa_magnet_name', domainKey:'nyaa_url', enabledKey:'nyaa_magnet_enabled', templateKey:'nyaa_search_template', defaultName:'Nyaa', defaultDomain:'sukebei.nyaa.si', defaultTemplate:'/?f=0&c=0_0&q={query}'},
+        {id:'torrentkitty', label:'TorrentKitty', nameKey:'torrentkitty_magnet_name', domainKey:'torrentkitty_url', enabledKey:'torrentkitty_magnet_enabled', templateKey:'torrentkitty_search_template', defaultName:'TorrentKitty', defaultDomain:TORRENTKITTY_DOMAIN, defaultTemplate:'/search/{query}'}
     ];
+    function magnetSourceHost(source) {
+        return normalizeSiteHost(GM_getValue(source.domainKey,source.defaultDomain)||source.defaultDomain);
+    }
+    function magnetSourceName(source) {
+        return String(GM_getValue(source.nameKey,source.defaultName)||source.defaultName).trim();
+    }
+    function magnetSourceTemplate(source) {
+        return String(GM_getValue(source.templateKey,source.defaultTemplate)||'').trim();
+    }
+    function buildMagnetSearchUrl(sourceId, keyword) {
+        const source=MAGNET_SOURCES.find(item=>item.id===sourceId);
+        if(!source) return '';
+        const host=magnetSourceHost(source),template=magnetSourceTemplate(source);
+        if(!host||!template||!template.startsWith('/')||template.startsWith('//')||!template.includes('{query}')||/[\u0000-\u001f]/.test(template)) return '';
+        try {
+            const url=new URL('https://'+host+template.replace(/\{query\}/g,encodeURIComponent(String(keyword||''))));
+            return url.protocol==='https:'&&url.hostname===host.split(':')[0]?url.href:'';
+        } catch(error) { return ''; }
+    }
     function enabledMagnetSources() {
-        return MAGNET_SOURCES.filter(source => GM_getValue(source.enabledKey, true))
-            .map(source => String(GM_getValue(source.domainKey, source.defaultDomain) || '').trim())
-            .filter(Boolean);
+        return MAGNET_SOURCES.filter(source=>GM_getValue(source.enabledKey,true))
+            .map(magnetSourceHost).filter(Boolean);
     }
     function magnetSourceLabel(host) {
-        const value = String(host || '').toLowerCase();
-        const source = MAGNET_SOURCES.find(item =>
-            String(GM_getValue(item.domainKey, item.defaultDomain) || '').toLowerCase() === value);
-        return source ? source.label : (host || '未知来源');
+        const value=String(host||'').toLowerCase();
+        const source=MAGNET_SOURCES.find(item=>magnetSourceHost(item).toLowerCase()===value);
+        return source?magnetSourceName(source):(host||'未知来源');
     }
 
     function bindTampermonkeyOpenLinks(root) {
@@ -246,9 +275,12 @@
                 GM_setValue(SITE_CONFIG_KEY,readSiteConfig());
                 for(const legacyKey of Object.keys(LEGACY_SITE_KEYS)) GM_deleteValue(legacyKey);
             }
-            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN};
-            for(const [key,value] of Object.entries(defaults))if(GM_getValue(key,undefined)===undefined)GM_setValue(key,value);
-            for(const source of MAGNET_SOURCES)if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
+            for(const source of MAGNET_SOURCES) {
+                if(GM_getValue(source.domainKey,undefined)===undefined)GM_setValue(source.domainKey,source.defaultDomain);
+                if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
+                if(GM_getValue(source.nameKey,undefined)===undefined)GM_setValue(source.nameKey,source.defaultName);
+                if(GM_getValue(source.templateKey,undefined)===undefined)GM_setValue(source.templateKey,source.defaultTemplate);
+            }
             GM_setValue('javOldDriver_version',GM_info.script.version);
             GM_registerMenuCommand('设置',()=>Common.openSystemConfig());
         }
@@ -293,23 +325,31 @@
             controls.className='tm-site-controls';controls.append(add,restore);dom.appendChild(controls);
             const scrollRow=document.createElement('label');scrollRow.className='tm-setting';scrollRow.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
             const scroll=makeCheck(GM_getValue('scroll_status',1)!==0);scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
-            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源（独立配置）';dom.appendChild(magnetHeading);
-            const magnetInputs={},toggles={};
+            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源配置';dom.appendChild(magnetHeading);
+            const magnetHelp=document.createElement('p');magnetHelp.className='tm-setting-help';magnetHelp.textContent='可修改现有搜索源的名称、域名和搜索路径模板。模板必须包含 {query}，用于填入搜索关键词。每个来源使用专用结果解析器，因此这里不能仅通过填写域名新增一个全新的搜索引擎。';dom.appendChild(magnetHelp);
+            const magnetRows=[];
             for(const source of MAGNET_SOURCES){
-                const row=document.createElement('div');row.className='tm-setting';
-                const label=document.createElement('label');label.textContent=source.label+' 启用';
-                const toggle=makeCheck(GM_getValue(source.enabledKey,true));toggles[source.enabledKey]=toggle;label.appendChild(toggle);
-                const input=makeInput(String(GM_getValue(source.domainKey,source.defaultDomain)||source.defaultDomain),'磁力源域名');magnetInputs[source.domainKey]=input;
-                row.append(label,input);dom.appendChild(row);
+                const row=document.createElement('section');row.className='tm-site-row';
+                const name=makeInput(magnetSourceName(source),'来源名称');
+                const host=makeInput(magnetSourceHost(source),'域名，例如 example.com');
+                const template=makeInput(magnetSourceTemplate(source),'搜索模板，例如 /search?q={query}');
+                const enabled=makeCheck(GM_getValue(source.enabledKey,true));
+                const fields=document.createElement('div');fields.className='tm-site-fields';
+                const named=(caption,node)=>{const wrap=document.createElement('label');wrap.className='tm-site-field';const label=document.createElement('span');label.textContent=caption;wrap.append(label,node);return wrap;};
+                fields.append(named('来源名称',name),named('域名',host),named('搜索 URL 路径模板',template));
+                const flags=document.createElement('div');flags.className='tm-site-flags';
+                const flag=document.createElement('label');flag.append(enabled,document.createTextNode('启用'));flags.appendChild(flag);
+                row.append(fields,flags);dom.appendChild(row);
+                magnetRows.push({source,name,host,template,enabled});
             }
             const collectSites=()=>{
                 const result=[];
                 for(const row of siteRows){
                     if(!row.row.isConnected)continue;
-                    const name=row.title.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim();
+                    const name=row.title.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim()||'/';
                     const groups=row.original&&row.original.dynamic?['jump']:[];
                     if(!(row.original&&row.original.dynamic)){if(row.jump.checked)groups.push('jump');if(row.preview.checked)groups.push('preview');}
-                    if(!name||!host||!template||!template.startsWith('/')||template.startsWith('//')||/[\u0000-\u001f]/.test(template)||!groups.length)throw new Error('站点名称、有效域名、以 / 开头的路径模板及至少一个适用场景均为必填项。');
+                    if(!name||!host||!template.startsWith('/')||template.startsWith('//')||/[\u0000-\u001f]/.test(template)||!groups.length)throw new Error('站点名称、有效域名及至少一个适用场景为必填项；路径模板可以留空（留空时使用站点首页）。');
                     const original=row.original||{};
                     result.push({id:original.id||row.row.dataset.siteId||('custom-'+Date.now()),name,host,template,groups,enabled:row.enabled.checked,dynamic:!!original.dynamic});
                 }
@@ -321,12 +361,21 @@
                 if(!result.value)return;
                 let sites;
                 try{sites=collectSites();}catch(error){Swal.fire('配置有误',error.message,'error');return;}
-                const magnetValues={};
-                for(const [key,input] of Object.entries(magnetInputs)){const host=normalizeSiteHost(input.value);if(!host){Swal.fire('网址格式错误','请填写有效磁力源域名，可包含端口。','error');return;}magnetValues[key]=host;}
+                const magnetValues=[];
+                for(const row of magnetRows){
+                    const name=row.name.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim();
+                    if(!name||!host){Swal.fire('磁力源配置有误','磁力源名称和有效域名不能为空。','error');return;}
+                    if(!template.startsWith('/')||template.startsWith('//')||!template.includes('{query}')||/[\u0000-\u001f]/.test(template)){Swal.fire('搜索模板有误','磁力搜索模板必须以 / 开头，并且包含 {query}。','error');return;}
+                    magnetValues.push({source:row.source,name,host,template,enabled:row.enabled.checked});
+                }
                 GM_setValue(SITE_CONFIG_KEY,sites);
                 GM_setValue('scroll_status',scroll.checked?1:0);
-                for(const [key,value] of Object.entries(magnetValues))GM_setValue(key,value);
-                for(const source of MAGNET_SOURCES)GM_setValue(source.enabledKey,toggles[source.enabledKey].checked);
+                for(const item of magnetValues){
+                    GM_setValue(item.source.nameKey,item.name);
+                    GM_setValue(item.source.domainKey,item.host);
+                    GM_setValue(item.source.templateKey,item.template);
+                    GM_setValue(item.source.enabledKey,item.enabled);
+                }
                 const enabled=enabledMagnetSources(),selected=GM_getValue('search_index','');
                 if(enabled.length&&!enabled.includes(selected))GM_setValue('search_index',enabled[0]);
                 history.go(0);
@@ -2124,8 +2173,11 @@
                 },
             },
             resource_sites: {
-                [GM_getValue('javdb_url', JAVDB_DOMAIN)]: (kw, callback) => {
-                    let promise = Common.request("https://" + GM_getValue('search_index') + "/search?f=download&q=" + kw, "https://" + GM_getValue('search_index') + "/");
+                [magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='javdb'))]: (kw, callback) => {
+                    const searchHost=GM_getValue('search_index');
+                    const searchUrl=buildMagnetSearchUrl('javdb',kw);
+                    if(!searchUrl){callback('',[]);return;}
+                    let promise = Common.request(searchUrl, "https://" + searchHost + "/");
                     promise.then((result) => {
                         let data = [];
                         return new Promise((resolve, reject) => {
@@ -2133,10 +2185,9 @@
                             let doc = Common.parsetext(result.responseText);
                             let a = $(doc).find(`.box .video-title:contains('${kw.toUpperCase().replace("+", "-")}')`);
                             if (a) {
-                                let url = a[0].parentElement.href.replace(location.origin, 'https://' + [GM_getValue('javdb_url')]);
-                                if(url.indexOf("http") < 0) {
-                                    url = 'https://' + [GM_getValue('javdb_url')] + url;
-                                }
+                                let url;
+                                try { url=new URL(a[0].parentElement.getAttribute('href'),"https://"+searchHost+"/").href; }
+                                catch(error) { reject(error);return; }
                                 resolve(url);
                             }
                             else {
@@ -2178,8 +2229,9 @@
                         });
                     });
                 },
-                [GM_getValue('btsow_url', BTSOW_DOMAIN)]: (kw, callback) => {
-                    let promise = Common.request("https://" + GM_getValue('search_index') + "/search/" + kw);
+                [magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='btsow'))]: (kw, callback) => {
+                    const searchUrl=buildMagnetSearchUrl('btsow',kw);if(!searchUrl){callback('',[]);return;}
+                    let promise = Common.request(searchUrl);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
                         var doc = Common.parsetext(result.responseText);
@@ -2204,8 +2256,9 @@
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('btdig_url', 'www.btdig.com')]: (kw, callback) => {
-                    let promise = Common.request("https://" + GM_getValue('search_index') + "/search?q=" + kw);
+                [magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='btdig'))]: (kw, callback) => {
+                    const searchUrl=buildMagnetSearchUrl('btdig',kw);if(!searchUrl){callback('',[]);return;}
+                    let promise = Common.request(searchUrl);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
                         let doc = Common.parsetext(result.responseText);
@@ -2232,8 +2285,9 @@
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('nyaa_url', 'sukebei.nyaa.si')]: (kw, callback) => {
-                    let promise = Common.request("https://" + GM_getValue('search_index') + "/?f=0&c=0_0&q=" + kw);
+                [magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='nyaa'))]: (kw, callback) => {
+                    const searchUrl=buildMagnetSearchUrl('nyaa',kw);if(!searchUrl){callback('',[]);return;}
+                    let promise = Common.request(searchUrl);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
                         let doc = Common.parsetext(result.responseText);
@@ -2249,16 +2303,16 @@
                                     "maglink": elem.querySelector("td:nth-child(3)>a:nth-last-child(1)").href,
                                     //"torrent_url": "https://nyaa.si" + elem.querySelector("td:nth-child(3)>a:nth-child(1)").href,
                                     "size": elem.querySelector("td:nth-child(4)").textContent,
-                                    "src": "https://" + [GM_getValue('nyaa_url')]
-                                        + elem.querySelector("td:nth-child(2)>a:nth-child(1)").getAttribute('href'),
+                                    "src": new URL(elem.querySelector("td:nth-child(2)>a:nth-child(1)").getAttribute('href'),searchUrl).href,
                                 });
                             }
                         }
                         callback(result.finalUrl, data);
                     });
                 },
-                [GM_getValue('torrentkitty_url', TORRENTKITTY_DOMAIN)]: (kw, callback) => {
-                    let promise = Common.request("https://" + GM_getValue('search_index') + "/search/" + kw);
+                [magnetSourceHost(MAGNET_SOURCES.find(source=>source.id==='torrentkitty'))]: (kw, callback) => {
+                    const searchUrl=buildMagnetSearchUrl('torrentkitty',kw);if(!searchUrl){callback('',[]);return;}
+                    let promise = Common.request(searchUrl);
                     promise.then((result) => {
                         thirdparty.nong.search_engines.full_url = result.finalUrl;
                         let doc = Common.parsetext(result.responseText);
@@ -2272,7 +2326,7 @@
                                     "title": elem.querySelector(".name").textContent,
                                     "maglink": elem.querySelector(".action>a:nth-child(2)").href,
                                     "size": elem.querySelector(".size").textContent,
-                                    "src": "https://" + [GM_getValue('torrentkitty_url')] + elem.querySelector(".action>a:nth-child(1)").getAttribute('href'),
+                                    "src": new URL(elem.querySelector(".action>a:nth-child(1)").getAttribute('href'),searchUrl).href,
                                 });
                             }
                         }
