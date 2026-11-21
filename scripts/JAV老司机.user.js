@@ -185,8 +185,8 @@
     }
 
     function hostMatchesDomain(host, domain) {
-        const normalizedHost = String(host || '').toLowerCase().replace(/\\.$/, '');
-        const normalizedDomain = String(domain || '').toLowerCase().replace(/^\\./, '');
+        const normalizedHost = String(host || '').toLowerCase().replace(/\.$/, '');
+        const normalizedDomain = String(domain || '').toLowerCase().replace(/^\./, '');
         return !!normalizedHost && !!normalizedDomain &&
             (normalizedHost === normalizedDomain || normalizedHost.endsWith('.' + normalizedDomain));
     }
@@ -945,7 +945,14 @@
                     },
                     data: "sn=" + encodeURIComponent(avid),
                     timeout: 20000,
-                    onload: (r) => resolve(r.finalUrl),
+                    onload: (r) => {
+                        if (r.finalUrl && !isAuthorizedRequestUrl(r.finalUrl)) {
+                            notifyUnauthorizedRequest(r.finalUrl);
+                            reject(new Error('JAV321 请求重定向到未授权域名：' + r.finalUrl));
+                            return;
+                        }
+                        resolve(r.finalUrl);
+                    },
                     onerror: (r) => reject(`查找jav321的 ${avid} 出错了`),
                     ontimeout: (r) => reject(`查找jav321的 ${avid} 超时了`)
                 });
