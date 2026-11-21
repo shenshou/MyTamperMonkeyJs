@@ -306,7 +306,7 @@
                 return result;
             };
             Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存',showCancelButton:true,cancelButtonText:'取消',
-                onOpen:popup=>{popup.style.width='min(920px, calc(100vw - 24px))';popup.style.maxHeight='calc(100vh - 24px)';popup.style.display='flex';popup.style.flexDirection='column';const content=popup.querySelector('.swal2-content');if(content){content.style.overflowY='auto';content.style.minHeight='0';content.style.flex='1';}const actions=popup.querySelector('.swal2-actions');if(actions)actions.style.flexShrink='0';}
+                onOpen:popup=>{popup.style.width='min(920px, calc(100vw - 24px))';popup.style.maxHeight='calc(100vh - 24px)';popup.style.display='flex';popup.style.flexDirection='column';const content=popup.querySelector('.swal2-content');if(content){content.style.overflow='hidden';content.style.display='flex';content.style.minHeight='0';content.style.flex='1 1 auto';}const config=popup.querySelector('#tm-site-config');if(config){config.style.maxHeight='70vh';config.style.overflowY='auto';}const actions=popup.querySelector('.swal2-actions');if(actions)actions.style.flexShrink='0';}
             }).then(result=>{
                 if(!result.value)return;
                 let sites;
