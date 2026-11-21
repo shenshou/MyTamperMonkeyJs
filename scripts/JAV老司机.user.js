@@ -88,6 +88,9 @@
     const JAVDB_DOMAIN = 'javdb368.com';
     const TORRENTKITTY_DOMAIN = 'www.torrentkitty.one';
     const MMTV_DOMAIN = '7mmtv.sx';
+    function getSiteDomain(key, fallback) {
+        return String(GM_getValue(key, fallback) || fallback).trim().replace(/^https?:\/\//i, '').split('/')[0];
+    }
     const JAVLIB_DOMAIN = 's87n.com';
     const MAGNET_SOURCES = [
         {label:'JavDB', domainKey:'javdb_url', enabledKey:'javdb_magnet_enabled', defaultDomain:JAVDB_DOMAIN},
@@ -199,7 +202,7 @@
      */
     class Common {
         static init() {
-            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN,javlib_url:'www.javlibrary.com',javbus_url:'www.javbus.com',avsox_url:'avsox.click'};
+            const defaults={btsow_url:BTSOW_DOMAIN,btdig_url:'www.btdig.com',nyaa_url:'sukebei.nyaa.si',torrentkitty_url:TORRENTKITTY_DOMAIN,javdb_url:JAVDB_DOMAIN,javlib_url:'www.javlibrary.com',javbus_url:'www.javbus.com',avsox_url:'avsox.click',onejav_url:'onejav.com',jav321_url:'www.jav321.com',javstore_url:'javstore.net',missav_url:'missav.com',mmtv_url:MMTV_DOMAIN,supjav_url:'supjav.com',njav_url:'njav.tv'};
             for(const [key,value] of Object.entries(defaults))if(GM_getValue(key,undefined)===undefined)GM_setValue(key,value);
             for(const source of MAGNET_SOURCES)if(GM_getValue(source.enabledKey,undefined)===undefined)GM_setValue(source.enabledKey,true);
             GM_setValue('javOldDriver_version',GM_info.script.version);
@@ -207,7 +210,7 @@
         }
         static openSystemConfig() {
             const dom=document.createElement('div'),inputs={},toggles={};
-            const siteFields=[['javlib_url','JavLibrary 域名','www.javlibrary.com'],['javbus_url','JavBus 域名','www.javbus.com'],['avsox_url','AVSOX 域名','avsox.click']];
+            const siteFields=[['javlib_url','JavLibrary 域名','www.javlibrary.com'],['javbus_url','JavBus 域名','www.javbus.com'],['avsox_url','AVSOX 域名','avsox.click'],['onejav_url','OneJAV 域名','onejav.com'],['jav321_url','JAV321 域名','www.jav321.com'],['javstore_url','JavStore 域名','javstore.net'],['missav_url','MissAV 域名','missav.com'],['mmtv_url','7mmtv 域名',MMTV_DOMAIN],['supjav_url','SupJav 域名','supjav.com'],['njav_url','NJAV 域名','njav.tv']];
             const scrollRow=document.createElement('label');scrollRow.className='tm-setting';scrollRow.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
             const scroll=document.createElement('input');scroll.type='checkbox';scroll.className='tm-checkbox';scroll.checked=GM_getValue('scroll_status',1)!==0;scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
             const siteHeading=document.createElement('h3');siteHeading.textContent='资源站域名';dom.appendChild(siteHeading);
@@ -455,7 +458,7 @@
         static getOneJavSearchUrl(avid) {
             //FC2-PPV-9999999 => 9999999 , ABP-999 => ABP999
             avid = avid.replace(/-|FC2|PPV/g, "");
-            return "https://onejav.com/search/" + avid;
+            return "https://" + getSiteDomain("onejav_url", "onejav.com") + "/search/" + avid;
         }
         /**
          * 获取查询blogjav的番号处理过后的查询字符
@@ -486,7 +489,7 @@
             return new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
                     method: "POST",
-                    url: 'https://www.jav321.com/search',
+                    url: 'https://' + getSiteDomain('jav321_url', 'www.jav321.com') + '/search',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
@@ -504,7 +507,7 @@
          * @returns {Promise}  返回符合JavStore查询番号参数的url
          */
         static getJavStoreSearchUrl(avid) {
-            let promise1 = Common.request(`https://javstore.net/search/${avid}.html`);
+            let promise1 = Common.request(`https://${getSiteDomain('javstore_url', 'javstore.net')}/search/${avid}.html`);
             return promise1.then((result) => {
                 if (!result.loadstuts) return;
                 let doc = Common.parsetext(result.responseText);
@@ -525,7 +528,7 @@
                     }
                 }
 
-                return a ? `https://javstore.net${a.pathname}` : null;
+                return a ? `https://${getSiteDomain('javstore_url', 'javstore.net')}${a.pathname}` : null;
             });
         }
         /**
@@ -539,7 +542,7 @@
                 //鼠标左键 0  鼠标中键滚轮 1
                 if (e.button < 2) {
                     Common.getJav321SearchUrl(avid).then((url) => {
-                        if (url && !(/https:\/\/www.jav321.com\/search/).test(url)) {
+                        if (url && !(/\/search\/?$/.test(new URL(url).pathname))) {
                             GM_openInTab(url, { active: !e.button, insert: true, setParent: true });
                         } else {
                             Common.notifiy(`Jav321查无此番号: ${avid}`, '换个JAV站点查找试试吧!', EMPTY_IMAGE_DATA, "");
@@ -974,7 +977,7 @@
                 }
                 //JavWebSql.DBinit();
                 // 新增VR发行、FC2发行菜单入口
-                $('.menul1 ul li:contains("新发行")').after('<li><a href="https://onejav.com/popular/?amateur=1" target="_blank" style="color: red;">FC2发行</a></li>');
+                $('.menul1 ul li:contains("新发行")').after('<li><a href="https://' + getSiteDomain('onejav_url', 'onejav.com') + '/popular/?amateur=1" target="_blank" style="color: red;">FC2发行</a></li>');
                 $('.menul1 ul li:contains("新发行")').after('<li><a href="vl_genre.php?g=aaua" style="color: red;">VR发行</a></li>');
 
 
@@ -1087,9 +1090,9 @@
                             <table><tbody><tr>
                                 <td class="header">在线预览:</td>
                                 <td>
-                                    <span class="genre"><a href="https://missav.com/cn/${AVID}" target="_blank" title="MissAV">missav</a></span>
-                                    <span class="genre"><a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" title="7mmtv">7mmtv</a></span>
-                                    <span class="genre"><a href="https://supjav.com/zh/?s=${Common.getAvCode(AVID)}+${AVID}" target="_blank" title="SupJav">supjav</a></span>
+                                    <span class="genre"><a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${AVID}" target="_blank" title="MissAV">missav</a></span>
+                                    <span class="genre"><a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${AVID}/1.html" target="_blank" title="7mmtv">7mmtv</a></span>
+                                    <span class="genre"><a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${Common.getAvCode(AVID)}+${AVID}" target="_blank" title="SupJav">supjav</a></span>
                                 </td>
                             </tr></tbody></table>
                         </div>
@@ -1120,7 +1123,7 @@
                     .screencap img{	width:100%;	max-width: 1000px;}
                 `);
                 // 新增FC2菜单入口
-                $('#navbar ul.nav.navbar-nav li:eq(0)').after(`<li><a href="https://onejav.com/popular/?amateur=1" target="_blank" style="color: red;">FC2</a></li>`);
+                $('#navbar ul.nav.navbar-nav li:eq(0)').after(`<li><a href="https://${getSiteDomain('onejav_url', 'onejav.com')}/popular/?amateur=1" target="_blank" style="color: red;">FC2</a></li>`);
                 // 新增VR菜单入口
                 $('#navbar ul.nav.navbar-nav li:eq(0)').after('<li><a href="/search/VR&type=1" style="color: red;">VR</a></li>');
                 // 指定站点页面加入瀑布流控制按钮
@@ -1188,9 +1191,9 @@
                     $('.col-md-3.info').append(`
                         <p id="jav-online-preview">
                             <span class="header">在线预览:</span>
-                            <a href="https://missav.com/cn/${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;</a>
-                            <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;</a>
-                            <a href="https://supjav.com/zh/?s=${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;</a>
+                            <a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;</a>
+                            <a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${AVID}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;</a>
+                            <a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;</a>
                         </p>
                     `);
                     bindTampermonkeyOpenLinks(document.getElementById('jav-online-preview'));
@@ -1452,10 +1455,10 @@
                 thirdparty.nong.searchMagnetRun();
 
                 $(".onlinePlayLink").append(`
-                    <a href="https://njav.tv/zh/search?keyword=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="NJAV">njav&nbsp;&nbsp;</a>
-                    <a href="https://missav.com/cn/${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;&nbsp;</a>
-                    <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${$('.boxoleft .box_left_news.news_2n').attr("avid")}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;&nbsp;</a>
-                    <a href="https://supjav.com/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;&nbsp;</a>
+                    <a href="${'https://' + getSiteDomain('njav_url', 'njav.tv')}/zh/search?keyword=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="NJAV">njav&nbsp;&nbsp;</a>
+                    <a href="${'https://' + getSiteDomain('missav_url', 'missav.com')}/cn/${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;&nbsp;</a>
+                    <a href="${'https://' + getSiteDomain('mmtv_url', MMTV_DOMAIN)}/zh/censored_search/all/${$('.boxoleft .box_left_news.news_2n').attr("avid")}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;&nbsp;</a>
+                    <a href="${'https://' + getSiteDomain('supjav_url', 'supjav.com')}/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;&nbsp;</a>
                 `);
                 bindTampermonkeyOpenLinks(document.querySelector('.onlinePlayLink'));
 
