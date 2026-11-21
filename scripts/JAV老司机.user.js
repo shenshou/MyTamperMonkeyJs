@@ -123,6 +123,10 @@
             return url.href;
         } catch(error) { return ''; }
     }
+    function isSiteEnabled(id, group) {
+        const site=readSiteConfig().find(item=>item.id===id);
+        return !!(site&&site.enabled&&Array.isArray(site.groups)&&site.groups.includes(group));
+    }
     function renderSiteLinks(avid, group) {
         return readSiteConfig().filter(site=>site.enabled&&!site.dynamic&&Array.isArray(site.groups)&&site.groups.includes(group))
             .map(site=>{const url=buildSiteUrl(site,avid);return url?'<a href="'+escapeSiteHtml(url)+'" target="_blank" rel="noopener noreferrer" title="'+escapeSiteHtml(site.name)+'">'+escapeSiteHtml(site.name)+'&nbsp;</a>':'';}).join('');
@@ -258,8 +262,9 @@
                 const host=makeInput(site.host,'域名，例如 www.example.com');host.setAttribute('aria-label','域名');
                 const template=makeInput(site.template,'路径模板，例如 /search/{id}');template.setAttribute('aria-label','URL 路径模板');
                 const enabled=makeCheck(site.enabled!==false);
-                const jump=makeCheck((site.groups||[]).includes('jump'));
-                const preview=makeCheck((site.groups||[]).includes('preview'));
+                const jump=makeCheck(!!site.dynamic||(site.groups||[]).includes('jump'));
+                const preview=makeCheck(!site.dynamic&&(site.groups||[]).includes('preview'));
+                if(site.dynamic){jump.disabled=true;preview.disabled=true;}
                 const top=document.createElement('div');top.className='tm-site-row-top';
                 const fields=document.createElement('div');fields.className='tm-site-fields';
                 const named=(label,node)=>{const wrap=document.createElement('label');wrap.className='tm-site-field';const caption=document.createElement('span');caption.textContent=label;wrap.append(caption,node);return wrap;};
@@ -298,7 +303,8 @@
                 for(const row of siteRows){
                     if(!row.row.isConnected)continue;
                     const name=row.title.value.trim(),host=normalizeSiteHost(row.host.value),template=row.template.value.trim();
-                    const groups=[];if(row.jump.checked)groups.push('jump');if(row.preview.checked)groups.push('preview');
+                    const groups=row.original&&row.original.dynamic?['jump']:[];
+                    if(!(row.original&&row.original.dynamic)){if(row.jump.checked)groups.push('jump');if(row.preview.checked)groups.push('preview');}
                     if(!name||!host||!template||!template.startsWith('/')||template.startsWith('//')||/[\u0000-\u001f]/.test(template)||!groups.length)throw new Error('站点名称、有效域名、以 / 开头的路径模板及至少一个适用场景均为必填项。');
                     const original=row.original||{};
                     result.push({id:original.id||row.row.dataset.siteId||('custom-'+Date.now()),name,host,template,groups,enabled:row.enabled.checked,dynamic:!!original.dynamic});
@@ -1159,9 +1165,11 @@
                         </div>
                     `);
                     bindTampermonkeyOpenLinks(document.getElementById('javweb_jump'));
-                    // javstoreLink
-                    let $span = $(`<span class="genre"><a href="javascript:void(0);">JavStore</a></span>`);
-                    $('#linkJump').prepend(Common.javstoreLinkMousedown($span, AVID));
+                    // JavStore 使用专用搜索流程，按统一站点配置控制显示和目标地址。
+                    if (isSiteEnabled('javstore', 'jump')) {
+                        let $span = $(`<span class="genre"><a href="javascript:void(0);">JavStore</a></span>`);
+                        $('#linkJump').prepend(Common.javstoreLinkMousedown($span, AVID));
+                    }
 
 
                     //加入在线预览跳转
@@ -1279,9 +1287,10 @@
                             <span class="header">JAV跳转:</span>${renderSiteLinks(AVID, "jump")}
                         </p>
                     `);
-                    // javstoreLink
-                    let $a = $(`<a title="综合 JAV资源站" href="javascript:void(0);" style="color: rgb(204, 0, 0);">JavStore&nbsp;</a>`);
-                    $('#linkJump').append(Common.javstoreLinkMousedown($a, AVID));
+                    if (isSiteEnabled('javstore', 'jump')) {
+                        let $a = $(`<a title="综合 JAV资源站" href="javascript:void(0);" style="color: rgb(204, 0, 0);">JavStore&nbsp;</a>`);
+                        $('#linkJump').append(Common.javstoreLinkMousedown($a, AVID));
+                    }
 
                     // 磁链列表增加复制操作列
                     $('#magnet-table tbody tr').append('<td style="text-align:center;white-space:nowrap">操作</td>');
@@ -1790,19 +1799,22 @@
                                         ${renderSiteLinks(avid, "jump")}
                                     `);
                             bindTampermonkeyOpenLinks($div[0]);
-                            let $a = $(`
-                                        <a title="素人 JAV资源站" href="javascript:void(0);">
-                                            <span class="tag hobby" style="margin-right: 0px;background-color:#418fa7;">Jav321</span>
-                                        </a>
-                                    `);
-                            $div.append(Common.jav321LinkMousedown($a, avid));
-
-                            let $b = $(`
-                                        <a title="综合 JAV资源站" href="javascript:void(0);">
-                                            <span class="tag hobby" style="margin-right: 0px;background-color:#ad1d18;">JavStore</span>
-                                        </a>
-                                    `);
-                            $div.append(Common.javstoreLinkMousedown($b, avid));
+                            if (isSiteEnabled('jav321', 'jump')) {
+                                let $a = $(`
+                                            <a title="素人 JAV资源站" href="javascript:void(0);">
+                                                <span class="tag hobby" style="margin-right: 0px;background-color:#418fa7;">Jav321</span>
+                                            </a>
+                                        `);
+                                $div.append(Common.jav321LinkMousedown($a, avid));
+                            }
+                            if (isSiteEnabled('javstore', 'jump')) {
+                                let $b = $(`
+                                            <a title="综合 JAV资源站" href="javascript:void(0);">
+                                                <span class="tag hobby" style="margin-right: 0px;background-color:#ad1d18;">JavStore</span>
+                                            </a>
+                                        `);
+                                $div.append(Common.javstoreLinkMousedown($b, avid));
+                            }
 
                             // 提取评分数、评分人数
                             $(e).attr("score", $(e).find('.score>span').text().match(/-?(?:\d+(?:\.\d*)?|\.\d+)/g)[0]);
