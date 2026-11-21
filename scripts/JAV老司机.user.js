@@ -248,20 +248,37 @@
         }
         static openSystemConfig() {
             const dom=document.createElement('div'),inputs={},toggles={};
-            const fields=[['javdb_url','JavDB 域名'],['btsow_url','BTSOW 域名'],['btdig_url','BTDig 域名'],['nyaa_url','Nyaa 域名'],['torrentkitty_url','TorrentKitty 域名'],['javlib_url','JavLibrary 域名'],['javbus_url','JavBus 域名'],['avsox_url','AVSOX 域名']];
-            const scrollLabel=document.createElement('label');scrollLabel.className='tm-setting';scrollLabel.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
-            const scroll=document.createElement('input');scroll.type='checkbox';scroll.className='tm-checkbox';scroll.checked=GM_getValue('scroll_status',1)!==0;scrollLabel.appendChild(scroll);dom.appendChild(scrollLabel);
-            for(const [key,title] of fields){const label=document.createElement('label');label.className='tm-setting';label.appendChild(document.createTextNode(title));const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(key,'')||'');inputs[key]=input;label.appendChild(input);dom.appendChild(label);}
-            const heading=document.createElement('h3');heading.textContent='磁力搜索源（可独立启用/禁用）';dom.appendChild(heading);
-            for(const source of MAGNET_SOURCES){const label=document.createElement('label');label.className='tm-setting';label.appendChild(document.createTextNode(source.label+' 启用'));const toggle=document.createElement('input');toggle.type='checkbox';toggle.className='tm-checkbox';toggle.checked=GM_getValue(source.enabledKey,true);toggles[source.enabledKey]=toggle;label.appendChild(toggle);dom.appendChild(label);}
+            const siteFields=[['javlib_url','JavLibrary 域名','www.javlibrary.com'],['javbus_url','JavBus 域名','www.javbus.com'],['avsox_url','AVSOX 域名','avsox.click']];
+            const scrollRow=document.createElement('label');scrollRow.className='tm-setting';scrollRow.appendChild(document.createTextNode('开启各站瀑布流（自动加载下一页）'));
+            const scroll=document.createElement('input');scroll.type='checkbox';scroll.className='tm-checkbox';scroll.checked=GM_getValue('scroll_status',1)!==0;scrollRow.appendChild(scroll);dom.appendChild(scrollRow);
+            const siteHeading=document.createElement('h3');siteHeading.textContent='资源站域名';dom.appendChild(siteHeading);
+            for(const [key,title,fallback] of siteFields){
+                const row=document.createElement('label');row.className='tm-setting';row.appendChild(document.createTextNode(title));
+                const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(key,fallback)||fallback);inputs[key]=input;row.appendChild(input);dom.appendChild(row);
+            }
+            const magnetHeading=document.createElement('h3');magnetHeading.textContent='磁力搜索源（可独立启用、禁用和修改域名）';dom.appendChild(magnetHeading);
+            for(const source of MAGNET_SOURCES){
+                const row=document.createElement('div');row.className='tm-setting';
+                const label=document.createElement('label');label.textContent=source.label+' 启用';
+                const toggle=document.createElement('input');toggle.type='checkbox';toggle.className='tm-checkbox';toggle.checked=GM_getValue(source.enabledKey,true);toggles[source.enabledKey]=toggle;label.appendChild(toggle);
+                const input=document.createElement('input');input.type='text';input.className='tm-text';input.value=String(GM_getValue(source.domainKey,source.defaultDomain)||source.defaultDomain);inputs[source.domainKey]=input;
+                row.append(label,input);dom.appendChild(row);
+            }
             Swal.fire({title:'脚本设置',html:dom,confirmButtonText:'保存'}).then(result=>{
                 if(!result.value)return;
                 const values={};
-                for(const [key] of fields){const host=inputs[key].value.trim().replace(/^https?:/i,'').split('/')[0];if(!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host)||host.includes('..')){Swal.fire('网址格式错误','请填写有效域名，可包含端口，不要填写路径。','error');return;}values[key]=host.toLowerCase();}
+                for(const [key,input] of Object.entries(inputs)){
+                    const host=input.value.trim().replace(/^https?:\/\//i,'').split('/')[0];
+                    if(!/^[a-z0-9.-]+(?::[0-9]{1,5})?$/i.test(host)||host.includes('..')){
+                        Swal.fire('网址格式错误','请填写有效域名，可包含端口，不要填写路径或脚本代码。','error');return;
+                    }
+                    values[key]=host.toLowerCase();
+                }
                 GM_setValue('scroll_status',scroll.checked?1:0);
                 for(const [key,value] of Object.entries(values))GM_setValue(key,value);
                 for(const source of MAGNET_SOURCES)GM_setValue(source.enabledKey,toggles[source.enabledKey].checked);
-                const enabled=enabledMagnetSources();if(enabled.length&&!enabled.includes(GM_getValue('search_index','')))GM_setValue('search_index',enabled[0]);
+                const enabled=enabledMagnetSources(),selected=GM_getValue('search_index','');
+                if(enabled.length&&!enabled.includes(selected))GM_setValue('search_index',enabled[0]);
                 history.go(0);
             });
         }
@@ -860,11 +877,6 @@
                 });
             });
         }
-        /**
-         * 查询115网盘是否拥有番号
-         * @param {string} javId 番号
-         * @param {Function} callback 回调函数
-         */
     };
 
     class Jav {
@@ -2258,6 +2270,7 @@
                     create_head: () => {
                         const row=document.createElement('tr');row.className='jav-nong-row';row.id='jav-nong-head';
                         const first=document.createElement('th'),select=document.createElement('select'),hosts=enabledMagnetSources();
+                        const sourceLabel=document.createElement('span');sourceLabel.textContent='来源：';first.appendChild(sourceLabel);
                         select.className='nong-source-select';
                         for(const host of hosts){const option=document.createElement('option');option.value=host;option.textContent=magnetSourceLabel(host)+' · '+host;select.appendChild(option);}
                         const selected=GM_getValue('search_index',hosts[0]||'');select.value=hosts.includes(selected)?selected:(hosts[0]||'');first.appendChild(select);
