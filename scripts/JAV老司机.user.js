@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         JAV老司机（测试版）
-// @namespace    https://github.com/shenshou/MyTamperMonkeyJs/test
+// @name         JAV老司机
+// @namespace    https://sleazyfork.org/zh-CN/users/25794
 // @version      3.8.15
-// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
-// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
 // @source       https://github.com/shenshou/MyTamperMonkeyJs
 // @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
