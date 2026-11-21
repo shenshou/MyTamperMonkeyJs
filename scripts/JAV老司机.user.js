@@ -315,7 +315,7 @@
             };
             const siteRows=[];
             const heading=document.createElement('h3');heading.textContent='统一资源站跳转配置';dom.appendChild(heading);
-            const help=document.createElement('p');help.className='tm-setting-help';help.textContent='修改、新增或删除后会应用到对应的全站跳转入口。路径模板使用 {id} 表示完整番号，{code} 表示去掉连字符的番号；例如 /cn/search/{id}。域名与路径分开填写。';dom.appendChild(help);
+            const help=document.createElement('p');help.className='tm-setting-help';help.textContent='修改、新增或删除后会应用到对应的全站跳转入口。路径模板使用 {id} 表示完整番号，{code} 表示去掉连字符的番号；例如 /cn/search/{id}。路径模板可以留空，留空时跳转到站点首页。域名与路径分开填写。';dom.appendChild(help);
             const renderRows=()=>{siteList.replaceChildren();siteRows.length=0;for(const site of readSiteConfig()){const row=makeSiteRow(site);siteList.appendChild(row.row);siteRows.push(row);}};
             renderRows();dom.appendChild(siteList);
             const add=document.createElement('button');add.type='button';add.className='tm-site-add';add.textContent='＋ 添加自定义站点';
