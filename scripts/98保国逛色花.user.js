@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.27
+// @version      100.28
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -49,7 +49,6 @@
 (async function () {
   "use strict";
   /* global showWindow */
-  /* global stopRandomSelection */
   /* global setanswer */
 
   // #region 全局变量
@@ -3334,30 +3333,6 @@
   }
 
   /**
-   * 处理帖子列表页面的初始状态，可能会重定向
-   * @param {Object} settings - 用户的设置
-   */
-  function handleInitialPageState(settings) {
-    const currentURL = window.location.href;
-    const queryParams = getQueryParams(currentURL);
-    const fid = queryParams.fid;
-    const hasOrderBy = queryParams.orderby === "dateline";
-
-    // 检查当前fid是否存在于orderFids中
-    const isFidInOrder = settings.orderFids.includes(fid);
-
-    if (isFidInOrder && !hasOrderBy) {
-      // 如果上次是时间排序，但现在URL没有orderby=dateline，则需要重定向
-      const newURL = `${baseURL}/forum.php?mod=forumdisplay&fid=${fid}&filter=author&orderby=dateline`;
-      window.location.href = newURL;
-    } else if (!isFidInOrder && hasOrderBy) {
-      // 如果上次是默认排序，但现在URL有orderby=dateline，则需要重定向
-      const newURL = `${baseURL}/forum.php?mod=forumdisplay&fid=${fid}`;
-      window.location.href = newURL;
-    }
-  }
-
-  /**
    * 插入帖子内的前三张图片到帖子标题下方
    */
 
@@ -3633,7 +3608,6 @@
    * @param {Element} buttonContainer - 按钮容器元素
    */
   async function handleForumDisplayPage(settings, buttonContainer) {
-    //handleInitialPageState(settings);//停止自动跳转排序防止和另一个脚本(98堂-预览)冲突导致页面无限刷新
     if (settings.enableTitleStyle) {
       stylePosts(settings);
     }
