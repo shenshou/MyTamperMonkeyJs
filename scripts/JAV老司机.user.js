@@ -2,8 +2,8 @@
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
 // @version      3.8.11
-// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
-// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
 // @source       https://github.com/shenshou/MyTamperMonkeyJs
 // @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
@@ -109,8 +109,8 @@
 // v1.0.2  优化了javlibrary排版,做了最低分辨率1280x800的排版适配调整，及修复了已知问题。
 // v1.0.0  支持javlibrary.com、javbus.com、avmo.pw、avso.pw等老司机站点，第一版发布。
 
-// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
-// @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
+// @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // ==/UserScript==
 /* jshint -W097 */
 (function () {
