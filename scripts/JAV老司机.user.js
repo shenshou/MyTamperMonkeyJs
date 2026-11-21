@@ -549,7 +549,7 @@
                         if (url && !(/https:\/\/www.jav321.com\/search/).test(url)) {
                             GM_openInTab(url, { active: !e.button, insert: true, setParent: true });
                         } else {
-                            Common.notifiy(`Jav321查无此番号: ${avid}`, '换个JAV站点查找试试吧!', icon, "");
+                            Common.notifiy(`Jav321查无此番号: ${avid}`, '换个JAV站点查找试试吧!', EMPTY_IMAGE_DATA, "");
                         }
                     }).catch((errMsg) => Common.notifiy(errMsg));
                 }
@@ -573,7 +573,7 @@
                             GM_setValue(url, avid);
                             GM_openInTab(url, { active: !e.button, insert: true, setParent: true });
                         } else {
-                            Common.notifiy(`JavStore查无此番号: ${avid}`, '换个JAV站点查找试试吧!', icon, "");
+                            Common.notifiy(`JavStore查无此番号: ${avid}`, '换个JAV站点查找试试吧!', EMPTY_IMAGE_DATA, "");
                         }
                     });
                 }
