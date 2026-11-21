@@ -1069,11 +1069,20 @@
                             <table><tbody><tr>
                                 <td class="header">JAV跳转:</td>
                                 <td id="linkJump">
-                                    <span class="genre"><a href="https://${GM_getValue('javbus_url')}/${AVID}" target="_blank">JavBus</a></span>
+                                    <span class="genre"><a id="javbus_jump_link" href="https://${GM_getValue('javbus_url')}/${AVID}" target="_blank" rel="noopener noreferrer">JavBus</a></span>
                                 </td>
                             </tr></tbody></table>
                         </div>
                     `);
+                    // JavBus 由 Tampermonkey 在用户点击事件中打开，避免普通弹窗拦截
+                    const javbusJumpLink = document.getElementById('javbus_jump_link');
+                    if (javbusJumpLink) {
+                        javbusJumpLink.addEventListener('click', (event) => {
+                            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                            event.preventDefault();
+                            GM_openInTab(javbusJumpLink.href, { active: true, insert: true, setParent: true });
+                        });
+                    }
                     // javstoreLink
                     let $span = $(`<span class="genre"><a href="javascript:void(0);">JavStore</a></span>`);
                     $('#linkJump').prepend(Common.javstoreLinkMousedown($span, AVID));
