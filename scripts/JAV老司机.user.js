@@ -113,7 +113,7 @@
         const site=typeof siteOrId==='string'?readSiteConfig().find(item=>item.id===siteOrId):siteOrId;
         if(!site||!site.enabled||!site.host||!site.template) return '';
         const full=String(avid||'').trim();
-        const code=full.replace(/-/g,'');
+        const code=site.id==='onejav'?full.replace(/-|FC2|PPV/g,''):full.replace(/-/g,'');
         const path=String(templateOverride||site.template).trim();
         if(!path.startsWith('/')||path.startsWith('//')||/[\u0000-\u001f]/.test(path)) return '';
         const expanded=path.replace(/\{(id|code)\}/g,(_,key)=>encodeURIComponent(key==='code'?code:full));
@@ -1736,7 +1736,7 @@
                         $(aEle.parentElement.parentElement).attr("style", "flex-direction: column;");
                         if (!(/^FC2(-)/g).test(avid)) {
                             // Javlib的跳转链接
-                            $(aEle.parentElement).append(renderSiteLinks(avid, 'jump'));
+                            $(aEle.parentElement).append(renderSiteLinks(avcd, 'jump'));
                             bindTampermonkeyOpenLinks(aEle.parentElement);
                         }
                         // 番号预览大图
