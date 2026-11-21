@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.25
+// @version      100.26
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -3394,17 +3394,14 @@
 
         if (!imgElements.length) continue;
         const tbodyRef = link.closest("tbody");
-        // Check if the tbody with the specific ID already exists. If it does, we skip this iteration.
-        if (
-          tbodyRef.nextElementSibling &&
-          tbodyRef.nextElementSibling.id === "imagePreviewTbody"
-        ) {
+        if (!tbodyRef) continue;
+        if (tbodyRef.nextElementSibling?.classList.contains("bgsh-imagePreviewTbody")) {
           continue;
         }
 
         // 创建新的图片容器
         const newTbody = document.createElement("tbody");
-        newTbody.id = "imagePreviewTbody"; // Assigning the unique ID to the tbody
+        newTbody.className = "bgsh-imagePreviewTbody";
         const newTr = document.createElement("tr");
         const newTd = document.createElement("td");
         const imgContainer = document.createElement("div");
@@ -3412,7 +3409,9 @@
 
         imgElements.forEach((imgEl) => {
           let img = document.createElement("img");
-          img.src = imgEl.getAttribute("file");
+          const imageURL = new URL(imgEl.getAttribute("file"), window.location.href);
+          if (imageURL.protocol !== "http:" && imageURL.protocol !== "https:") return;
+          img.src = imageURL.href;
           img.style.width = "300px";
           img.style.height = "auto";
           img.style.maxWidth = "300px";
@@ -3578,13 +3577,13 @@
 
           if (!imgElements.length) continue;
           const closestLi = h3Element.closest("li");
-          if (closestLi.querySelector("tbody, #imagePreviewTbody")) {
+          if (!closestLi || closestLi.querySelector("tbody, .bgsh-imagePreviewTbody")) {
             continue;
           }
 
           // 创建新的图片容器
           const newTbody = document.createElement("tbody");
-          newTbody.id = "imagePreviewTbody"; // Assigning the unique ID to the tbody
+          newTbody.className = "bgsh-imagePreviewTbody";
           const newTr = document.createElement("tr");
           const newTd = document.createElement("td");
           const imgContainer = document.createElement("div");
@@ -3592,7 +3591,9 @@
 
           imgElements.forEach((imgEl) => {
             let img = document.createElement("img");
-            img.src = imgEl.getAttribute("file");
+            const imageURL = new URL(imgEl.getAttribute("file"), window.location.href);
+            if (imageURL.protocol !== "http:" && imageURL.protocol !== "https:") return;
+            img.src = imageURL.href;
             img.style.width = "300px";
             img.style.height = "auto";
             img.style.maxWidth = "300px";
