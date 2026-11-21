@@ -1,46 +1,31 @@
 // ==UserScript==
 // @name         JAV老司机
 // @namespace    https://sleazyfork.org/zh-CN/users/25794
-// @version      3.8.15
+// @version      3.8.16
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // @supportURL   https://sleazyfork.org/zh-CN/scripts/25781/feedback
 // @source       https://github.com/shenshou/MyTamperMonkeyJs
 // @description  JAV老司机多站点增强、影片信息补充、高清预览与多资源站磁力搜索。
 // @author       MyTamperMonkeyJs
-
 // @require      https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@9.17.2/dist/sweetalert2.all.min.js
-
-// javlib主要有码jav资源、排行榜、点评，最新地址在github.com/javlibcom
 // @include      *://*javlibrary.com/*
 // @include      *://*javlib.com/*
 // @include      *://*r86m.com/*
 // @include      *://*s87n.com/*
-
-// javbus有无码jav资源、论坛
 // @include      *://*javbus.com/*
 // @include      *://www.*bus*/*
 // @include      *://www.*javsee*/*
 // @include      *://www.*seejav*/*
-
-// onejav有FC2资源、排行榜
 // @include      *://*onejav.com/*
-
-// avsox有无码jav资源，含FC2  tellme.pw/avsox
 // @include      *://*avsox.*/*
-
-// jav321有素人资源、排行榜
 // @include      *://*jav321.com/video/*
-
-// javdb有各资源排行榜，但部分需付费  javdb.com
 // @include      *://*javdb*.com/*
-
 // @include      *://*javstore.*/*
 // @include      *://*avmoo.*/*
 // @include      *://tellme.pw/avmoo*
 // @include      *://www.*dmm*/*
-
 // @run-at       document-idle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
@@ -52,32 +37,10 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_info
 // @grant        GM_openInTab
-
 // @connect      *
 // @copyright    hobby 2016-12-18
 // @license      GPL-3.0
 // @compatible   chrome V52+ & Tampermonkey
-
-// 大陆用户推荐Chrome(V52+) + Tampermonkey（必须扩展） + Clash/V2ray(代理) + Proxy SwitchyOmega（扩展）的环境下配合使用。
-// 上车请使用chrome浏览器，其他浏览器的问题本人不支持发现和修复相关问题。
-
-
-// 油猴脚本技术交流：https://t.me/+TgfN6vLVRew7aMWt
-
-// 已知问题：javlib加了Cloudflare防御，目前更新版本利用新网址列表功能已经复活8成以上，代价是2秒左右刷新一个列表的番号。目前只能这样了。
-//          如有更优方案，可留言反馈。另外blogjav站已经能访问了，但新番号基本无预览图了，就做一个备用预览大图源吧。
-
-
-//         优化dmm评分数据获取，多数番号突破dmm地区访问限制。代码调整优化。修复了已知问题。
-
-
-//         原javlib番号页面自带预览图可点击查看，onejav列表简单优化，其他已知bug修复，部分代码优化。
-
-//         修复了预览图失效的问题。
-
-
-
-
 // ==/UserScript==
 /* jshint -W097 */
 (function () {
