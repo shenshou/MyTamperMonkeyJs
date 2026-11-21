@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.17
+// @version      100.18
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -1916,6 +1916,7 @@
       },
       body: data,
     });
+    if (!response.ok) throw new Error("签到请求失败：HTTP " + response.status);
     return response.text();
   }
 
@@ -2078,9 +2079,12 @@
     const starUrl = `/home.php?mod=spacecp&ac=favorite&type=thread&id=${tid}&formhash=${formHash}&infloat=yes&handlekey=k_favorite&inajax=1&ajaxtarget=fwin_content_k_favorite`;
 
     // 发送收藏请求
-    const text = await fetch(starUrl).then((r) => r.text());
+    try {
+      const response = await fetch(starUrl);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const text = await response.text();
 
-    // 根据响应内容提供相应的提示
+      // 根据响应内容提供相应的提示
     if (text.includes("抱歉，您已收藏，请勿重复收藏")) {
       return showTooltip("抱歉，您已收藏，请勿重复收藏");
     }
@@ -2090,8 +2094,12 @@
     }
 
     // 如果既没有成功消息也没有重复收藏消息，视为出错并在控制台记录
-    showTooltip("信息收藏出现问题！！！");
-    console.error("收藏请求返回了未识别的响应。");
+      showTooltip("信息收藏出现问题！！！");
+      console.error("收藏请求返回了未识别的响应。");
+    } catch (error) {
+      showTooltip("收藏请求失败，请稍后重试。");
+      console.error("收藏请求失败：", error);
+    }
   }
 
   // #endregion
@@ -2212,7 +2220,9 @@
     });
 
     try {
-      const responseText = await fetch(request).then((r) => r.text());
+      const response = await fetch(request);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const responseText = await response.text();
 
       // 根据响应内容提供评分成功或失败的提示
       if (responseText.includes("感谢您的参与，现在将转入评分前页面")) {
@@ -2337,10 +2347,14 @@
         body: data,
       });
 
-      const text = await fetch(request).then((r) => r.text());
+      const response = await fetch(request);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const text = await response.text();
 
       const xml = new DOMParser().parseFromString(text, "text/xml");
-      const htmlContent = xml.querySelector("root").textContent;
+      const root = xml.querySelector("root");
+      if (!root) throw new Error("未能解析置顶操作响应。");
+      const htmlContent = root.textContent;
       const doc = new DOMParser().parseFromString(htmlContent, "text/html");
 
       // 检查是否存在错误
@@ -2422,7 +2436,9 @@
     });
 
     try {
-      const responseText = await fetch(request).then((r) => r.text());
+      const response = await fetch(request);
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const responseText = await response.text();
 
       // 根据响应内容提供置顶成功或失败的提示
       if (responseText.includes("操作成功 ")) {
@@ -3327,7 +3343,10 @@
       let threadURL = link.href;
 
       try {
-        let response = await fetch(threadURL);
+        const threadURLObject = new URL(threadURL, window.location.href);
+        if (threadURLObject.origin !== window.location.origin) continue;
+        let response = await fetch(threadURLObject.href);
+        if (!response.ok) throw new Error("HTTP " + response.status);
         let pageContent = await response.text();
         let parser = new DOMParser();
         let doc = parser.parseFromString(pageContent, "text/html");
@@ -3508,7 +3527,10 @@
       if (aElement) {
         let url = aElement.href;
         try {
-          let response = await fetch(url);
+          const threadURLObject = new URL(url, window.location.href);
+          if (threadURLObject.origin !== window.location.origin) continue;
+          let response = await fetch(threadURLObject.href);
+          if (!response.ok) throw new Error("HTTP " + response.status);
           let pageContent = await response.text();
           let parser = new DOMParser();
           let doc = parser.parseFromString(pageContent, "text/html");
