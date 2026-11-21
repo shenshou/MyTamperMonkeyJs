@@ -145,33 +145,6 @@
     let domain = location.host;
 
     /**
-     * 对Date的扩展，将 Date 转化为指定格式的String
-     * 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，/';
-     * 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
-     * 例子：(new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423f
-     * (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18
-     * @param {string} fmt 日期格式
-     * @returns {void | string} 格式化后的日期字符串
-     */
-    Date.prototype.Format = function (fmt) { //author: meizz
-        var o = {
-            "M+": this.getMonth() + 1, //月份
-            "d+": this.getDate(), //日
-            "h+": this.getHours(), //小时
-            "m+": this.getMinutes(), //分
-            "s+": this.getSeconds(), //秒
-            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-            "S": this.getMilliseconds() //毫秒
-        };
-        if (/(y+)/.test(fmt))
-            fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-        for (var k in o)
-            if (new RegExp("(" + k + ")").test(fmt))
-                fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-        return fmt;
-    };
-
-    /**
      * 多线程异步队列 依赖 jQuery 1.8+
      * @param {Number} n 正整数, 线程数量
      */
@@ -283,26 +256,6 @@
             });
         }
 
-        static compareVersions(curV, reqV) {
-            if (curV && reqV) {
-                //将两个版本号拆成数字
-                var arr1 = curV.split('.'),
-                    arr2 = reqV.split('.');
-                var minLength = Math.min(arr1.length, arr2.length),
-                    position = 0,
-                    diff = 0;
-                //依次比较版本号每一位大小，当对比得出结果后跳出循环（后文有简单介绍）
-                while (position < minLength && ((diff = parseInt(arr1[position]) - parseInt(arr2[position])) == 0)) {
-                    position++;
-                }
-                diff = (diff != 0) ? diff : (arr1.length - arr2.length);
-                //若curV大于reqV，则返回true
-                return diff > 0;
-            } else {
-                //输入为空
-                return false;
-            }
-        }
         /**
          * 设置cookie
          * @param {string} cname  名字
@@ -937,12 +890,8 @@
         static javlibaryScript() {
             let a3 = this.waterfallButton();
             if ((/(JAVLibrary)/g).test(document.title)) {
-                //数据库初始化  start01
                 // JavLibrary 列表增强。
                 {
-                    // results.forEach(function(row) {
-
-                    // });
                     if (document.URL.indexOf("bestrated") > 0) {
                         $(".left select").after("<a href='/cn/vl_bestrated.php?deleteTwoMonthAway' class='hobby-a'>&nbsp;&nbsp;只看近两月份</a>");
                         $(".left select").after("<a href='/cn/vl_bestrated.php?deleteOneMonthAway' class='hobby-a'>&nbsp;&nbsp;只看当前月份</a>");
@@ -1659,7 +1608,6 @@
                             }
                         });
                         let indexCd_id, actor, dateString, pingfengString;
-                        let code = $(elems[i]).find('.id').text();
                         // 保留演员、发行日期、评分提取，不再读取或写入个人影片库。
                         function getMovieInfo() {
                             w.queue.push(() => {
