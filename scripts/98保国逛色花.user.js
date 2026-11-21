@@ -2857,6 +2857,8 @@
   function initInfiniteScroll(pageName) {
     let isLoading = false;
     let noMoreData = false;
+    let scrollScheduled = false;
+    const loadedPageURLs = new Set([window.location.href]);
     const settings = getSettings();
 
     // 根据传入的页面名称决定内容选择器
@@ -2906,12 +2908,21 @@
 
       isLoading = true;
       const url = nextPageLink.getAttribute("href");
+      if (!url) {
+        noMoreData = true;
+        return;
+      }
 
       let loadedSuccessfully = false;
       try {
         const nextPageURL = new URL(url, window.location.href);
         if (nextPageURL.origin !== window.location.origin) {
           throw new Error("分页链接不属于当前站点，已停止加载。");
+        }
+        if (loadedPageURLs.has(nextPageURL.href)) {
+          noMoreData = true;
+          showTooltip("检测到重复分页链接，已停止自动翻页。");
+          return;
         }
         const response = await fetch(nextPageURL.href);
         if (!response.ok) throw new Error(`加载下一页失败：HTTP ${response.status}`);
@@ -2937,6 +2948,7 @@
         const newContent = div.querySelector(contentSelector);
         if (!newContent) throw new Error("下一页响应中未找到帖子内容区域。");
         appendNewContent(newContent);
+        loadedPageURLs.add(nextPageURL.href);
         updatePagination(div.querySelector(".pg"));
         const newSettings = getSettings();
         await processPageContentBasedOnSettings(pageName, newSettings);
@@ -3027,14 +3039,20 @@
     }
 
     window.addEventListener("scroll", () => {
-      if (
-        window.innerHeight + window.scrollY >=
-          document.body.offsetHeight - 500 &&
-        !isLoading
-      ) {
-        loadNextPage();
-      }
-    });
+      if (scrollScheduled) return;
+      scrollScheduled = true;
+      requestAnimationFrame(() => {
+        scrollScheduled = false;
+        if (
+          window.innerHeight + window.scrollY >=
+            document.body.offsetHeight - 500 &&
+          !isLoading &&
+          !noMoreData
+        ) {
+          loadNextPage();
+        }
+      });
+    }, { passive: true });
 
     checkAndLoadIfContentNotEnough();
   }
@@ -4788,12 +4806,9 @@
    * 移除首页热门
    */
   async function removeIndex() {
-    window.addEventListener("load", function () {
-      const diyChart = document.querySelector("#diy_chart");
-      if (diyChart) {
-        diyChart.remove();
-      }
-    });
+    const removeChart = () => document.querySelector("#diy_chart")?.remove();
+    if (document.readyState === "complete") removeChart();
+    else window.addEventListener("load", removeChart, { once: true });
   }
 
   // #endregion
@@ -5098,15 +5113,15 @@
    */
   function replaceImageSrc() {
     // 等待页面完全加载
-    window.addEventListener("load", function () {
-      // 查找所有包含旧图片路径的img元素
+    const replaceLogo = () => {
       document
         .querySelectorAll('img[src="static/image/common/logo_sc_s.png"]')
-        .forEach(function (img) {
-          // 替换为新的图片路径
+        .forEach((img) => {
           img.src = "static/image/common/logo.png";
         });
-    });
+    };
+    if (document.readyState === "complete") replaceLogo();
+    else window.addEventListener("load", replaceLogo, { once: true });
 
   }
 
