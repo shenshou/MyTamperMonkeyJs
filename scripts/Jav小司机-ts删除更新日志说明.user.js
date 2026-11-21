@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jav小司机-ts删除更新日志说明
 // @namespace    wddd
-// @version      1.1.8
+// @version      1.1.9
 // @author       wddd
 // @license      MIT
 // @match        *://*.javlibrary.com/*
@@ -373,7 +373,14 @@ function openResourceManager() {
         '#md-resource-manager-overlay .md-resource-help{margin:0 0 10px;color:#666;font-size:12px;}',
         '#md-resource-manager-overlay .md-resource-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(150px,1.2fr) minmax(180px,2fr) auto auto;gap:8px;align-items:end;padding:10px 0;border-bottom:1px solid #eee;}',
         '#md-resource-manager-overlay .md-resource-field{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:12px;color:#555;}',
-        '#md-resource-manager-overlay input[type=text]{width:100%;min-width:0;height:34px;padding:6px 8px;border:1px solid #bbb;border-radius:5px;font-size:13px;color:#222;}',
+        '#md-resource-manager-overlay input[type=text],#md-resource-manager-overlay input[type=password],#md-resource-manager-overlay input[type=number],#md-resource-manager-overlay select{width:100%;min-width:0;height:36px;padding:7px 9px;border:1px solid #c8cdd4;border-radius:6px;font-size:13px;color:#222;background:#fff;}',
+        '#md-resource-manager-overlay .md-resource-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 18px;}',
+        '#md-resource-manager-overlay .md-resource-setting{display:flex;flex-direction:column;gap:5px;min-width:0;color:#555;font-size:12px;}',
+        '#md-resource-manager-overlay .md-resource-setting small{color:#888;font-size:11px;}',
+        '#md-resource-manager-overlay .md-resource-setting-toggle{display:flex;align-items:center;gap:8px;min-height:36px;color:#444;font-size:13px;}',
+        '#md-resource-manager-overlay .md-resource-setting-toggle input{width:16px;height:16px;}',
+        '#md-resource-manager-overlay .md-resource-status{display:none;margin:10px 0 0;padding:8px 10px;border-radius:5px;background:#fff4e5;color:#8a4b08;font-size:12px;}',
+        '@media(max-width:680px){#md-resource-manager-overlay .md-resource-settings-grid{grid-template-columns:1fr;}}',
         '#md-resource-manager-overlay .md-resource-enabled{display:flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:8px;font-size:12px;}',
         '#md-resource-manager-overlay button{border:1px solid #aaa;border-radius:5px;background:#f7f7f7;color:#222;padding:7px 11px;cursor:pointer;font-size:13px;}',
         '#md-resource-manager-overlay button:hover{background:#eaeaea;}',
@@ -400,9 +407,87 @@ function openResourceManager() {
     body.className = 'md-resource-body';
     const note = document.createElement('p');
     note.className = 'md-resource-note';
-    note.textContent = '管理脚本生成的普通跳转链接和种子搜索入口。路径模板支持 {id}（完整番号）与 {code}（去掉连字符的番号）。这里修改的是浏览器打开的链接；截图、JavTrailers 等跨域请求受脚本 @connect 授权限制，JavLibrary 运行域名受 @match 限制，新增或更换这些请求/运行域名需要更新脚本元数据。';
+    note.textContent = '在这里统一管理脚本设置、普通跳转链接和种子搜索入口。资源路径模板支持 {id}（完整番号）与 {code}（去掉连字符的番号）。跨域请求域名仍受脚本 @connect 授权限制，新增请求域名需要更新脚本元数据。';
     body.appendChild(note);
-
+    const settingsSection = document.createElement('section');
+    const settingsHeading = document.createElement('h3');
+    settingsHeading.textContent = '功能设置';
+    const settingsHelp = document.createElement('p');
+    settingsHelp.className = 'md-resource-help';
+    settingsHelp.textContent = '这些选项原先分散在油猴菜单中，现在统一在此管理；保存后立即应用。';
+    const settingsGrid = document.createElement('div');
+    settingsGrid.className = 'md-resource-settings-grid';
+    function makeSetting(labelText, helpText) {
+        const label = document.createElement('label');
+        label.className = 'md-resource-setting';
+        const caption = document.createElement('span');
+        caption.textContent = labelText;
+        const help = document.createElement('small');
+        help.textContent = helpText;
+        label.append(caption, help);
+        return { label, caption, help };
+    }
+    const tokenSetting = makeSetting('JavTrailers API Token', '仅保存在当前油猴脚本的 GM 存储中；留空表示不发送 Token。');
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'password';
+    tokenInput.autocomplete = 'new-password';
+    tokenInput.spellcheck = false;
+    tokenInput.placeholder = '输入你自己的 API Token';
+    tokenInput.value = GM_getValue('javTrailersApiToken', '');
+    tokenSetting.label.appendChild(tokenInput);
+    settingsGrid.appendChild(tokenSetting.label);
+    const concurrencySetting = makeSetting('视频列表请求并发数', '范围 1–8，默认 4；数值越低，请求越平缓。');
+    const concurrencyInput = document.createElement('input');
+    concurrencyInput.type = 'number';
+    concurrencyInput.min = '1';
+    concurrencyInput.max = '8';
+    concurrencyInput.step = '1';
+    const savedConcurrency = Number(GM_getValue('mdVideoConcurrency', 4));
+    concurrencyInput.value = String(Number.isInteger(savedConcurrency) && savedConcurrency >= 1 && savedConcurrency <= 8 ? savedConcurrency : 4);
+    concurrencySetting.label.appendChild(concurrencyInput);
+    settingsGrid.appendChild(concurrencySetting.label);
+    const previewSetting = document.createElement('div');
+    previewSetting.className = 'md-resource-setting';
+    const previewCaption = document.createElement('span');
+    previewCaption.textContent = '视频预览';
+    const previewHelp = document.createElement('small');
+    previewHelp.textContent = '开启后在影片详情页尝试加载 JavTrailers 视频预览。';
+    previewSetting.append(previewCaption, previewHelp);
+    const previewToggle = document.createElement('label');
+    previewToggle.className = 'md-resource-setting-toggle';
+    const previewInput = document.createElement('input');
+    previewInput.type = 'checkbox';
+    previewInput.checked = GM_getValue('mdEnablePreview', true) !== false;
+    const previewText = document.createElement('span');
+    previewText.textContent = '启用视频预览';
+    previewToggle.append(previewInput, previewText);
+    previewSetting.appendChild(previewToggle);
+    settingsGrid.appendChild(previewSetting);
+    const screenshotSetting = makeSetting('截图来源', 'both 会先尝试 JavScreens，失败或图片高度不超过 200px 时再尝试 Japanese-Bukkake。');
+    const screenshotSelect = document.createElement('select');
+    const screenshotOptions = [
+        ['both', '两个来源依次尝试（推荐）'],
+        ['javscreens', '仅 JavScreens'],
+        ['japanese', '仅 Japanese-Bukkake'],
+        ['off', '关闭截图']
+    ];
+    for (const [value, label] of screenshotOptions) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        screenshotSelect.appendChild(option);
+    }
+    const savedScreenshotSource = GM_getValue('mdScreenshotSource', 'both');
+    screenshotSelect.value = ['both', 'javscreens', 'japanese', 'off'].includes(savedScreenshotSource) ? savedScreenshotSource : 'both';
+    screenshotSetting.label.appendChild(screenshotSelect);
+    settingsGrid.appendChild(screenshotSetting.label);
+    settingsSection.append(settingsHeading, settingsHelp, settingsGrid);
+    body.appendChild(settingsSection);
+    const status = document.createElement('p');
+    status.className = 'md-resource-status';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    body.appendChild(status);
     function makeField(labelText, value, placeholder) {
         const label = document.createElement('label');
         label.className = 'md-resource-field';
@@ -539,12 +624,20 @@ function openResourceManager() {
                 jumpLinks: collect(jumpList, 'jump'),
                 torrentSites: collect(torrentList, 'torrent')
             };
+            const concurrency = Number(concurrencyInput.value);
+            if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) throw new Error('视频列表请求并发数必须是 1 到 8 之间的整数。');
             GM_setValue(RESOURCE_CONFIG_KEY, nextConfig);
-            overlay.remove();
-            alert('资源配置已保存，页面将刷新以应用更改。');
+            GM_setValue('javTrailersApiToken', tokenInput.value.trim());
+            GM_setValue('mdVideoConcurrency', concurrency);
+            GM_setValue('mdEnablePreview', previewInput.checked);
+            GM_setValue('mdScreenshotSource', screenshotSelect.value);
+            status.textContent = '设置已保存，正在刷新页面应用更改…';
+            status.style.display = 'block';
             location.reload();
         } catch (error) {
-            alert(error.message || '配置无效，请检查后重试。');
+            status.textContent = error.message || '配置无效，请检查后重试。';
+            status.style.display = 'block';
+            status.scrollIntoView({ block: 'nearest' });
         }
     });
     footer.append(restore, cancel, save);
@@ -561,29 +654,6 @@ function openResourceManager() {
 initializeResourceConfig();
 
 if (typeof GM_registerMenuCommand === 'function') {
-    GM_registerMenuCommand('设置 JavTrailers API Token', () => {
-        const current = GM_getValue('javTrailersApiToken', '');
-        const value = prompt('输入你自己获得的 JavTrailers API Token。留空则清除。', current);
-        if (value !== null) GM_setValue('javTrailersApiToken', value.trim());
-    });
-    GM_registerMenuCommand(`设置视频列表请求并发数（当前：${GM_getValue('mdVideoConcurrency', 4)}）`, () => {
-        const current = GM_getValue('mdVideoConcurrency', 4);
-        const value = prompt('设置视频列表详情请求并发数（1-8）。数值越低，请求越平缓。', String(current));
-        if (value === null) return;
-        const limit = Number.parseInt(value, 10);
-        if (Number.isInteger(limit) && limit >= 1 && limit <= 8) GM_setValue('mdVideoConcurrency', limit);
-        else alert('请输入 1 到 8 之间的整数。');
-    });
-    GM_registerMenuCommand(GM_getValue('mdEnablePreview', true) ? '关闭视频预览' : '开启视频预览',
-        () => GM_setValue('mdEnablePreview', !GM_getValue('mdEnablePreview', true)));
-    GM_registerMenuCommand(`设置截图来源（当前：${GM_getValue('mdScreenshotSource', 'both')}）`, () => {
-        const current = GM_getValue('mdScreenshotSource', 'both');
-        const value = prompt('选择截图来源：\n both = 两个来源依次尝试\n javscreens = 仅 JavScreens\n japanese = 仅 Japanese-Bukkake\n off = 不加载截图', current);
-        if (value === null) return;
-        const normalized = value.trim().toLowerCase();
-        if (['both', 'javscreens', 'japanese', 'off'].includes(normalized)) GM_setValue('mdScreenshotSource', normalized);
-        else alert('无效选项，请输入 both、javscreens、japanese 或 off。');
-    });
     GM_registerMenuCommand('站点与资源管理', openResourceManager);
 }
 
