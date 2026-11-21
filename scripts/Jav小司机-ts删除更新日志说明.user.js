@@ -1020,7 +1020,7 @@ class MiniDriver {
             }
             torrents.appendChild(table);
         }
-        const anchor = document.getElementById('video_favorite_edit');
+        const anchor = document.getElementById('md-custom-jump-links') || document.getElementById('video_favorite_edit');
         if (anchor) insertAfter(torrents, anchor);
     }
     updateReviews() {
