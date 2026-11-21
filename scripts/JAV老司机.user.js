@@ -86,7 +86,6 @@
 //         修复了预览图失效的问题。
 // v3.3.3  预览图备用站更换成javstore。
 // v3.2.0  新增javarchive站的预览图做备用，当blogjav预览图无法正常读取时使用。
-//         优化图书馆缓存个人数据的同步效率(60秒内可完成)。优化图书馆站点瀑布流列表排版。修复了部分115在线播放查找识别问题。
 // v3.1.7  增加脚本设置功能，支持磁链地址失效可自己更换。更新最新磁链地址。
 // v3.1.6  更换失效的磁链地址。另btdig，nayy，torrentkitty站点需科学上网，其中btdig还需手工验证非机器访问。
 // v3.1.5  增加过滤评分及排序时排除10分的番号，更换失效的磁链地址。
@@ -875,27 +874,18 @@
          */
 
         static javbusUs() {
-            $('#magnet-table tbody tr td[colspan="4"]').attr("colspan", "5");
-            $('#magnet-table tr[height="35px"]').each((index, row) => {
+            $('#magnet-table tbody tr td[colspan="4"]').attr("colspan","5");
+            for (const row of $('#magnet-table tr[height="35px"]')) {
+                if ($(row).find('.nong-copy').length) continue;
                 const magnet = $(row).find('td a').first().attr('href') || '';
-                if ($(row).find('.nong-copy').length) return;
-                const cell = document.createElement('td');
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'nong-copy';
-                button.textContent = '复制完整磁链';
-                button.setAttribute('data-magnet', magnet);
-                cell.style.textAlign = 'center';
-                cell.appendChild(button);
-                row.setAttribute('maglink', magnet);
-                row.appendChild(cell);
-                button.addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-            });
+                const cell = document.createElement('td'), button = document.createElement('button');
+                button.type='button'; button.className='nong-copy'; button.textContent='复制完整磁链';
+                button.setAttribute('data-magnet',magnet); cell.style.textAlign='center'; cell.appendChild(button);
+                row.appendChild(cell); row.setAttribute('maglink',magnet);
+                button.addEventListener('click',thirdparty.nong.magnet_table.handle_event,false);
+            }
         }
 
-                /**
-         * 初始化同步保存数据方法
-         */
         static getAvidAndChgPage() {
             let AVID = $('.header')[0].nextElementSibling.textContent;
             // 实现点击番号复制到系统剪贴板 todo 181221v1
@@ -938,15 +928,12 @@
                 //数据库初始化  start01
                 // JavLibrary 列表增强。
                 {
-                    GM_setValue(domain + "_saveMovieNum", results.length);
                     // results.forEach(function(row) {
 
                     // });
                     if (document.URL.indexOf("bestrated") > 0) {
                         $(".left select").after("<a href='/cn/vl_bestrated.php?deleteTwoMonthAway' class='hobby-a'>&nbsp;&nbsp;只看近两月份</a>");
                         $(".left select").after("<a href='/cn/vl_bestrated.php?deleteOneMonthAway' class='hobby-a'>&nbsp;&nbsp;只看当前月份</a>");
-                        $(".left select").after("<a href='/cn/vl_bestrated.php?filterMyBrowse' class='hobby-a'>&nbsp;&nbsp;不看我阅览过(上个月)</a>");
-                        $(".left select").after("<a href='/cn/vl_bestrated.php?filterMyBrowse&mode=2' class='hobby-a'>&nbsp;&nbsp;不看我阅览过(全部)</a>");
                         //todo
                     } else if (document.URL.indexOf("vl_newrelease") > 0 || document.URL.indexOf("vl_update") > 0
                         || document.URL.indexOf("vl_genre") > 0 || document.URL.indexOf("vl_mostwanted") > 0) {
@@ -1185,7 +1172,6 @@
                 //获取番号影片详情页的番号  例如：https://www.javbus.com/AVVR-323
                 if ($('.header').length && $('meta[name="keywords"]').length) {
                     let AVID = this.getAvidAndChgPage();
-                    Common.addBrowseJavidCache(AVID);
 
                     //加入坐标div，辅助插入元素
                     $('p.header').before('<p id="zuobiao"></p>');
@@ -2256,14 +2242,9 @@
             // 挊
             search_engines: {
                 cur_engine: (kw, callback) => {
-                    let ops = Object.keys(thirdparty.nong.resource_sites);
-                    let z = thirdparty.nong.resource_sites[GM_getValue('search_index', ops[0])];
-                    if (!z) {
-                        //alert("search engine not found");
-                        GM_setValue('search_index', Object.keys(thirdparty.nong.resource_sites)[0]);
-                        z = thirdparty.nong.resource_sites[GM_getValue('search_index')];
-                    }
-                    return z(kw, callback);
+                    const ops=enabledMagnetSources();if(!ops.length){callback('',[]);return;}
+                    let selected=GM_getValue('search_index',ops[0]);if(!ops.includes(selected)){selected=ops[0];GM_setValue('search_index',selected);}
+                    const engine=thirdparty.nong.resource_sites[selected];if(typeof engine!=='function'){callback('',[]);return;}return engine(kw,callback);
                 },
                 parse_error: (a) => {
                     alert("调用搜索引擎错误，可能需要更新，请向作者反馈。i=" + a);
@@ -2275,256 +2256,47 @@
             magnet_table: {
                 template: {
                     create_head: () => {
-                        var a = document.createElement('tr');
-                        a.className = 'jav-nong-row';
-                        a.id = 'jav-nong-head';
-                        var list = ['标题', '大小', '操作', '离线下载'];
-                        for (var i = 0; i < list.length; i++) {
-                            var b = thirdparty.nong.magnet_table.template.head.cloneNode(true);
-                            if (i === 0) {
-                                var select = document.createElement("select");
-                                var ops = Object.keys(thirdparty.nong.resource_sites); // todo 181225
-                                var cur_index = GM_getValue("search_index", ops[0]);
-                                for (var j = 0; j < ops.length; j++) {
-                                    var op = document.createElement("option");
-                                    op.value = ops[j];
-                                    op.textContent = ops[j];
-                                    if (cur_index == ops[j]) {
-                                        op.setAttribute("selected", "selected");
-                                    }
-                                    select.appendChild(op);
-                                }
-                                b.removeChild(b.firstChild);
-                                b.appendChild(select);
-                                let a3 = document.createElement('a');
-                                $(a3).append('&nbsp;修改&nbsp;')
-                                $(a3).css({
-                                    "color": "blue",
-                                    "font": "bold 12px monospace"
-                                });
-                                $(a3).attr("href", "#");
-                                $(a3).click(() => {
-                                    Common.openSystemConfig();
-                                });
-                                b.append(a3);
-                                a.appendChild(b);
-                                continue;
-                            }
-                            b.firstChild.textContent = list[i];
-                            a.appendChild(b);
-                        }
-                        return a;
+                        const row=document.createElement('tr');row.className='jav-nong-row';row.id='jav-nong-head';
+                        const first=document.createElement('th'),select=document.createElement('select'),hosts=enabledMagnetSources();
+                        select.className='nong-source-select';
+                        for(const host of hosts){const option=document.createElement('option');option.value=host;option.textContent=magnetSourceLabel(host)+' · '+host;select.appendChild(option);}
+                        const selected=GM_getValue('search_index',hosts[0]||'');select.value=hosts.includes(selected)?selected:(hosts[0]||'');first.appendChild(select);
+                        const settings=document.createElement('a');settings.href='#';settings.textContent='设置';settings.style.marginLeft='8px';settings.addEventListener('click',event=>{event.preventDefault();Common.openSystemConfig();});first.appendChild(settings);
+                        const search=document.createElement('a');search.className='nong-search-page';search.href='#';search.target='_blank';search.rel='noopener noreferrer';search.textContent='搜索页';search.style.marginLeft='8px';first.appendChild(search);row.appendChild(first);
+                        for(const label of ['文件名','大小','磁链']){const th=document.createElement('th');th.textContent=label;row.appendChild(th);}
+                        select.addEventListener('change',()=>{GM_setValue('search_index',select.value);document.getElementById('nong-table-new')?.remove();thirdparty.nong.searchMagnetRun();});return row;
                     },
-                    create_row: (data) => {
-                        var a = document.createElement('tr');
-                        a.className = 'jav-nong-row';
-                        a.setAttribute('maglink', data.maglink);
-                        // 暂时针对cnbtkitty.pw站点生效。
-                        if (data.maglink.indexOf("#magnetlink") > -1) {
-                            a.setAttribute('id', data.id);
-                            let promise1 = Common.request(data.maglink + "?hobbyId=" + data.id);// 传递修改hobbyId，用于修改时定位。
-                            promise1.then((result) => {
-                                //定位磁链编码开始下标位置
-                                let indexNum = result.responseText.indexOf('#website#infohash#');
-                                if (indexNum >= 0) {
-                                    let magnetlink = result.responseText.substring(indexNum + 18, indexNum + 58);
-                                    let hobbyId = result.finalUrl.substring(result.finalUrl.indexOf('?hobbyId=') + 9, result.finalUrl.length);
-                                    $("#" + hobbyId).attr("maglink", "magnet:?xt=urn:btih:" + magnetlink);
-                                }
-                            });
-                        }
-
-                        var b = document.createElement('td');
-                        var list = [
-                            thirdparty.nong.magnet_table.template.create_info(data.title, data.maglink),
-                            thirdparty.nong.magnet_table.template.create_size(data.size, data.src),
-                            thirdparty.nong.magnet_table.template.create_operation(data.maglink),
-                            thirdparty.nong.magnet_table.template.create_offline()
-                        ];
-                        for (var i = 0; i < list.length; i++) {
-                            var c = b.cloneNode(true);
-                            c.appendChild(list[i]);
-                            a.appendChild(c);
-                        }
-                        return a;
+                    create_row: data => {
+                        const row=document.createElement('tr');row.className='jav-nong-row';row.setAttribute('maglink',data.maglink||'');
+                        const src=data.src||'';let host='';try{host=new URL(src,location.href).hostname;}catch(error){}
+                        const sourceCell=document.createElement('td'),sourceLink=document.createElement('a');sourceLink.href=src||'#';sourceLink.target='_blank';sourceLink.rel='noopener noreferrer';sourceLink.textContent=magnetSourceLabel(host);sourceLink.title=host||src;sourceCell.appendChild(sourceLink);
+                        const nameCell=document.createElement('td');nameCell.textContent=data.title||'未命名资源';nameCell.title=data.title||'';
+                        const sizeCell=document.createElement('td');sizeCell.textContent=data.size||'未知';
+                        const magnetCell=document.createElement('td'),magnetLink=document.createElement('a');magnetLink.className='nong-magnet-link';magnetLink.href=data.maglink||'#';magnetLink.textContent=data.maglink?'打开磁链':'等待解析';magnetCell.appendChild(magnetLink);
+                        const copy=document.createElement('button');copy.type='button';copy.className='nong-copy';copy.textContent='复制完整磁链';copy.disabled=!/^magnet:\?xt=urn:btih:/i.test(data.maglink||'');magnetCell.appendChild(copy);row.append(sourceCell,nameCell,sizeCell,magnetCell);
+                        if(data.maglink&&data.maglink.includes('#magnetlink'))Common.request(data.maglink+'?hobbyId='+encodeURIComponent(data.id||'')).then(result=>{
+                            const marker='#website#infohash#',index=result.responseText.indexOf(marker);if(index<0)return;
+                            const hash=result.responseText.substring(index+marker.length,index+marker.length+40);if(!/^[a-f0-9]{40}$/i.test(hash))return;
+                            const magnet='magnet:?xt=urn:btih:'+hash;row.setAttribute('maglink',magnet);magnetLink.href=magnet;magnetLink.textContent='打开磁链';copy.disabled=false;
+                        }).catch(()=>{});
+                        copy.addEventListener('click',thirdparty.nong.magnet_table.handle_event,false);return row;
                     },
-                    create_loading: () => {
-                        var a = document.createElement('tr');
-                        a.className = 'jav-nong-row';
-                        var p = document.createElement('p');
-                        p.textContent = 'Loading';
-                        p.id = 'notice';
-                        a.appendChild(p);
-                        return a;
-                    },
-                    create_info: (title, maglink) => {
-                        var a = thirdparty.nong.magnet_table.template.info.cloneNode(true);
-                        a.firstChild.textContent = title.length < 20 ? title : title.substr(0, 20) + '...';
-                        a.firstChild.href = maglink;
-                        a.title = title;
-                        return a;
-                    },
-                    create_size: (size, src) => {
-                        var a = thirdparty.nong.magnet_table.template.size.cloneNode(true);
-                        a.textContent = size;
-                        a.href = src;
-                        return a;
-                    },
-                    create_operation: (maglink) => {
-                        var a = thirdparty.nong.magnet_table.template.operation.cloneNode(true);
-                        a.firstChild.href = maglink;
-                        return a;
-                    },
-                    create_offline: () => {    //有用 hobby
-                        var a = thirdparty.nong.magnet_table.template.offline();
-                        a.className = 'nong-offline';
-                        return a;
-                    },
-                    head: (() => {
-                        var a = document.createElement('th');
-                        var b = document.createElement('a');
-                        a.appendChild(b);
-                        return a;
-                    })(),
-                    info: (() => {
-                        var a = document.createElement('div');
-                        var b = document.createElement('a');
-                        b.textContent = 'name';
-                        b.href = 'src';
-                        a.appendChild(b);
-                        return a;
-                    })(),
-                    size: (() => {
-                        var a = document.createElement('a');
-                        a.textContent = 'size';
-                        return a;
-                    })(),
-                    operation: (() => {
-                        var a = document.createElement('div');
-                        var copy = document.createElement('a');
-                        copy.className = 'nong-copy';
-                        copy.textContent = '复制';
-                        a.appendChild(copy);
-                        return a;
-                    })(),
-                    offline: () => {
-                        var a = document.createElement('div');
-                        var b = document.createElement('a');
-                        b.className = 'nong-offline-download';
-                        b.target = '_blank';
-                        for (var k in thirdparty.nong.offline_sites) {
-                            if (thirdparty.nong.offline_sites[k].enable) {
-                                var c = b.cloneNode(true);
-                                c.href = thirdparty.nong.offline_sites[k].url;
-                                c.textContent = thirdparty.nong.offline_sites[k].name;
-                                a.appendChild(c);
-                            }
-                        }
-                        return a;
-                    },
+                    create_loading: () => {const row=document.createElement('tr'),cell=document.createElement('td');row.className='jav-nong-row';cell.colSpan=4;cell.id='notice';cell.textContent='正在搜索磁力资源…';row.appendChild(cell);return row;}
                 },
-                create_empty_table: () => {   //有用 hobby
-                    var a = document.createElement('table');
-                    a.id = 'nong-table-new';
-                    return a;
+                create_empty_table: () => {const table=document.createElement('table');table.id='nong-table-new';return table;},
+                updata_table: (src,data) => {
+                    const table=document.getElementById('nong-table-new');if(!table)return;const notice=table.querySelector('#notice');if(notice)notice.parentElement.remove();
+                    for(const item of data)table.appendChild(thirdparty.nong.magnet_table.template.create_row(item));
+                    const link=document.querySelector('#jav-nong-head .nong-search-page');if(link&&src)link.href=src;
                 },
-                updata_table: (src, data, type) => {
-                    if (type == 'full') {
-                        var tab = $('#nong-table-new')[0];
-                        tab.removeChild(tab.querySelector("#notice").parentElement);
-                        for (var i = 0; i < data.length; i++) {
-                            tab.appendChild(thirdparty.nong.magnet_table.template.create_row(data[i]));
-                        }
-                    }
-                    thirdparty.nong.magnet_table.reg_event();
+                full: () => {const table=thirdparty.nong.magnet_table.create_empty_table();table.appendChild(thirdparty.nong.magnet_table.template.create_head());table.appendChild(thirdparty.nong.magnet_table.template.create_loading());return table;},
+                handle_event: event => {
+                    const button=event.target.closest('.nong-copy');if(!button)return;const row=button.closest('tr');
+                    const magnet=row?row.getAttribute('maglink'):button.getAttribute('data-magnet');
+                    if(!/^magnet:\?xt=urn:btih:/i.test(magnet||'')){button.textContent='磁链尚未就绪';return;}
+                    GM_setClipboard(magnet);button.textContent='已复制';setTimeout(()=>{button.textContent='复制完整磁链';},1000);event.preventDefault();
                 },
-                full: (src, data) => {
-                    var tab = thirdparty.nong.magnet_table.create_empty_table();
-                    tab.appendChild(thirdparty.nong.magnet_table.template.create_head());
-                    var loading = thirdparty.nong.magnet_table.template.create_loading();
-                    tab.appendChild(loading);
-                    return tab;
-                },
-                handle_event: (event) => {
-                    var maglink = event.target.parentElement.parentElement.getAttribute('maglink')
-                        || event.target.parentElement.parentElement.parentElement.getAttribute('maglink')|| event.target.getAttribute("href");
-                    if ($(event.target).hasClass("nong-copy")) {
-                        event.target.innerHTML = '成功';
-                        maglink = maglink.substr(0, 60);
-                        GM_setClipboard(maglink);
-                        setTimeout(() => {
-                            event.target.innerHTML = '复制';
-                        }, 1000);
-                        event.preventDefault(); //阻止跳转
-                    }
-                    else if ($(event.target).hasClass("nong-offline-download")) {
-                        maglink = maglink.substr(0, 60);
-                        GM_setValue('magnet', maglink);
-                        //获取115 token接口
-                        let promise = Common.request('https://115.com/?ct=offline&ac=space&_=' + new Date().getTime());
-                        promise.then((responseDetails) => {
-                            if (responseDetails.responseText.indexOf('html') >= 0) {
-                                //未登录处理
-                                Common.notifiy("115还没有登录",
-                                    '请先登录115账户后,再离线下载！',
-                                    icon,
-                                    'https://115.com/?mode=login'
-                                );
-                                return false;
-                            }
-                            var sign115 = JSON.parse(responseDetails.response).sign;
-                            var time115 = JSON.parse(responseDetails.response).time;
-                            GM_xmlhttpRequest({
-                                method: 'POST',
-                                url: 'https://115.com/web/lixian/?ct=lixian&ac=add_task_url', //添加115离线任务接口
-                                headers: {
-                                    "Content-Type": "application/x-www-form-urlencoded"
-                                },
-                                data: "url=" + encodeURIComponent(maglink) + "&uid=" + jav_userID + "&sign=" + sign115
-                                    + "&time=" + time115,
-                                onload: (responseDetails) => {
-                                    var lxRs = JSON.parse(responseDetails.responseText); //离线结果
-                                    if (lxRs.state) {
-                                        //离线任务添加成功
-                                        Common.notifiy("115老司机自动开车",
-                                            '离线任务添加成功 , 3秒后刷新本页面',
-                                            icon,
-                                            'https://115.com/?tab=offline&mode=wangpan'
-                                        );
-                                        setTimeout(() => {
-                                            location.reload();
-                                        }, 3000);
-                                    }
-                                    else {
-                                        //离线任务添加失败
-                                        if (lxRs.errcode == '911') {
-                                            lxRs.error_msg = '你的帐号使用异常，需要在线手工重新验证即可正常使用。';
-                                        }
-                                        Common.notifiy("失败了",
-                                            '请重新打开115,' + lxRs.error_msg,
-                                            icon,
-                                            'https://115.com/?tab=offline&mode=wangpan'
-                                        );
-                                    }
-                                }
-                            });
-
-                        });
-                        event.preventDefault(); //阻止跳转
-                    }
-                },
-                reg_event: () => { // target 处理 更精准
-                    var list = [
-                        '.nong-copy',
-                        '.nong-offline-download'
-                    ];
-                    for (var i = 0; i < list.length; i++) {
-                        var a = document.querySelectorAll(list[i]);
-                        for (var u = 0; u < a.length; u++) {
-                            a[u].addEventListener('click', thirdparty.nong.magnet_table.handle_event, false);
-                        }
-                    }
-                },
+                reg_event: () => {}
             },
             // 挊
             searchMagnetRun: () => {
@@ -2547,38 +2319,22 @@
                                     #nong-table-new{margin:10px auto;color:#666 !important;font-size:13px;text-align:center;background-color: #F2F2F2;}
                                     #nong-table-new th,#nong-table-new td{text-align: center;height:30px;background-color: #FFF;padding:0 5px 0;border: 1px solid #EFEFEF;}
                                     .jav-nong-row{text-align: center;height:30px;background-color: #FFF;padding:0 5px 0;border: 1px solid #EFEFEF;}
-                                    .nong-copy{color:#08c !important;}
-                                    .nong-offline{text-align: center;}
-                                    #jav-nong-head a {margin-right: 5px;color: black;}
-                                    .nong-offline-download{color: rgb(0, 180, 30) !important; margin-right: 4px !important;}
-                                    .nong-offline-download:hover{color:red !important;}
+                                    .nong-copy{margin-left:8px;padding:3px 8px;cursor:pointer;}
+                                    .nong-copy:disabled{opacity:.5;cursor:not-allowed;}
+                                    #jav-nong-head a{margin-right:5px;color:#08c;}
+                                    #nong-table-new td{max-width:520px;overflow-wrap:anywhere;}
                                 `);
                                 main.cur_tab = thirdparty.nong.magnet_table.full();
                                 v.proc(main);
 
-                                let t = $('#jav-nong-head')[0].firstChild;
-                                t.firstChild.addEventListener('change', (e) => {
-                                    GM_setValue('search_index', e.target.value);
-                                    let s = $('#nong-table-new')[0];
-                                    s.parentElement.removeChild(s);
-                                    thirdparty.nong.searchMagnetRun();
-                                });
-
-                                if (GM_getValue('search_index', null) === null) {
-                                    GM_setValue('search_index', Object.keys(thirdparty.nong.resource_sites)[0]);
-                                }
                                 thirdparty.nong.search_engines.cur_engine(main.cur_vid, (src, data) => { //callback
                                     if (data.length === 0) {
                                         let url = thirdparty.nong.search_engines.full_url;
-                                        $('#nong-table-new #notice').text('No search result! ');   //todo 181224
-                                        $('#nong-table-new #notice').append(
-                                            `<a href="${url}" target="_blank" style="color: red;">&nbsp;Go</a>`);   //todo 190630
+                                        const notice=document.querySelector('#nong-table-new #notice');
+                                        if(notice){notice.textContent='没有找到磁力资源。';if(url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent=' 查看搜索页';notice.appendChild(link);}}
                                     }
                                     else {
-                                        thirdparty.nong.magnet_table.updata_table(src, data, 'full');
-                                        /*display search url*/
-                                        var y = $('#jav-nong-head th')[1].firstChild;
-                                        y.href = thirdparty.nong.search_engines.full_url;
+                                        thirdparty.nong.magnet_table.updata_table(src, data);
                                     }
                                 });
                             }
