@@ -272,6 +272,7 @@
                 const flags=document.createElement('div');flags.className='tm-site-flags';
                 const addFlag=(label,input)=>{const wrap=document.createElement('label');wrap.append(input,document.createTextNode(label));flags.appendChild(wrap);};
                 addFlag('启用',enabled);addFlag('JAV 跳转',jump);addFlag('在线预览',preview);
+                if(site.dynamic){const note=document.createElement('small');note.textContent='专用搜索流程，仅用于 JAV 跳转';note.style.color='#888';flags.appendChild(note);}
                 const remove=document.createElement('button');remove.type='button';remove.className='tm-site-remove';remove.textContent='删除站点';
                 remove.addEventListener('click',()=>row.remove());
                 top.append(fields,flags,remove);row.appendChild(top);
