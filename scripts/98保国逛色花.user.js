@@ -2603,9 +2603,6 @@
                   </li>
                   `
         ),
-        // createBlockAction('//table/tbody[tr[1]/td[1]//a[text()="' + userID + '"]]', "<p><center>已屏蔽 <font color=grey>" + userID + "</font></center></p>"),
-        // createBlockAction('//blockquote[font/a/font[contains(text(),"' + userID + '")]]', "<p>已屏蔽引用 <font color=grey>" + userID + "</font>的言论</p>"),
-        // createBlockAction('//table/tbody[tr[1]/th[1]//a[contains(text(),"' + userID + '")]]', ""),
       ];
 
       actions.forEach(applyBlockAction(displayBlockedTips));
@@ -3018,7 +3015,6 @@
         showAvatarEvent();
         const userid = getUserId();
         if (userid) {
-          // addQuickGradeToPostButton();//已失效和谐
           addQuickActionToPostButton();
         }
         removeAD3();
@@ -4128,9 +4124,7 @@
       () => {
         let pid = getTableIdFromElement(post);
         if (pid) {
-          // let fid = getFidFromElement();
-          // const tid = extractTid(window.location.href);
-          // showWindow("reply", `forum.php?mod=post&action=reply&fid=${fid}&tid=${tid}&repquote=${pid}`);
+                  // showWindow("reply", `forum.php?mod=post&action=reply&fid=${fid}&tid=${tid}&repquote=${pid}`);
           setanswer(pid, "");
         } else {
           showTooltip("未找到最佳答案");
@@ -4334,7 +4328,6 @@
         buttonContainer.appendChild(createOneClickDoubleButton());
       }
 
-      // addQuickGradeToPostButton();//已失效和谐
       addQuickActionToPostButton();
     }
     if (settings.showViewRatings) {
