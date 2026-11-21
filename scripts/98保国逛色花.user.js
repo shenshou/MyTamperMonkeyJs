@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.30
+// @version      100.31
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -550,22 +550,22 @@
                 <div class='bgsh-setting-box-container '>
                     <div class="bgsh-setting-first">
 
-                        <label for="tipsText">提示文字</label>
+                        <label for="tipsTextInput">提示文字</label>
                         <input type="text" id="tipsTextInput" value="${
                           escapeHTML(settings.tipsText)
                         }">
                         <br>
-                        <label for="logoText">评分/特效文字</label>
+                        <label for="logoTextInput">评分/特效文字</label>
                         <input type="text" id="logoTextInput" value="${
                           escapeHTML(settings.logoText)
                         }">
                         <br>
-                        <label for="imageSize">勋章尺寸：</label>
+                        <label for="imageSizeInput">勋章尺寸：</label>
                         <input type="text" id="imageSizeInput" value="${
                           escapeHTML(settings.imageSize)
                         }">
                         <br>
-                        <label for="imageUrl">替换勋章图片链接：</label>
+                        <label for="imageUrlInput">替换勋章图片链接：</label>
                         <input type="text" id="imageUrlInput" value="${
                           escapeHTML(settings.imageUrl)
                         }">
@@ -663,13 +663,13 @@
                         </label>
                         <br>
 
-                        <label for="titleStyleSize">字体大小</label>
+                        <label for="titleStyleSizeInput">字体大小</label>
                         <input type="number" min="1" id="titleStyleSizeInput" value="${
                           escapeHTML(settings.titleStyleSize)
                         }">
                         <br>
 
-                        <label for="titleStyleWeight">字体粗细</label>
+                        <label for="titleStyleWeightInput">字体粗细</label>
                         <input type="number" min="100" max="900" step="100" id="titleStyleWeightInput" value="${
                           escapeHTML(settings.titleStyleWeight)
                         }">
