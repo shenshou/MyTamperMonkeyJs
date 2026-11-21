@@ -67,50 +67,17 @@
 // 已知问题：javlib加了Cloudflare防御，目前更新版本利用新网址列表功能已经复活8成以上，代价是2秒左右刷新一个列表的番号。目前只能这样了。
 //          如有更优方案，可留言反馈。另外blogjav站已经能访问了，但新番号基本无预览图了，就做一个备用预览大图源吧。
 
-// v3.8.9  优化预览图加载顺序，优化预览图加载问题。（如遇预览图无法加载成功，优先考虑更新最新chrome版本再使用新版脚本）
-// v3.8.8  修复javlib加了Cloudflare防御导致列表功能失效问题。
-// v3.8.7  修复部分页面预览图失效的问题。javlib新增了FC2菜单跳转（onejav）。
 
-// v3.8.3  修复javstore22年12月番号视频内容预览大图改版前后的图片获取及显示兼容问题。解决获取dmm评价数据受18岁询问限制。
-// v3.8.2  修复javstore番号页图片显示问题,修复javstore备用预览图失效的问题。
-// v3.8.1  javlib、javbus、javdb新增了VR菜单入口，javbus新增了FC2菜单跳转，javdb修改了FC2菜单内容（需登录）。修复了已知问题。
 //         优化dmm评分数据获取，多数番号突破dmm地区访问限制。代码调整优化。修复了已知问题。
 
-// v3.7.1  再优化blogjav预览图获取方式，优化预览图加载时间。修复了已知问题。
-// v3.7.0  增加javdb列表的JAV评分排序、屏蔽指定评分人数功能。优化blogjav预览图获取方式。
 
-// v3.6.0  原番号页面增加dmm、javdb评分展示及在线播放跳转、JAV跳转，增加javstore番号页改造，增加javdb瀑布流及列表增加JAV跳转和排版优化。
 //         原javlib番号页面自带预览图可点击查看，onejav列表简单优化，其他已知bug修复，部分代码优化。
 
-// v3.5.2  修复部分地区无法访问脚本依赖库问题，重新梳理匹配脚本域名作用地址。
-// v3.5.1  修复javdb站源的磁力搜索，增加jav磁链地址的修改入口。
-// v3.4.0  针对JVR影片查找资源的需求，结合javlib站的进阶搜寻中多重搜寻来过滤VR资源，增加了javdb站做为jav磁链接下载来源。
 //         修复了预览图失效的问题。
-// v3.3.3  预览图备用站更换成javstore。
-// v3.2.0  新增javarchive站的预览图做备用，当blogjav预览图无法正常读取时使用。
-// v3.1.7  增加脚本设置功能，支持磁链地址失效可自己更换。更新最新磁链地址。
-// v3.1.6  更换失效的磁链地址。另btdig，nayy，torrentkitty站点需科学上网，其中btdig还需手工验证非机器访问。
-// v3.1.5  增加过滤评分及排序时排除10分的番号，更换失效的磁链地址。
-// v3.1.0  优化javbus/avmoo/avsox瀑布流排版。
 
-// v2.2.0  增加onejav网站内容排版的支持，热门Jav预览搜集更省时省力。更换两个磁链资源新地址。
-// v2.1.5  增加点击番号完成复制功能。
-// v2.1.3  增加btdigg磁链资源站点。修复了已知问题。
-// v2.1.1  增加jav站点瀑布流控制按钮功能。
 
-// v2.0.7  增加一种情况Jav列表排序功能支持(仅javlib)。
-// v2.0.5  增加Jav列表“按评分排序”、“按时间排序”功能(仅javlib)，及更新Jav站点域名。
-// v2.0.0  增加自动同步个人数据缓存到本地,jav列表能识别个人已阅览过的内容(需登录javlibray),针对javlibrary的高评价栏目,增加过滤"不看我阅览过"功能。
 
-// v1.2.0  针对javlibrary的高评价栏目，增加过滤“只看当前月份”、“只看近两月份”功能。另默认此栏目近两月份的内容增加背景颜色区分。
-// v1.2.0  更新了合成“挊”脚本的更多网站的支持，感谢作者thunderhit，同时修复原脚本部分网站功能失效问题。
-// v1.1.0  优化更新了JAV列表无限滚动自动加载的代码,增加JAV列表中显示"发行日期"和"评分"的排版,以及修复了已知问题。
-// v1.0.3  优化了高清预览大图的获取。
-// v1.0.2  优化了javlibrary排版,做了最低分辨率1280x800的排版适配调整，及修复了已知问题。
-// v1.0.0  支持javlibrary.com、javbus.com、avmo.pw、avso.pw等老司机站点，第一版发布。
 
-// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
-// @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/hardening/jav-old-driver/scripts/JAV%E8%80%81%E5%8F%B8%E6%9C%BA.user.js
 // ==/UserScript==
 /* jshint -W097 */
 (function () {
@@ -139,6 +106,23 @@
         const source = MAGNET_SOURCES.find(item =>
             String(GM_getValue(item.domainKey, item.defaultDomain) || '').toLowerCase() === value);
         return source ? source.label : (host || '未知来源');
+    }
+
+    function bindTampermonkeyOpenLinks(root) {
+        if (!root) return;
+        root.querySelectorAll('a[href]').forEach(link => {
+            if (link.dataset.tmOpenBound === '1') return;
+            link.dataset.tmOpenBound = '1';
+            link.addEventListener('click', event => {
+                if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+                const href = link.href;
+                let protocol;
+                try { protocol = new URL(href, location.href).protocol; } catch (error) { return; }
+                if (protocol !== 'http:' && protocol !== 'https:') return;
+                event.preventDefault();
+                GM_openInTab(href, { active: true, insert: true, setParent: true });
+            });
+        });
     }
 
     // 瀑布流状态：1：开启、0：关闭
@@ -1103,13 +1087,14 @@
                             <table><tbody><tr>
                                 <td class="header">在线预览:</td>
                                 <td>
-                                    <span class="genre"><a href="https://missav.com/cn/${AVID}" target="_blank" title="需解封印" >missav</a></span>
-                                    <span class="genre"><a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" title="需解封印" >7mmtv</a></span>
-                                    <span class="genre"><a href="https://supjav.com/zh/?s=${Common.getAvCode(AVID)}+${AVID}" target="_blank" title="需解封印">supjav</a></span>
+                                    <span class="genre"><a href="https://missav.com/cn/${AVID}" target="_blank" title="MissAV">missav</a></span>
+                                    <span class="genre"><a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" title="7mmtv">7mmtv</a></span>
+                                    <span class="genre"><a href="https://supjav.com/zh/?s=${Common.getAvCode(AVID)}+${AVID}" target="_blank" title="SupJav">supjav</a></span>
                                 </td>
                             </tr></tbody></table>
                         </div>
                     `);
+                    bindTampermonkeyOpenLinks(document.getElementById('video_webplayer'));
 
                     $('#watched .smallbutton').html("放弃了");
                     $('#watched .smalldarkbutton.hidden').html("我放弃这片了");
@@ -1201,13 +1186,14 @@
 
                     //加入在线预览跳转
                     $('.col-md-3.info').append(`
-                        <p>
+                        <p id="jav-online-preview">
                             <span class="header">在线预览:</span>
-                            <a href="https://missav.com/cn/${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="需解封印">missav&nbsp;</a>
-                            <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="需解封印">7mmtv&nbsp;</a>
-                            <a href="https://supjav.com/zh/?s=${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="需解封印">supjav&nbsp;</a>
+                            <a href="https://missav.com/cn/${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;</a>
+                            <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${AVID}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;</a>
+                            <a href="https://supjav.com/zh/?s=${AVID}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;</a>
                         </p>
                     `);
+                    bindTampermonkeyOpenLinks(document.getElementById('jav-online-preview'));
                     // 加入javlib的跳转链接
                     $('.col-md-3.info').append(`
                         <p id="linkJump">
@@ -1466,11 +1452,12 @@
                 thirdparty.nong.searchMagnetRun();
 
                 $(".onlinePlayLink").append(`
-                    <a href="https://njav.tv/zh/search?keyword=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="">njav&nbsp;&nbsp;</a>
-                    <a href="https://missav.com/cn/${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="此站需解封">missav&nbsp;&nbsp;</a>
-                    <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${$('.boxoleft .box_left_news.news_2n').attr("avid")}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="此站需解封">7mmtv&nbsp;&nbsp;</a>
-                    <a href="https://supjav.com/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="此站需解封">supjav&nbsp;&nbsp;</a>
+                    <a href="https://njav.tv/zh/search?keyword=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="NJAV">njav&nbsp;&nbsp;</a>
+                    <a href="https://missav.com/cn/${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="MissAV">missav&nbsp;&nbsp;</a>
+                    <a href="https://${MMTV_DOMAIN}/zh/censored_search/all/${$('.boxoleft .box_left_news.news_2n').attr("avid")}/1.html" target="_blank" style="color: rgb(204, 0, 0);" title="7mmtv">7mmtv&nbsp;&nbsp;</a>
+                    <a href="https://supjav.com/zh/?s=${$('.boxoleft .box_left_news.news_2n').attr("avid")}" target="_blank" style="color: rgb(204, 0, 0);" title="SupJav">supjav&nbsp;&nbsp;</a>
                 `);
+                bindTampermonkeyOpenLinks(document.querySelector('.onlinePlayLink'));
 
             }
         }
