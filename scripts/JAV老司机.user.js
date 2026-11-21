@@ -317,15 +317,24 @@
          * @param {string} click_url
          */
         static notifiy(title, body, icon, click_url) {
-            var notificationDetails = {
+            const notificationDetails = {
                 text: body,
                 title: title,
                 timeout: 3000,
-                image: icon,
-                onclick: () => {
-                    window.open(click_url);
-                }
+                image: icon
             };
+            let targetUrl = '';
+            try {
+                const parsedUrl = new URL(String(click_url || ''));
+                if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+                    targetUrl = parsedUrl.href;
+                }
+            } catch (error) {}
+            if (targetUrl) {
+                notificationDetails.onclick = () => {
+                    GM_openInTab(targetUrl, { active: true, insert: true, setParent: true });
+                };
+            }
             GM_notification(notificationDetails);
         }
 
