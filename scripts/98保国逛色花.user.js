@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.23
+// @version      100.24
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -2852,8 +2852,8 @@
         Referer: baseURL,
       },
       onload: function (response) {
-        if (response.status === 301 || response.status === 302) {
-          var headers = response.responseHeaders.split("\n");
+        if ([301, 302, 303, 307, 308].includes(response.status)) {
+          var headers = String(response.responseHeaders || "").split("\n");
           var locationHeader = headers.find((header) =>
             header.toLowerCase().startsWith("location:")
           );
@@ -2861,13 +2861,21 @@
             const redirectValue = locationHeader.slice(locationHeader.indexOf(":") + 1).trim();
             try {
               const redirectURL = new URL(redirectValue, baseURL);
-              if (redirectURL.protocol === "http:" || redirectURL.protocol === "https:") {
+              if (
+                (redirectURL.protocol === "http:" || redirectURL.protocol === "https:") &&
+                redirectURL.origin === window.location.origin
+              ) {
                 window.open(redirectURL.href, "_blank", "noopener,noreferrer");
+              } else {
+                showTooltip("搜索响应包含非本站跳转，已阻止打开。");
               }
             } catch (error) {
               console.warn("划词搜索返回了无效的跳转地址：", error);
             }
           }
+        } else if (response.status < 200 || response.status >= 300) {
+          showTooltip("划词搜索请求失败：HTTP " + response.status);
+          console.error("划词搜索请求失败，HTTP状态：" + response.status);
         } else {
           if (String(response.finalUrl || "").includes("searchmd5")) {
             showTooltip(
