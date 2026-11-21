@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.22
+// @version      100.23
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -571,7 +571,7 @@
                         }">
                         <br>
                         <label for="maxGradeThread">主贴评分最大值:</label>
-                        <input type="number" id="maxGradeThread" value="${
+                        <input type="number" min="0" id="maxGradeThread" value="${
                           escapeHTML(settings.maxGradeThread)
                         }">
                         <br>
@@ -1318,7 +1318,8 @@
     const radios = document.getElementsByName(name);
     for (let i = 0; i < radios.length; i++) {
       if (radios[i].checked) {
-        return parseInt(radios[i].value);
+        const value = Number(radios[i].value);
+        return Number.isInteger(value) ? value : null;
       }
     }
     return null;
@@ -2565,6 +2566,10 @@
    */
   function replaceMedal(img, targetMatch, setting, newUrl) {
     if (!shouldApplySetting(setting, targetMatch)) return;
+    if (!String(newUrl || "").trim()) {
+      console.warn("已跳过空的勋章图片地址。");
+      return;
+    }
     try {
       const imageURL = new URL(newUrl, window.location.href);
       if (imageURL.protocol !== "http:" && imageURL.protocol !== "https:") {
