@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98保国逛色花（维护版）
 // @namespace    https://www.sehuatang.net
-// @version      100.24
+// @version      100.25
 // @description  最好用的98堂(原色花堂)脚本 高级搜索 自动签到 快速复制 快速评分 划词搜索 图片预览 快速收藏
 // @author       MySelf
 // @match        *://*.sehuatang.net/*
@@ -4880,8 +4880,14 @@
 
     // 尝试自动签到
     if (!hasSignedToday) {
-      const signed = await sign(userid);
-      signButton.innerText = signed ? "已经签到" : "快去签到";
+      try {
+        const signed = await sign(userid);
+        signButton.textContent = signed ? "已经签到" : "快去签到";
+      } catch (error) {
+        signButton.textContent = "快去签到";
+        showTooltip("自动签到暂时失败，请稍后重试。");
+        console.error("自动签到失败：", error);
+      }
     }
 
     // 添加签到按钮到容器
