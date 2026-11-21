@@ -1379,7 +1379,7 @@
                             d="M729.047155 553.52312a739.28266 739.28266 0 0 0-87.001799 0 1777.255987 1777.255987 0 0 0-226.576875 58.621533c0 7.444004 13.492257 17.67951 113.055812 26.984515a1599.530388 1599.530388 0 0 0 200.522862 4.187252 1460.885811 1460.885811 0 0 0 201.453362-2.791501c99.563555-9.770255 113.521063-19.540511 113.521063-26.984515a1759.576477 1759.576477 0 0 0-227.042126-59.086783c-26.054014-2.791502-87.932299-0.930501-87.932299-0.930501z"
                             fill="#F2C330" p-id="15007"></path>
                         </svg>`;
-      watermarkText.innerHTML = `${kissIcon}${settings.logoText}${kissIcon}`;
+      watermarkText.innerHTML = `${kissIcon}${escapeHTML(settings.logoText)}${kissIcon}`;
 
       let attempts = 0;
       let overlap = false;
@@ -2998,6 +2998,7 @@
       isLoading = true;
       const url = nextPageLink.getAttribute("href");
 
+      let loadedSuccessfully = false;
       try {
         const nextPageURL = new URL(url, window.location.href);
         if (nextPageURL.origin !== window.location.origin) {
@@ -3031,13 +3032,14 @@
         const newSettings = getSettings();
         await processPageContentBasedOnSettings(pageName, newSettings);
         blockContentByUsers(newSettings);
+        loadedSuccessfully = true;
       } catch (error) {
         console.error("无缝翻页加载失败：", error);
         showTooltip("下一页加载失败，请稍后重试。");
       } finally {
         isLoading = false;
       }
-      checkAndLoadIfContentNotEnough();
+      if (loadedSuccessfully) checkAndLoadIfContentNotEnough();
     }
 
     /**
@@ -4032,8 +4034,6 @@
         return;
       }
 
-      const result = elements.map((el) => el.outerHTML).join("<br>");
-
       // 创建模态框
       const modal = document.createElement("div");
       modal.id = "customModal";
@@ -4053,15 +4053,29 @@
       modal.style.overflowY = "auto";
       modal.style.zIndex = "100";
 
-      // 添加内容和关闭按钮
-      modal.innerHTML = `<div style="margin-bottom: 20px;">${result}</div><button id="closeModal" style="padding: 5px 10px; background-color: #F44336; color: white; border: none; border-radius: 5px; cursor: pointer;">关闭</button>`;
-
-      document.body.appendChild(modal);
-
-      // 关闭按钮事件
-      document.getElementById("closeModal").addEventListener("click", () => {
-        modal.remove();
+      // 直接克隆已有附件节点，避免将页面内容序列化后重新解析为 HTML。
+      const resultContainer = document.createElement("div");
+      resultContainer.style.marginBottom = "20px";
+      elements.forEach((element, index) => {
+        if (index > 0) resultContainer.appendChild(document.createElement("br"));
+        resultContainer.appendChild(element.cloneNode(true));
       });
+      modal.appendChild(resultContainer);
+
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.textContent = "关闭";
+      Object.assign(closeButton.style, {
+        padding: "5px 10px",
+        backgroundColor: "#F44336",
+        color: "white",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer",
+      });
+      closeButton.addEventListener("click", () => modal.remove());
+      modal.appendChild(closeButton);
+      document.body.appendChild(modal);
     });
   }
 
