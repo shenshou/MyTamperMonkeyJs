@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98图片预览助手-帖子列表时自动加载内部前三张
 // @namespace    98imgloader
-// @version      1.7.2
+// @version      1.7.3
 // @description  浏览帖子列表时自动加载内部前三张(可配置)图片供预览。如需支持其他免翻地址，请使用@match自行添加连接，如果某个版块不希望预览，请使用@exclude自行添加要排除的版块链接
 // @author       sehuatang_chen
 // @license      MIT
@@ -18,7 +18,6 @@
 // @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js
-// @require      https://cdn.bootcdn.net/ajax/libs/jquery_lazyload/1.9.7/jquery.lazyload.min.js
 
 // @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B-%E5%B8%96%E5%AD%90%E5%88%97%E8%A1%A8%E6%97%B6%E8%87%AA%E5%8A%A8%E5%8A%A0%E8%BD%BD%E5%86%85%E9%83%A8%E5%89%8D%E4%B8%89%E5%BC%A0.user.js
 // @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B-%E5%B8%96%E5%AD%90%E5%88%97%E8%A1%A8%E6%97%B6%E8%87%AA%E5%8A%A8%E5%8A%A0%E8%BD%BD%E5%86%85%E9%83%A8%E5%89%8D%E4%B8%89%E5%BC%A0.user.js
@@ -85,6 +84,11 @@ const normalthread = {
         var count = 0
         var block_user = 0
         var hide = 0
+        const authorControlEnabled = GM_getValue("author_control") == 1;
+        const authorList = authorControlEnabled ? tools.getAuthorList() : [];
+        const removedIds = tools.getRemovedIds();
+        const hideModeValue = GM_getValue("hideorgray");
+        const hideMode = ["hide", "gray"].includes(hideModeValue) ? hideModeValue : "gray";
         $("#threadlist table[id='threadlisttableid'] > tbody:not([id])").each(function(index) {
             var $_tbody=$(this);
             if ($_tbody.find('td[id^="noid_"]').length == 0) {
@@ -108,9 +112,8 @@ const normalthread = {
             var userid=userMatch[1];
             var username = $author_a.text()
 
-            if (GM_getValue("author_control") == 1) {
-                var arr = tools.getAuthorList()
-                if (arr.findIndex((user) => user["id"] == userid) >= 0) {
+            if (authorControlEnabled) {
+                if (authorList.findIndex((user) => user["id"] == userid) >= 0) {
                     $tbody.remove();
                     $("#"+info_id).remove();
                     block_user++
@@ -118,10 +121,9 @@ const normalthread = {
                 }
             }
 
-            var removed_ids = tools.getRemovedIds()
-            var removed = removed_ids.includes(thread_id)
+            var removed = removedIds.includes(thread_id)
             if (removed) {
-                if (GM_getValue("hideorgray") == "gray") {
+                if (hideMode === "gray") {
                     $tbody.css("background-color", "rgb(197 179 179)")
                 } else {
                     $tbody.remove();
@@ -143,8 +145,9 @@ const normalthread = {
 
             if ($tbody.find("#"+load_btn_id).length == 0) {
                 var $load_btn = $('<span title="查看帖内图片" >'+imgs.expand_svg+'</span>')
+                $load_btn.attr("title", "展开/收起帖内图片");
                 $load_btn.on("click", function(){
-                    normalthread.load_thread_info($tbody)
+                    tools.toggle_thread_preview(info_id, () => normalthread.load_thread_info($tbody))
                 })
                 $tbody.find("tr").append($('<td id="'+load_btn_id+'" style="width:20px"></td>').append($load_btn))
             }
@@ -174,11 +177,11 @@ const normalthread = {
         })
 
         if (!isonekeyload) {
-            if (GM_getValue("author_control") == 1 && GM_getValue("hideorgray") == "hide") {
+            if (authorControlEnabled && hideMode === "hide") {
                 tools.tip(`已隐藏屏蔽用户帖子${block_user}条，隐藏标记帖子${hide}条`)
-            }else if (GM_getValue("author_control") == 1) {
+            }else if (authorControlEnabled) {
                 tools.tip(`已隐藏屏蔽用户帖子${block_user}条`)
-            }else if (GM_getValue("hideorgray") == "hide") {
+            }else if (hideMode === "hide") {
                 tools.tip(`已隐藏标记帖子${hide}条`)
             }
         }
@@ -231,8 +234,9 @@ const favorite = {
                 $load_btn.attr("id", load_btn_id);
                 $load_btn.addClass("y")
                 $load_btn.css("margin","0 5px")
+                $load_btn.attr("title", "展开/收起帖内图片");
                 $load_btn.on("click", function(){
-                    favorite.load_thread_info($li)
+                    tools.toggle_thread_preview(info_id, () => favorite.load_thread_info($li))
                 })
                 $li.find("#a_delete_"+thread_id).after($load_btn)
             }
@@ -299,8 +303,9 @@ const userspace = {
 
             if ($tr.find("#"+load_btn_id).length == 0) {
                 var $load_btn = $('<span title="查看帖内图片" >'+imgs.expand_svg+'</span>')
+                $load_btn.attr("title", "展开/收起帖内图片");
                 $load_btn.on("click", function(){
-                    userspace.load_thread_info($tr, info_id)
+                    tools.toggle_thread_preview(info_id, () => userspace.load_thread_info($tr, info_id))
                 })
                 $tr.append($('<td id="'+load_btn_id+'" style="width:20px"></td>').append($load_btn))
             }
@@ -351,6 +356,33 @@ const tools = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
     },
     activeRequests: new Set(),
+    lazyObserver: null,
+    toggle_thread_preview: (infoId, loadCallback) => {
+        const $preview = $("#" + infoId);
+        if ($preview.length) {
+            $preview.toggle();
+            return;
+        }
+        loadCallback();
+    },
+    observe_lazy_image: (image) => {
+        if (!("IntersectionObserver" in window)) {
+            image.src = image.dataset.original;
+            return;
+        }
+        if (!tools.lazyObserver) {
+            tools.lazyObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        const target = entry.target;
+                        target.src = target.dataset.original;
+                        tools.lazyObserver.unobserve(target);
+                    }
+                });
+            }, { rootMargin: "50px" });
+        }
+        tools.lazyObserver.observe(image);
+    },
     request_and_parse_thread: (url, $tag) => {
         let targetUrl;
         try { targetUrl = new URL(url, window.location.href); }
@@ -363,7 +395,8 @@ const tools = {
         tools.activeRequests.add(requestKey);
         let finished = false;
         const finish = () => { if (!finished) { finished = true; tools.activeRequests.delete(requestKey); } };
-        GM_xmlhttpRequest({
+        try {
+            GM_xmlhttpRequest({
             method: "GET", url: requestKey, headers: tools.headers, timeout: 20000,
             onload: (result) => {
                 finish();
@@ -378,7 +411,11 @@ const tools = {
             onerror: () => { finish(); $tag.text("帖子请求失败，请稍后重试"); },
             ontimeout: () => { finish(); $tag.text("帖子请求超时，请稍后重试"); },
             onabort: () => { finish(); $tag.text("帖子请求已取消"); }
-        });
+            });
+        } catch (error) {
+            finish();
+            $tag.text("帖子请求启动失败");
+        }
     },
     load_img: ($from_con, $to_con, threadUrl) => {
         const imgMaxHeight = tools.getNumberSetting("img_max_height", 200, 1000, 300);
@@ -400,7 +437,7 @@ const tools = {
             $tag_img.on("click",function(){if(typeof window.zoom==="function")window.zoom(this,this.src,0,0,0);});
             $tag_img.css({"max-width":imgMaxWidth+"px","max-height":imgMaxHeight+"px",cursor:"pointer","margin-right":"3px",float:"left"});
             $inner_tag_div.append($tag_img);
-            if(lazyLoadEnabled)$tag_img.lazyload({threshold:50});
+            if (lazyLoadEnabled) tools.observe_lazy_image($tag_img[0]);
         });
         if($inner_tag_div.children().length===0)$tag_div.text("未识别到图片"); else $tag_div.append($inner_tag_div);
     },
