@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.12
+// @version      2026.1122.13
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯及可选缩略图预览等
 // @author       匿名
 // @license      GPL
@@ -370,7 +370,7 @@
         const note=el('span','','配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。');
         const jumpLabel=el('label','jump-setting');jumpLabel.htmlFor='onejav-auto-jump';
         const jumpToggle=el('input');jumpToggle.type='checkbox';jumpToggle.id='onejav-auto-jump';jumpToggle.checked=autoJumpEnabled;
-        jumpLabel.append(jumpToggle,el('span','','自动跳转（唯一结果时自动进入详情页）'));
+        jumpLabel.append(jumpToggle,el('span','','自动点击（部分站点自动进入内容页）'));
         const previewLabel=el('label','jump-setting');previewLabel.htmlFor='onejav-preview-enabled';
         const previewToggle=el('input');previewToggle.type='checkbox';previewToggle.id='onejav-preview-enabled';previewToggle.checked=previewEnabled;
         previewLabel.append(previewToggle,el('span','','点击加载缩略图预览（默认关闭）'));
@@ -1724,9 +1724,7 @@
     /* avmoo javbus */
     if (hasAnyHostnameLabel('avmoo', 'avsox', 'javbus', 'busjav', 'busfan', 'fanbus', 'buscdn', 'cdnbus', 'dmmsee', 'seedmm', 'busdmm', 'dmmbus', 'javsee', 'seejav')) {
         const showBoxes = $('.movie-box');
-        if (showBoxes.length === 1 && autoJumpEnabled) {
-            location.href = showBoxes[0].href;
-        }
+        
         const bango = $('body > div.container > h3').text().trim().split(' ')[0];
         const jav = new JAV(bango);
         $('body > div.container > #star-div').after(jav.create_table(1));
@@ -1957,13 +1955,7 @@
         //const showBoxes = $('.box');
         const showBoxesA = document.querySelectorAll('.item a[href*="/v/"]');
         const showBoxesB = document.querySelectorAll('.box.actor-box a[href*="/actors/"]');
-        if (autoJumpEnabled) {
-            if (showBoxesA.length === 1) {
-                location.href = showBoxesA[0].href;
-            } else if (showBoxesB.length === 1) {
-                location.href = showBoxesB[0].href;
-            }
-        }
+        
         const bango = $('body > section > div > div.video-detail > h2 > strong').text().trim().replace("10musu\_", "").split(' ')[0];
         const jav = new JAV(bango);
         $('body > section > div > div.video-detail > div.video-meta-panel').after(jav.create_table(1));
@@ -1999,7 +1991,7 @@
     /* javhd.today */
     if (isJavHdHostname) {
         const showBoxes = $('.thumbnail');
-        if (showBoxes.length === 1 && autoJumpEnabled) { location.href = showBoxes[0].href; }
+        
     }
     /* javstore.net */
     if (null != location.hostname.match(/javstore/)) {
