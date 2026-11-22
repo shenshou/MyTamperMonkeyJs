@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.4
+// @version      2026.1122.5
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图等
 // @author       匿名
 // @license      GPL
@@ -188,8 +188,8 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
 // @run-at       document-end
-// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/OneJAVOneWeb%20list%E8%87%AA%E7%94%A8%E7%89%88.user.js
-// @updateURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/OneJAVOneWeb%20list%E8%87%AA%E7%94%A8%E7%89%88.user.js
+// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/OneJAVOneWeb%20list%E7%BB%B4%E6%8A%A4%E7%89%88.user.js
+// @updateURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/OneJAVOneWeb%20list%E7%BB%B4%E6%8A%A4%E7%89%88.user.js
 // ==/UserScript==
 (function () {
     'use strict';
