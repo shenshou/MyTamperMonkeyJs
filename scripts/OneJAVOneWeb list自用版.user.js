@@ -204,6 +204,15 @@
     const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
+    document.addEventListener('mouseover', event => {
+        const trigger = event.target.closest?.('.jav-preview-trigger');
+        if (!trigger) return;
+        const preview = trigger.closest('.movieav')?.querySelector('.jav-preview-image');
+        if (preview) preview.style.display = 'block';
+    });
+    document.addEventListener('click', event => {
+        if (event.target.matches?.('.jav-preview-image')) event.target.style.display = 'none';
+    });
     /* Basic */
     class JAV {
         constructor(i) {
@@ -1480,7 +1489,7 @@
             htmlTable += htmlTbody;
 
             // 删除鼠标离开隐藏 onMouseOut="document.getElementById('img_1').style.display = 'none'"
-            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><a style="padding-left:5px;" href="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg"  onMouseOver="document.getElementById('img_1').style.display = 'block'" target="_blank"><b><font color='green'>查看 大缩略图</font></b></a><img id="img_1" src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none" onclick="document.getElementById(\'img_1\').style.display=\'none\';">&nbsp;&nbsp;<span style='font-size:9px;font-family:MingLiU;'>车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color='green'>绿色</font>:免番羽&nbsp;&nbsp;<font color='red'>红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
+            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><a class="jav-preview-trigger" style="padding-left:5px;" href="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" target="_blank" rel="noopener noreferrer"><b><font color="green">查看 大缩略图</font></b></a><img class="jav-preview-image" src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none" alt="大缩略图预览">&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
             // 从别的脚本看到一些 ¹⁸⁺ 图库，分享下 不想看到可以在下行前面添加注释符 //
             htmlTable += `<tbody><tr><td colspan="${rows}">图库¹⁸⁺:<a href="https://www.micmicidol.com/" style="padding:2px;">mic写真集</a><a href="https://www.wndfx.com/">Wndfx</a><a href="https://hentai-img.com/" style="padding:2px;">Hentai</a><a href="https://zh.hentai-cosplays.com/" style="padding:2px;">Cosplay</a><a href="https://zh.porn-images-xxx.com/" style="padding:2px;">Porn</a><a href="http://www.xiuren.org/" style="padding:2px;">Xiuren</a><a href="https://everia.club/" style="padding:2px;">Everia</a><a href="https://nsfwx.pics" style="padding:2px;">Nsfwpicx</a><a href="https://asiantolick.com" style="padding:2px;">Asian</a><a href="https://xchina.co" style="padding:2px;">小黄书</a><a href="https://jjgirls.com/" style="padding:2px;">Heyzo</a><a href="https://www.photos18.com/" style="padding:2px;">色圖</a><a href="https://mm.tvv.tw/" style="padding:2px;">tvv</a><br><a href="https://www.pornpics.com/" style="padding:2px;">Porn Pics</a><a href="https://idol.gravureprincess.date/" style="padding:2px;">Idol</a><a href="https://hotgirl.asia/" style="padding:2px;">HOTGIRL</a><a href="https://buondua.com/" style="padding:2px;">Buon Dua</a><a href="https://www.ilovexs.com/" style="padding:2px;">NongMo</a><a href="https://nudecosplaygirls.com/" style="padding:2px;">NUDECOSPLAY</a><a href="https://nudebird.biz/" style="padding:2px;">NudeBird</a><a href="https://goddess247.com/" style="padding:2px;">Goddess247</a><a href="https://tw.goddesssite.com/" style="padding:2px;">Kiss Goddess</a><a href="https://girlygirlpic.com/" style="padding:2px;">girlpic</a></td></tr></tbody>`;
             htmlTable += `</table></div>`;
