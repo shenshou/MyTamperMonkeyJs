@@ -1723,7 +1723,6 @@
 
     /* avmoo javbus */
     if (hasAnyHostnameLabel('avmoo', 'avsox', 'javbus', 'busjav', 'busfan', 'fanbus', 'buscdn', 'cdnbus', 'dmmsee', 'seedmm', 'busdmm', 'dmmbus', 'javsee', 'seejav')) {
-        const showBoxes = $('.movie-box');
         
         const bango = $('body > div.container > h3').text().trim().split(' ')[0];
         const jav = new JAV(bango);
@@ -1953,8 +1952,6 @@
     /* javdb */
     if (isJavDbHostname) {
         //const showBoxes = $('.box');
-        const showBoxesA = document.querySelectorAll('.item a[href*="/v/"]');
-        const showBoxesB = document.querySelectorAll('.box.actor-box a[href*="/actors/"]');
         
         const bango = $('body > section > div > div.video-detail > h2 > strong').text().trim().replace("10musu\_", "").split(' ')[0];
         const jav = new JAV(bango);
@@ -1990,7 +1987,6 @@
     }
     /* javhd.today */
     if (isJavHdHostname) {
-        const showBoxes = $('.thumbnail');
         
     }
     /* javstore.net */
@@ -2036,7 +2032,6 @@
     /* javhoo.org */
     if (hasHostnameLabel('javhoo')) {
         (() => {
-            const showBoxes = $('.thumbnail');
             const bango = document.title.split(" ")[0];
             const jav = new JAV(bango);
             $('body > section > div.content-wrap > div > article').after(jav.create_table(1));
