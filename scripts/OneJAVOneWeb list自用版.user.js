@@ -263,7 +263,7 @@
             const o=settings.overrides[key]||{};
             result.push({id:'builtin:'+key,key,name:o.name??String(item.name).replace(/<[^>]*>/g,''),description:o.description??item.zhushi??'',
                 urlTemplate:o.urlTemplate??toTemplate(item.url,jav),color:o.color??item.color??'#000000',bgcolor:o.bgcolor??item.bgcolor??'',
-                categoryId:o.categoryId||cat,builtin:true,deleted:settings.deleted.includes(key),disabled:settings.disabled.includes(key),index});
+                categoryId:o.categoryId||cat,builtin:true,hasOverride:Object.keys(o).length>0,deleted:settings.deleted.includes(key),disabled:settings.disabled.includes(key),index});
         });
         settings.custom.forEach((item,index)=>result.push({...item,id:item.id,key:item.id,builtin:false,deleted:false,disabled:!item.enabled,index:Object.keys(data).length+index}));
         const order=new Map(settings.siteOrder.map((id,index)=>[id,index]));
@@ -324,7 +324,7 @@
                 const row=el('article','row'),info=el('div'),name=el('div','name',site.name+' · '+(site.deleted?'已删除':site.disabled?'已停用':'启用中'));
                 info.append(name,el('div','meta',categoryName(site.categoryId,settings)+' · '+site.urlTemplate),el('div','meta',site.description));
                 const actions=el('div','actions');
-                [['move-up','↑'],['move-down','↓'],['edit-site','编辑'],['toggle-site',site.disabled?'启用':'停用'],['delete-site',site.deleted?'恢复':'删除']].forEach(([action,label])=>{const b=el('button',action==='delete-site'?'danger':'',label);b.dataset.action=action;b.dataset.id=site.id;actions.appendChild(b);});
+                const actionList=[['move-up','↑'],['move-down','↓'],['edit-site','编辑'],['toggle-site',site.disabled?'启用':'停用']];if(site.builtin&&site.hasOverride)actionList.push(['reset-site','恢复默认']);actionList.push(['delete-site',site.deleted?'恢复':'删除']);actionList.forEach(([action,label])=>{const b=el('button',action==='delete-site'||action==='reset-site'?'danger':'',label);b.dataset.action=action;b.dataset.id=site.id;actions.appendChild(b);});
                 row.append(info,actions);list.appendChild(row);
             });
             if(!shown.length)list.appendChild(el('div','meta','没有符合条件的站点'));main.appendChild(list);
@@ -374,11 +374,17 @@
             const b=event.target.closest('button');if(!b)return;const a=b.dataset.action,id=b.dataset.id;
             if(b.dataset.tab){b.dataset.tab==='sites'?renderSites():renderCategories();return;}
             if(a==='close'){root.remove();return;}if(a==='add-site'){editor(null);return;}if(a==='cancel-editor'){b.closest('.formcover')?.remove();return;}if(a==='edit-site'){editor(id);return;}
-            if(a==='toggle-site'||a==='delete-site'){
+            if(a==='toggle-site'||a==='delete-site'||a==='reset-site'){
                 const site=sites().find(s=>s.id===id);if(!site)return;
-                if(a==='toggle-site'){if(site.builtin)settings.disabled=site.disabled?settings.disabled.filter(k=>k!==site.key):[...settings.disabled,site.key];else{const x=settings.custom.find(v=>v.id===id);if(x)x.enabled=!x.enabled;}}
-                else if(site.builtin)settings.deleted=site.deleted?settings.deleted.filter(k=>k!==site.key):[...settings.deleted,site.key];
-                else{settings.custom=settings.custom.filter(x=>x.id!==id);settings.siteOrder=settings.siteOrder.filter(x=>x!==id);}save();return;
+                if(a==='reset-site'){
+                    if(!site.builtin||!confirm('将“'+site.name+'”恢复为脚本内置默认配置？'))return;
+                    delete settings.overrides[site.key];settings.deleted=settings.deleted.filter(k=>k!==site.key);settings.disabled=settings.disabled.filter(k=>k!==site.key);
+                }else if(a==='toggle-site'){
+                    if(site.builtin)settings.disabled=site.disabled?settings.disabled.filter(k=>k!==site.key):[...settings.disabled,site.key];
+                    else{const x=settings.custom.find(v=>v.id===id);if(x)x.enabled=!x.enabled;}
+                }else if(site.builtin)settings.deleted=site.deleted?settings.deleted.filter(k=>k!==site.key):[...settings.deleted,site.key];
+                else{if(!confirm('永久删除自定义站点“'+site.name+'”？'))return;settings.custom=settings.custom.filter(x=>x.id!==id);settings.siteOrder=settings.siteOrder.filter(x=>x!==id);}
+                save();return;
             }
             if(a==='move-up'||a==='move-down'){const ids=sites().map(s=>s.id),i=ids.indexOf(id),j=i+(a==='move-up'?-1:1);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];settings.siteOrder=ids;save();return;}
             if(a==='add-category'){const name=(main.querySelector('[name="new-category"]')?.value||'').trim();if(!name){alert('请填写分类名称');return;}if(cats().some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('分类名称已存在');return;}settings.customCategories.push({id:'customcat_'+Date.now().toString(36),name});save();return;}
@@ -391,6 +397,7 @@
                 renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null&&typeof next.setSelectionRange==='function')next.setSelectionRange(pos,pos);}
             }
         });
+        root.addEventListener('change',event=>{if(event.target.name==='site-filter'){const q=main.querySelector('[name="site-search"]')?.value||'',f=event.target.value||'';renderSites(q,f);}});
         root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
         renderSites();
     }
