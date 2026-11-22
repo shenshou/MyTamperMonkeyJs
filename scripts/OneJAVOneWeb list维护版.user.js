@@ -2037,9 +2037,6 @@
     if (hasHostnameLabel('javhoo')) {
         (() => {
             const showBoxes = $('.thumbnail');
-            if (showBoxes.length === 1 && autoJumpEnabled) {
-                location.href = showBoxes[0].href;
-            }
             const bango = document.title.split(" ")[0];
             const jav = new JAV(bango);
             $('body > section > div.content-wrap > div > article').after(jav.create_table(1));
