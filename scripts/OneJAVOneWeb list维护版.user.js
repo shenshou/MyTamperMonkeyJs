@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.7
+// @version      2026.1122.8
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图等
 // @author       匿名
 // @license      GPL
@@ -304,6 +304,7 @@
         const close=document.createElement('button');close.textContent='关闭';close.dataset.action='close';header.append(title,close);
         const nav=document.createElement('nav'),tab1=document.createElement('button'),tab2=document.createElement('button');
         tab1.textContent='站点管理';tab1.dataset.tab='sites';tab2.textContent='分类管理';tab2.dataset.tab='categories';nav.append(tab1,tab2);
+        const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
         const main=document.createElement('main'),footer=document.createElement('footer');
         const note=el('span','','配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。');
         const jumpLabel=el('label','jump-setting');jumpLabel.htmlFor='onejav-auto-jump';
@@ -311,7 +312,6 @@
         jumpLabel.append(jumpToggle,el('span','','自动跳转（唯一结果时自动进入详情页）'));
         footer.append(note,jumpLabel);
         panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
-        const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
         const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
         const renderSites=(q='',filter='')=>{
             main.replaceChildren();const toolbar=el('div','toolbar'),search=el('input');search.type='search';search.name='site-search';search.placeholder='搜索站点名称、网址或说明';search.value=q;
