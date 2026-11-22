@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.10
+// @version      2026.1122.12
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯及可选缩略图预览等
 // @author       匿名
 // @license      GPL
@@ -208,6 +208,66 @@
     })[character]);
     let autoJumpEnabled = GM_getValue('auto_jump', true);
     let previewEnabled = GM_getValue('onejav_preview_enabled', false) === true;
+    const GALLERY_MANAGER_KEY = 'onejav_gallery_manager_v1';
+    const GALLERY_DEFAULTS = [
+        {id:'mic',name:'mic写真集',url:'https://www.micmicidol.com/'},
+        {id:'wndfx',name:'Wndfx',url:'https://www.wndfx.com/'},
+        {id:'hentai',name:'Hentai',url:'https://hentai-img.com/'},
+        {id:'cosplay',name:'Cosplay',url:'https://zh.hentai-cosplays.com/'},
+        {id:'porn',name:'Porn',url:'https://zh.porn-images-xxx.com/'},
+        {id:'xiuren',name:'Xiuren',url:'http://www.xiuren.org/'},
+        {id:'everia',name:'Everia',url:'https://everia.club/'},
+        {id:'nsfwx',name:'Nsfwpicx',url:'https://nsfwx.pics/'},
+        {id:'asian',name:'Asian',url:'https://asiantolick.com/'},
+        {id:'xchina',name:'小黄书',url:'https://xchina.co/'},
+        {id:'heyzo',name:'Heyzo',url:'https://jjgirls.com/'},
+        {id:'photos18',name:'色圖',url:'https://www.photos18.com/'},
+        {id:'tvv',name:'tvv',url:'https://mm.tvv.tw/'},
+        {id:'pornpics',name:'Porn Pics',url:'https://www.pornpics.com/'},
+        {id:'idol',name:'Idol',url:'https://idol.gravureprincess.date/'},
+        {id:'hotgirl',name:'HOTGIRL',url:'https://hotgirl.asia/'},
+        {id:'buondua',name:'Buon Dua',url:'https://buondua.com/'},
+        {id:'nongmo',name:'NongMo',url:'https://www.ilovexs.com/'},
+        {id:'nudecosplay',name:'NUDECOSPLAY',url:'https://nudecosplaygirls.com/'},
+        {id:'nudebird',name:'NudeBird',url:'https://nudebird.biz/'},
+        {id:'goddess247',name:'Goddess247',url:'https://goddess247.com/'},
+        {id:'kissgoddess',name:'Kiss Goddess',url:'https://tw.goddesssite.com/'},
+        {id:'girlpic',name:'girlpic',url:'https://girlygirlpic.com/'}
+    ];
+    const ensureGallerySettings = value => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) value = {};
+        if (typeof value.enabled !== 'boolean') value.enabled = true;
+        ['disabled','deleted','order'].forEach(key => {
+            if (!Array.isArray(value[key])) value[key] = [];
+            else value[key] = value[key].filter(item => typeof item === 'string');
+        });
+        if (!value.overrides || typeof value.overrides !== 'object' || Array.isArray(value.overrides)) value.overrides = {};
+        if (!Array.isArray(value.custom)) value.custom = [];
+        value.custom = value.custom.filter(item => item && typeof item === 'object' && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.url === 'string');
+        return value;
+    };
+    const gallerySettings = ensureGallerySettings(GM_getValue(GALLERY_MANAGER_KEY, {}));
+    const saveGallerySettings = () => GM_setValue(GALLERY_MANAGER_KEY, gallerySettings);
+    const safeGalleryUrl = value => {
+        try {
+            const url = new URL(String(value || '').trim());
+            return ['http:','https:'].includes(url.protocol) && !url.username && !url.password && !/[<>\s]/.test(String(value || ''));
+        } catch (_) { return false; }
+    };
+    const getManagedGalleries = () => {
+        const entries = GALLERY_DEFAULTS.map((item,index) => {
+            const override = gallerySettings.overrides[item.id] || {};
+            return {...item,...override,builtin:true,disabled:gallerySettings.disabled.includes(item.id),deleted:gallerySettings.deleted.includes(item.id),index};
+        }).concat(gallerySettings.custom.map((item,index)=>({...item,builtin:false,disabled:!item.enabled,deleted:false,index:GALLERY_DEFAULTS.length+index})));
+        const order = new Map(gallerySettings.order.map((id,index)=>[id,index]));
+        return entries.sort((a,b)=>(order.get(a.id)??100000+a.index)-(order.get(b.id)??100000+b.index));
+    };
+    const renderGalleryLinks = () => {
+        if (!gallerySettings.enabled) return '';
+        const links = getManagedGalleries().filter(item=>!item.disabled&&!item.deleted&&safeGalleryUrl(item.url));
+        if (!links.length) return '';
+        return `<tbody><tr><td colspan="12">图库¹⁸⁺:${links.map((item,index)=>`${index===13?'<br>':''}<a href="${escapeHTML(item.url)}" target="_blank" rel="noopener noreferrer" style="padding:2px;">${escapeHTML(item.name)}</a>`).join('')}</td></tr></tbody>`;
+    };
     GM_registerMenuCommand('综合管理面板', openSiteManager);
     const hostnameLabels = location.hostname.toLowerCase().split('.');
     const hasHostnameLabel = label => {
@@ -298,13 +358,13 @@
         const settings=readSettings(),jav=new JAV('ABC-123',false),root=document.createElement('div');
         root.id='onejav-site-manager';
         const style=document.createElement('style');
-        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}#onejav-site-manager .jump-setting{display:flex;align-items:center;gap:7px;color:#222;white-space:nowrap}#onejav-site-manager .jump-setting input{min-width:auto}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
+        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px;flex-wrap:wrap}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}#onejav-site-manager .jump-setting{display:flex;align-items:center;gap:7px;color:#222;white-space:nowrap}#onejav-site-manager .jump-setting input{min-width:auto}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
         root.appendChild(style);
         const panel=document.createElement('div');panel.className='panel';
         const header=document.createElement('header'),title=document.createElement('h2');title.textContent='OneJAVOneWeb · 综合管理面板';
         const close=document.createElement('button');close.textContent='关闭';close.dataset.action='close';header.append(title,close);
-        const nav=document.createElement('nav'),tab1=document.createElement('button'),tab2=document.createElement('button');
-        tab1.textContent='站点管理';tab1.dataset.tab='sites';tab2.textContent='分类管理';tab2.dataset.tab='categories';nav.append(tab1,tab2);
+        const nav=document.createElement('nav'),tab1=document.createElement('button'),tab2=document.createElement('button'),tab3=document.createElement('button');
+        tab1.textContent='站点管理';tab1.dataset.tab='sites';tab2.textContent='分类管理';tab2.dataset.tab='categories';tab3.textContent='图库管理';tab3.dataset.tab='galleries';nav.append(tab1,tab2,tab3);
         const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
         const main=document.createElement('main'),footer=document.createElement('footer');
         const note=el('span','','配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。');
@@ -314,7 +374,10 @@
         const previewLabel=el('label','jump-setting');previewLabel.htmlFor='onejav-preview-enabled';
         const previewToggle=el('input');previewToggle.type='checkbox';previewToggle.id='onejav-preview-enabled';previewToggle.checked=previewEnabled;
         previewLabel.append(previewToggle,el('span','','点击加载缩略图预览（默认关闭）'));
-        footer.append(note,jumpLabel,previewLabel);
+        const galleryLabel=el('label','jump-setting');galleryLabel.htmlFor='onejav-gallery-enabled';
+        const galleryToggle=el('input');galleryToggle.type='checkbox';galleryToggle.id='onejav-gallery-enabled';galleryToggle.checked=gallerySettings.enabled;
+        galleryLabel.append(galleryToggle,el('span','','显示图库¹⁸⁺链接'));
+        footer.append(note,jumpLabel,previewLabel,galleryLabel);
         panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
         const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
         const renderSites=(q='',filter='')=>{
@@ -332,7 +395,43 @@
                 row.append(info,actions);list.appendChild(row);
             });
             if(!shown.length)list.appendChild(el('div','meta','没有符合条件的站点'));main.appendChild(list);
-            tab1.classList.add('active');tab2.classList.remove('active');
+            tab1.classList.add('active');tab2.classList.remove('active');tab3.classList.remove('active');
+        };
+        const renderGalleries=(q='')=>{
+            main.replaceChildren();
+            const toolbar=el('div','toolbar'),search=el('input');search.type='search';search.name='gallery-search';search.placeholder='搜索图库名称或网址';search.value=q;
+            const add=el('button','primary','新增图库');add.dataset.action='add-gallery';toolbar.append(search,add);main.append(toolbar);
+            const all=getManagedGalleries(),shown=all.filter(item=>!q||(item.name+' '+item.url).toLowerCase().includes(q.toLowerCase()));
+            main.appendChild(el('div','meta','内置图库 '+GALLERY_DEFAULTS.length+' 个，自定义图库 '+gallerySettings.custom.length+' 个；删除内置图库仅隐藏，可随时恢复。'));
+            const list=el('div','list');
+            shown.forEach(item=>{
+                const status=item.deleted?'已隐藏':item.disabled?'已停用':'启用中';
+                const row=el('article','row'),info=el('div');
+                info.append(el('div','name',item.name+' · '+status+(item.builtin?' · 内置':' · 自定义')),el('div','meta',item.url));
+                const actions=el('div','actions');
+                [['move-gallery-up','↑'],['move-gallery-down','↓'],['edit-gallery','编辑']].forEach(([action,label])=>{const b=el('button','',label);b.dataset.action=action;b.dataset.id=item.id;actions.appendChild(b);});
+                if(item.deleted){const b=el('button','','恢复');b.dataset.action='restore-gallery';b.dataset.id=item.id;actions.appendChild(b);}
+                else{const b=el('button','',item.disabled?'启用':'停用');b.dataset.action='toggle-gallery';b.dataset.id=item.id;actions.appendChild(b);}
+                const remove=el('button','danger',item.builtin?'隐藏':'删除');remove.dataset.action='delete-gallery';remove.dataset.id=item.id;actions.appendChild(remove);
+                row.append(info,actions);list.appendChild(row);
+            });
+            if(!shown.length)list.appendChild(el('div','meta','没有符合条件的图库'));
+            main.append(list);tab1.classList.remove('active');tab2.classList.remove('active');tab3.classList.add('active');
+        };
+        const galleryEditor=id=>{
+            const item=id?getManagedGalleries().find(x=>x.id===id):null,cover=el('div','formcover'),form=el('form','formbox');
+            form.appendChild(el('h3','',item?'编辑图库':'新增自定义图库'));
+            const field=(label,key,value)=>{const wrap=el('div','field');wrap.appendChild(el('label','',label));const input=el('input');input.name=key;input.value=value||'';input.required=true;wrap.append(input);form.appendChild(wrap);};
+            field('图库名称','name',item?.name||'');field('网址（仅允许 HTTP/HTTPS）','url',item?.url||'https://');
+            const actions=el('div','formactions'),cancel=el('button','','取消'),submit=el('button','primary','保存');cancel.type='button';cancel.dataset.action='cancel-editor';submit.type='submit';actions.append(cancel,submit);form.append(actions);cover.appendChild(form);panel.appendChild(cover);
+            form.addEventListener('submit',event=>{
+                event.preventDefault();const values=new FormData(form),name=String(values.get('name')||'').trim(),url=String(values.get('url')||'').trim();
+                if(!name){alert('请填写图库名称');return;}if(!safeGalleryUrl(url)){alert('网址无效，仅允许不含账号凭据的 HTTP/HTTPS 地址');return;}
+                if(item?.builtin){gallerySettings.overrides[item.id]={...(gallerySettings.overrides[item.id]||{}),name,url};gallerySettings.deleted=gallerySettings.deleted.filter(x=>x!==item.id);}
+                else if(item){const target=gallerySettings.custom.find(x=>x.id===item.id);if(target)Object.assign(target,{name,url});}
+                else gallerySettings.custom.push({id:'gallery_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),name,url,enabled:true});
+                saveGallerySettings();location.reload();
+            });
         };
         const renderCategories=()=>{
             main.replaceChildren();const toolbar=el('div','toolbar'),input=el('input');input.name='new-category';input.placeholder='输入新分类名称';
@@ -345,7 +444,7 @@
                 const remove=el('button','danger','删除');remove.dataset.action='delete-category';remove.dataset.id=c.id;remove.disabled=count>0;
                 row.append(box,rename,remove);main.appendChild(row);
             });
-            tab1.classList.remove('active');tab2.classList.add('active');
+            tab1.classList.remove('active');tab2.classList.add('active');tab3.classList.remove('active');
         };
         const editor=id=>{
             const site=id?sites().find(s=>s.id===id):null,cover=el('div','formcover'),form=el('form','formbox');
@@ -376,8 +475,24 @@
         };
         root.addEventListener('click',event=>{
             const b=event.target.closest('button');if(!b)return;const a=b.dataset.action,id=b.dataset.id;
-            if(b.dataset.tab){b.dataset.tab==='sites'?renderSites():renderCategories();return;}
+            if(b.dataset.tab){if(b.dataset.tab==='sites')renderSites();else if(b.dataset.tab==='categories')renderCategories();else renderGalleries();return;}
             if(a==='close'){root.remove();return;}if(a==='add-site'){editor(null);return;}if(a==='cancel-editor'){b.closest('.formcover')?.remove();return;}if(a==='edit-site'){editor(id);return;}
+            if(a==='add-gallery'){galleryEditor(null);return;}if(a==='edit-gallery'){galleryEditor(id);return;}
+            if(a==='toggle-gallery'||a==='delete-gallery'||a==='restore-gallery'||a==='move-gallery-up'||a==='move-gallery-down'){
+                const item=getManagedGalleries().find(x=>x.id===id);if(!item)return;
+                if(a==='toggle-gallery'){
+                    if(item.builtin)gallerySettings.disabled=item.disabled?gallerySettings.disabled.filter(x=>x!==id):[...gallerySettings.disabled,id];
+                    else{const target=gallerySettings.custom.find(x=>x.id===id);if(target)target.enabled=!target.enabled;}
+                }else if(a==='delete-gallery'){
+                    if(item.builtin)gallerySettings.deleted=item.deleted?gallerySettings.deleted:[...gallerySettings.deleted,id];
+                    else{if(!confirm('永久删除自定义图库“'+item.name+'”？'))return;gallerySettings.custom=gallerySettings.custom.filter(x=>x.id!==id);gallerySettings.order=gallerySettings.order.filter(x=>x!==id);}
+                }else if(a==='restore-gallery'){gallerySettings.deleted=gallerySettings.deleted.filter(x=>x!==id);}
+                else{
+                    const ids=getManagedGalleries().map(x=>x.id),i=ids.indexOf(id),j=i+(a==='move-gallery-up'?-1:1);
+                    if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];gallerySettings.order=ids;
+                }
+                saveGallerySettings();location.reload();return;
+            }
             if(a==='toggle-site'||a==='delete-site'||a==='reset-site'){
                 const site=sites().find(s=>s.id===id);if(!site)return;
                 if(a==='reset-site'){
@@ -396,6 +511,7 @@
             if(a==='delete-category'){if(sites().some(s=>s.categoryId===id)){alert('请先将该分类下的站点调整到其他分类');return;}if(id.startsWith('builtin:'))settings.deletedCategories.push(id);else settings.customCategories=settings.customCategories.filter(x=>x.id!==id);delete settings.categoryNames[id];save();}
         });
         root.addEventListener('input',event=>{
+            if(event.target.name==='gallery-search'){const q=event.target.value||'',pos=event.target.selectionStart;renderGalleries(q);const next=main.querySelector('[name="gallery-search"]');if(next){next.focus();if(pos!==null&&typeof next.setSelectionRange==='function')next.setSelectionRange(pos,pos);}return;}
             if(event.target.name==='site-search'||event.target.name==='site-filter'){
                 const q=main.querySelector('[name="site-search"]')?.value||'',f=main.querySelector('[name="site-filter"]')?.value||'',name=event.target.name,pos=name==='site-search'?event.target.selectionStart:null;
                 renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null&&typeof next.setSelectionRange==='function')next.setSelectionRange(pos,pos);}
@@ -409,6 +525,7 @@
                 if(!previewEnabled)document.querySelectorAll('.jav-preview-image').forEach(image=>{image.style.display='none';});
                 return;
             }
+            if(event.target.id==='onejav-gallery-enabled'){gallerySettings.enabled=event.target.checked;saveGallerySettings();location.reload();return;}
             if(event.target.name==='site-filter'){const q=main.querySelector('[name="site-search"]')?.value||'',f=event.target.value||'';renderSites(q,f);}
         });
         root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
@@ -1557,7 +1674,7 @@
 
             htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><button type="button" class="jav-preview-trigger" style="padding:2px 8px;display:${previewEnabled?'inline-block':'none'};">查看缩略图</button><button type="button" class="jav-site-manager-trigger" style="margin-left:8px;padding:2px 8px;">综合管理</button><div class="jav-preview-container" style="max-width:100%;overflow:auto;"><img class="jav-preview-image" data-src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none;width:auto;height:auto;max-width:none;max-height:none;object-fit:initial;cursor:pointer;" alt="缩略图预览"></div>&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
             // 从别的脚本看到一些 ¹⁸⁺ 图库，分享下 不想看到可以在下行前面添加注释符 //
-            htmlTable += `<tbody><tr><td colspan="${rows}">图库¹⁸⁺:<a href="https://www.micmicidol.com/" style="padding:2px;">mic写真集</a><a href="https://www.wndfx.com/">Wndfx</a><a href="https://hentai-img.com/" style="padding:2px;">Hentai</a><a href="https://zh.hentai-cosplays.com/" style="padding:2px;">Cosplay</a><a href="https://zh.porn-images-xxx.com/" style="padding:2px;">Porn</a><a href="http://www.xiuren.org/" style="padding:2px;">Xiuren</a><a href="https://everia.club/" style="padding:2px;">Everia</a><a href="https://nsfwx.pics" style="padding:2px;">Nsfwpicx</a><a href="https://asiantolick.com" style="padding:2px;">Asian</a><a href="https://xchina.co" style="padding:2px;">小黄书</a><a href="https://jjgirls.com/" style="padding:2px;">Heyzo</a><a href="https://www.photos18.com/" style="padding:2px;">色圖</a><a href="https://mm.tvv.tw/" style="padding:2px;">tvv</a><br><a href="https://www.pornpics.com/" style="padding:2px;">Porn Pics</a><a href="https://idol.gravureprincess.date/" style="padding:2px;">Idol</a><a href="https://hotgirl.asia/" style="padding:2px;">HOTGIRL</a><a href="https://buondua.com/" style="padding:2px;">Buon Dua</a><a href="https://www.ilovexs.com/" style="padding:2px;">NongMo</a><a href="https://nudecosplaygirls.com/" style="padding:2px;">NUDECOSPLAY</a><a href="https://nudebird.biz/" style="padding:2px;">NudeBird</a><a href="https://goddess247.com/" style="padding:2px;">Goddess247</a><a href="https://tw.goddesssite.com/" style="padding:2px;">Kiss Goddess</a><a href="https://girlygirlpic.com/" style="padding:2px;">girlpic</a></td></tr></tbody>`;
+            htmlTable += renderGalleryLinks();
             htmlTable += `</table></div>`;
 
             return htmlTable;
