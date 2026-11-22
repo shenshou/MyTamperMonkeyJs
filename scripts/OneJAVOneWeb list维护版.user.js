@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.6
+// @version      2026.1122.7
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图等
 // @author       匿名
 // @license      GPL
@@ -206,12 +206,8 @@
     const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
-    const autoJumpEnabled = GM_getValue('auto_jump', true);
-    GM_registerMenuCommand('站点管理面板', openSiteManager);
-    GM_registerMenuCommand(autoJumpEnabled ? '关闭自动跳转' : '开启自动跳转', () => {
-        GM_setValue('auto_jump', !autoJumpEnabled);
-        location.reload();
-    });
+    let autoJumpEnabled = GM_getValue('auto_jump', true);
+    GM_registerMenuCommand('综合管理面板', openSiteManager);
     const hostnameLabels = location.hostname.toLowerCase().split('.');
     const hasHostnameLabel = label => {
         const index = hostnameLabels.lastIndexOf(label.toLowerCase());
@@ -301,15 +297,19 @@
         const settings=readSettings(),jav=new JAV('ABC-123',false),root=document.createElement('div');
         root.id='onejav-site-manager';
         const style=document.createElement('style');
-        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
+        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}#onejav-site-manager .jump-setting{display:flex;align-items:center;gap:7px;color:#222;white-space:nowrap}#onejav-site-manager .jump-setting input{min-width:auto}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
         root.appendChild(style);
         const panel=document.createElement('div');panel.className='panel';
-        const header=document.createElement('header'),title=document.createElement('h2');title.textContent='OneJAVOneWeb · 站点管理';
+        const header=document.createElement('header'),title=document.createElement('h2');title.textContent='OneJAVOneWeb · 综合管理面板';
         const close=document.createElement('button');close.textContent='关闭';close.dataset.action='close';header.append(title,close);
         const nav=document.createElement('nav'),tab1=document.createElement('button'),tab2=document.createElement('button');
         tab1.textContent='站点管理';tab1.dataset.tab='sites';tab2.textContent='分类管理';tab2.dataset.tab='categories';nav.append(tab1,tab2);
         const main=document.createElement('main'),footer=document.createElement('footer');
-        footer.textContent='配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。';
+        const note=el('span','','配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。');
+        const jumpLabel=el('label','jump-setting');jumpLabel.htmlFor='onejav-auto-jump';
+        const jumpToggle=el('input');jumpToggle.type='checkbox';jumpToggle.id='onejav-auto-jump';jumpToggle.checked=autoJumpEnabled;
+        jumpLabel.append(jumpToggle,el('span','','自动跳转（唯一结果时自动进入详情页）'));
+        footer.append(note,jumpLabel);
         panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
         const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
         const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
@@ -397,7 +397,10 @@
                 renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null&&typeof next.setSelectionRange==='function')next.setSelectionRange(pos,pos);}
             }
         });
-        root.addEventListener('change',event=>{if(event.target.name==='site-filter'){const q=main.querySelector('[name="site-search"]')?.value||'',f=event.target.value||'';renderSites(q,f);}});
+        root.addEventListener('change',event=>{
+            if(event.target.id==='onejav-auto-jump'){autoJumpEnabled=event.target.checked;GM_setValue('auto_jump',autoJumpEnabled);return;}
+            if(event.target.name==='site-filter'){const q=main.querySelector('[name="site-search"]')?.value||'',f=event.target.value||'';renderSites(q,f);}
+        });
         root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
         renderSites();
     }
@@ -1536,7 +1539,7 @@
             });
             htmlTable += htmlTbody;
 
-            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><a class="jav-preview-trigger" style="padding-left:5px;" href="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" target="_blank" rel="noopener noreferrer"><b><font color="green">查看 大缩略图</font></b></a><button type="button" class="jav-site-manager-trigger" style="margin-left:8px;padding:2px 8px;">站点管理</button><img class="jav-preview-image" data-src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none" alt="大缩略图预览">&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
+            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><a class="jav-preview-trigger" style="padding-left:5px;" href="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" target="_blank" rel="noopener noreferrer"><b><font color="green">查看 大缩略图</font></b></a><button type="button" class="jav-site-manager-trigger" style="margin-left:8px;padding:2px 8px;">综合管理</button><img class="jav-preview-image" data-src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none" alt="大缩略图预览">&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
             // 从别的脚本看到一些 ¹⁸⁺ 图库，分享下 不想看到可以在下行前面添加注释符 //
             htmlTable += `<tbody><tr><td colspan="${rows}">图库¹⁸⁺:<a href="https://www.micmicidol.com/" style="padding:2px;">mic写真集</a><a href="https://www.wndfx.com/">Wndfx</a><a href="https://hentai-img.com/" style="padding:2px;">Hentai</a><a href="https://zh.hentai-cosplays.com/" style="padding:2px;">Cosplay</a><a href="https://zh.porn-images-xxx.com/" style="padding:2px;">Porn</a><a href="http://www.xiuren.org/" style="padding:2px;">Xiuren</a><a href="https://everia.club/" style="padding:2px;">Everia</a><a href="https://nsfwx.pics" style="padding:2px;">Nsfwpicx</a><a href="https://asiantolick.com" style="padding:2px;">Asian</a><a href="https://xchina.co" style="padding:2px;">小黄书</a><a href="https://jjgirls.com/" style="padding:2px;">Heyzo</a><a href="https://www.photos18.com/" style="padding:2px;">色圖</a><a href="https://mm.tvv.tw/" style="padding:2px;">tvv</a><br><a href="https://www.pornpics.com/" style="padding:2px;">Porn Pics</a><a href="https://idol.gravureprincess.date/" style="padding:2px;">Idol</a><a href="https://hotgirl.asia/" style="padding:2px;">HOTGIRL</a><a href="https://buondua.com/" style="padding:2px;">Buon Dua</a><a href="https://www.ilovexs.com/" style="padding:2px;">NongMo</a><a href="https://nudecosplaygirls.com/" style="padding:2px;">NUDECOSPLAY</a><a href="https://nudebird.biz/" style="padding:2px;">NudeBird</a><a href="https://goddess247.com/" style="padding:2px;">Goddess247</a><a href="https://tw.goddesssite.com/" style="padding:2px;">Kiss Goddess</a><a href="https://girlygirlpic.com/" style="padding:2px;">girlpic</a></td></tr></tbody>`;
             htmlTable += `</table></div>`;
