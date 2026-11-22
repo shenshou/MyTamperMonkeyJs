@@ -182,7 +182,6 @@
 // @match      *://javcv.com/movie/*
 // @match      *://javcv.com/fc2/movie/*
 
-// @grant        window.close
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
@@ -1950,18 +1949,6 @@
         const jav = new JAV(bango);
         $('body > section > div > div.video-detail > div.video-meta-panel').after(jav.create_table(1));
     }
-
-    /* javdb actors */
-    // 2023年3月8日，db網頁版已加入如下調整:演員、片商、系列、導演、番號頁默認调整为按「發布日期倒序」排序，并增加「想看人数倒序」和「看过人数倒序」。 此处修改取消
-    //if (null != location.href.match(/javdb[0-9]*\.com\/actors/)) {
-    //    const bango = location.pathname.slice(location.pathname.lastIndexOf('/') + 1);
-    //     if (bango.match(/[a-zA-Z0-9]{4}/)) {
-    //    const url = "https://javdb.com/actors/";
-    //    const jiamima = "?sort_type=1&vft=1";
-    //    const resurl = url + bango + jiamima;;
-    //						window.location.href=resurl;
-    //														   		}
-    //}
 
     /* 98堂 */
     if (document.title.includes("高清中文字幕") || document.title.includes("亚洲有码原创") || document.title.includes("4K原版") || document.title.includes("素人有码系列") || document.title.includes("PPV") && document.title.includes("色花堂")) {
