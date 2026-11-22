@@ -317,7 +317,7 @@
             main.replaceChildren();const toolbar=el('div','toolbar'),search=el('input');search.type='search';search.name='site-search';search.placeholder='搜索站点名称、网址或说明';search.value=q;
             const select=el('select');select.name='site-filter';const all=el('option','','全部分类');all.value='';select.appendChild(all);
             cats().forEach(c=>{const o=el('option','',c.name);o.value=c.id;select.appendChild(o);});select.value=filter;
-            const add=el('button primary','','新增站点');add.dataset.action='add-site';toolbar.append(search,select,add);main.appendChild(toolbar);
+            const add=el('button','primary','新增站点');add.dataset.action='add-site';toolbar.append(search,select,add);main.appendChild(toolbar);
             const list=el('div','list'),allSites=sites(),shown=allSites.filter(s=>(!filter||s.categoryId===filter)&&(!q||(s.name+' '+s.urlTemplate+' '+s.description).toLowerCase().includes(q.toLowerCase())));
             main.appendChild(el('div','meta','共 '+allSites.length+' 个站点，当前显示 '+shown.length+' 个。'));
             shown.forEach(site=>{
@@ -332,13 +332,13 @@
         };
         const renderCategories=()=>{
             main.replaceChildren();const toolbar=el('div','toolbar'),input=el('input');input.name='new-category';input.placeholder='输入新分类名称';
-            const add=el('button primary','','新增分类');add.dataset.action='add-category';toolbar.append(input,add);main.append(toolbar);
+            const add=el('button','primary','新增分类');add.dataset.action='add-category';toolbar.append(input,add);main.append(toolbar);
             main.appendChild(el('div','meta','分类下仍有站点时不能删除，请先将站点调整到其他分类。'));
             cats().forEach(c=>{
                 const row=el('div','categoryrow'),box=el('div'),name=el('input');name.value=c.name;name.dataset.categoryName=c.id;
                 const count=sites().filter(s=>s.categoryId===c.id&&!s.deleted).length;box.append(name,el('div','meta',count+' 个站点 · '+(c.builtin?'内置分类':'自定义分类')));
                 const rename=el('button','','保存名称');rename.dataset.action='rename-category';rename.dataset.id=c.id;
-                const remove=el('button danger','','删除');remove.dataset.action='delete-category';remove.dataset.id=c.id;remove.disabled=count>0;
+                const remove=el('button','danger','删除');remove.dataset.action='delete-category';remove.dataset.id=c.id;remove.disabled=count>0;
                 row.append(box,rename,remove);main.appendChild(row);
             });
             tab1.classList.remove('active');tab2.classList.add('active');
@@ -358,7 +358,7 @@
             const wrap=el('div','field');wrap.appendChild(el('label','','所属分类'));const select=el('select');select.name='categoryId';
             cats().forEach(c=>{const o=el('option','',c.name);o.value=c.id;select.appendChild(o);});if(site)select.value=site.categoryId;wrap.append(select);form.append(wrap);
             field('文字颜色','color',site?.color||'#000000');field('背景颜色','bgcolor',site?.bgcolor||'');
-            const actions=el('div','formactions'),cancel=el('button','','取消'),submit=el('button primary','','保存');cancel.type='button';cancel.dataset.action='cancel-editor';submit.type='submit';actions.append(cancel,submit);form.append(actions);cover.appendChild(form);panel.appendChild(cover);
+            const actions=el('div','formactions'),cancel=el('button','','取消'),submit=el('button','primary','保存');cancel.type='button';cancel.dataset.action='cancel-editor';submit.type='submit';actions.append(cancel,submit);form.append(actions);cover.appendChild(form);panel.appendChild(cover);
             form.addEventListener('submit',event=>{
                 event.preventDefault();const v=new FormData(form),next={name:String(v.get('name')||'').trim(),urlTemplate:String(v.get('urlTemplate')||'').trim(),
                     description:String(v.get('description')||'').trim(),categoryId:String(v.get('categoryId')||''),color:String(v.get('color')||'').trim()||'#000000',bgcolor:String(v.get('bgcolor')||'').trim()};
