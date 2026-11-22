@@ -395,7 +395,7 @@
                 row.append(info,actions);list.appendChild(row);
             });
             if(!shown.length)list.appendChild(el('div','meta','没有符合条件的站点'));main.appendChild(list);
-            tab1.classList.add('active');tab2.classList.remove('active');
+            tab1.classList.add('active');tab2.classList.remove('active');tab3.classList.remove('active');
         };
         const renderGalleries=(q='')=>{
             main.replaceChildren();
