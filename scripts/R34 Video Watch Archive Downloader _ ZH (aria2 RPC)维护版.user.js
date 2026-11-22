@@ -1729,13 +1729,22 @@
       let separator = baseUrl.includes('?') ? '&' : '?';
       let downloadUrl = baseUrl + separator + 'download=true&download_filename=' + encodeURIComponent(task.filename);
 
+      const requestHeaders = [
+        "Referer: https://rule34video.com/",
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      ];
+      const mediaUrl = safeUrl(downloadUrl);
+      const mediaHost = mediaUrl ? mediaUrl.hostname.toLowerCase() : '';
+      if (
+        document.cookie &&
+        (mediaHost === 'rule34video.com' || mediaHost.endsWith('.rule34video.com'))
+      ) {
+        requestHeaders.push("Cookie: " + document.cookie);
+      }
+
       const options = {
-        header: [
-          "Referer: https://rule34video.com/",
-          "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Cookie: " + document.cookie   // 关键：携带会话 Cookie 解决 403
-        ],
-        out: task.filename   // 强制指定文件名，即使服务器忽略参数也能正确命名
+        header: requestHeaders,
+        out: task.filename
       };
       if (dir) options.dir = dir;
 
