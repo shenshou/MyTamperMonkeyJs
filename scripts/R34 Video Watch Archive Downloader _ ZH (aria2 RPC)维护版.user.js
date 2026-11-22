@@ -125,7 +125,6 @@
     lastObservedHref: '',
     routePollTimer: 0,
     lastItemKey: '',
-    lastHandledAt: 0,
   };
 
   const css = `
@@ -731,14 +730,12 @@
 
       const normalized = normalizeUrl(postUrl);
       const itemKey = watchedItemKey(normalized);
-      const now = Date.now();
 
       if (itemKey && itemKey === watchedPage.lastItemKey) {
         return;
       }
 
       watchedPage.lastItemKey = itemKey;
-      watchedPage.lastHandledAt = now;
       await queueWatchedVideo(normalized, source || 'watch');
     } catch (error) {
       addLog(`自动入队检查失败：${messageOf(error)}`);
@@ -1652,10 +1649,10 @@
 
       const changed = () => location.href !== oldHref || pageSignature() !== oldSignature;
       const observer = new MutationObserver(() => {
-        if (checkTimer) return;
+        if (done || checkTimer) return;
         checkTimer = setTimeout(() => {
           checkTimer = 0;
-          if (changed()) finish(true);
+          if (!done && changed()) finish(true);
         }, 80);
       });
       observer.observe(document.body, { childList: true, subtree: true });
