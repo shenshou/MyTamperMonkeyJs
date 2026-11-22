@@ -1311,7 +1311,7 @@
         }
         create_table() {
             const rows = 12;
-            const htmlTable = `<div class="movieav" fr-fix-stroke="true"><table class="jav_table" width="100%" border="1" cellspacing="0">`;
+            let htmlTable = `<div class="movieav" fr-fix-stroke="true"><table class="jav_table" width="100%" border="1" cellspacing="0">`;
             let htmlTbody = '';
             const tableEntries = Object.entries(this.data);
             const remainder = tableEntries.length % rows;
