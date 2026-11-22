@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         98图片预览助手-帖子列表时自动加载内部前三张
+// @name         98图片预览助手
 // @namespace    98imgloader
 // @version      1.7.3
 // @description  浏览帖子列表时自动加载内部前三张(可配置)图片供预览。如需支持其他免翻地址，请使用@match自行添加连接，如果某个版块不希望预览，请使用@exclude自行添加要排除的版块链接
@@ -19,8 +19,8 @@
 // @grant        GM_registerMenuCommand
 // @require      https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js
 
-// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B-%E5%B8%96%E5%AD%90%E5%88%97%E8%A1%A8%E6%97%B6%E8%87%AA%E5%8A%A8%E5%8A%A0%E8%BD%BD%E5%86%85%E9%83%A8%E5%89%8D%E4%B8%89%E5%BC%A0.user.js
-// @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B-%E5%B8%96%E5%AD%90%E5%88%97%E8%A1%A8%E6%97%B6%E8%87%AA%E5%8A%A8%E5%8A%A0%E8%BD%BD%E5%86%85%E9%83%A8%E5%89%8D%E4%B8%89%E5%BC%A0.user.js
+// @downloadURL https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B.user.js
+// @updateURL   https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/98%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E5%8A%A9%E6%89%8B.user.js
 // ==/UserScript==
 
 /* global $ */
