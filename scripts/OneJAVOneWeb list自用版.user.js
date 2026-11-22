@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list自用版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.2
+// @version      2026.1122.3
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图等
 // @author       匿名
 // @license      GPL
@@ -207,6 +207,7 @@
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
     const autoJumpEnabled = GM_getValue('auto_jump', true);
+    GM_registerMenuCommand('站点管理面板', openSiteManager);
     GM_registerMenuCommand(autoJumpEnabled ? '关闭自动跳转' : '开启自动跳转', () => {
         GM_setValue('auto_jump', !autoJumpEnabled);
         location.reload();
@@ -219,6 +220,171 @@
     const hasAnyHostnameLabel = (...labels) => labels.some(hasHostnameLabel);
     const isJavDbHostname = /(^|\.)javdb\d*\.com$/i.test(location.hostname);
     const isJavHdHostname = /(^|\.)javhd\.today$/i.test(location.hostname);
+    const SITE_MANAGER_KEY = 'onejav_site_manager_v1';
+    const CATEGORY_MARKERS = ['车牌信息', '演员信息', '磁力种子', '宣传片', '在线观看', '资讯', '大缩略图'];
+    const ensureSettings = value => {
+        value.overrides ||= {}; value.deleted ||= []; value.disabled ||= []; value.custom ||= [];
+        value.customCategories ||= []; value.categoryNames ||= {}; value.deletedCategories ||= []; value.siteOrder ||= [];
+        return value;
+    };
+    const readSettings = () => ensureSettings(GM_getValue(SITE_MANAGER_KEY, {}) || {});
+    const saveSettings = value => GM_setValue(SITE_MANAGER_KEY, value);
+    const categoriesFor = settings => CATEGORY_MARKERS.map(name => ({id:'builtin:'+name,name:settings.categoryNames['builtin:'+name]||name,builtin:true}))
+        .concat(settings.customCategories.map(item=>({id:item.id,name:item.name,builtin:false})))
+        .filter(item=>!settings.deletedCategories.includes(item.id));
+    const categoryName = (id, settings) => categoriesFor(settings).find(item=>item.id===id)?.name || '';
+    const toTemplate = (url, jav) => {
+        let value=String(url||'');
+        [['fanHao',jav.fanHao],['xiaxian',jav.xiaxian],['buwei',jav.buwei],['xiao',jav.xiao],['bango',jav.bango]]
+            .filter(item=>item[1]).sort((a,b)=>String(b[1]).length-String(a[1]).length).forEach(([key,part])=>{
+                [String(part),encodeURIComponent(String(part))].forEach(v=>{if(v.length>=3)value=value.split(v).join('{'+key+'}');});
+            });
+        if(jav.one&&String(jav.one).length===1)value=value.split('/'+jav.one+'/').join('/{one}/');
+        return value;
+    };
+    const expandTemplate = (template,jav) => {
+        const values={'番号':jav.fanHao,fanHao:jav.fanHao,bango:jav.bango,xiaxian:jav.xiaxian,buwei:jav.buwei,one:jav.one,xiao:jav.xiao};
+        return String(template||'').replace(/\{(番号|fanHao|bango|xiaxian|buwei|one|xiao)\}/g,(m,k)=>encodeURIComponent(String(values[k]??'')));
+    };
+    const getManagedSites = (data,jav,settings) => {
+        const result=[];let cat='builtin:车牌信息';
+        Object.entries(data).forEach(([key,item],index)=>{
+            if(CATEGORY_MARKERS.includes(key))cat='builtin:'+key;
+            if(!item.name)return;
+            const o=settings.overrides[key]||{};
+            result.push({id:'builtin:'+key,key,name:o.name??String(item.name).replace(/<[^>]*>/g,''),description:o.description??item.zhushi??'',
+                urlTemplate:o.urlTemplate??toTemplate(item.url,jav),color:o.color??item.color??'#000000',bgcolor:o.bgcolor??item.bgcolor??'',
+                categoryId:o.categoryId||cat,builtin:true,deleted:settings.deleted.includes(key),disabled:settings.disabled.includes(key),index});
+        });
+        settings.custom.forEach((item,index)=>result.push({...item,id:item.id,key:item.id,builtin:false,deleted:false,disabled:!item.enabled,index:Object.keys(data).length+index}));
+        const order=new Map(settings.siteOrder.map((id,index)=>[id,index]));
+        result.sort((a,b)=>(order.get(a.id)??100000+a.index)-(order.get(b.id)??100000+b.index));
+        return result;
+    };
+    const applySiteSettings = (data,jav) => {
+        const settings=readSettings(),entries=Object.entries(data),named=[];let cat='builtin:车牌信息';
+        entries.forEach(([key,item],index)=>{
+            if(CATEGORY_MARKERS.includes(key))cat='builtin:'+key;
+            if(!item.name||settings.deleted.includes(key)||settings.disabled.includes(key))return;
+            const o=settings.overrides[key]||{},next={...item,categoryId:o.categoryId||cat};
+            if(o.name!==undefined){next.name=o.name;next.plainName=true;}
+            if(o.description!==undefined)next.zhushi=o.description;
+            if(o.urlTemplate!==undefined)next.url=expandTemplate(o.urlTemplate,jav);
+            ['color','bgcolor'].forEach(k=>{if(o[k]!==undefined)next[k]=o[k];});
+            named.push(['builtin:'+key,key,next,index]);
+        });
+        settings.custom.forEach((item,index)=>{if(item.enabled)named.push([item.id,item.id,{name:item.name,plainName:true,custom:true,zhushi:item.description||'',url:expandTemplate(item.urlTemplate,jav),color:item.color||'#000000',bgcolor:item.bgcolor||'',categoryId:item.categoryId},entries.length+index]);});
+        const order=new Map(settings.siteOrder.map((id,index)=>[id,index]));
+        named.sort((a,b)=>(order.get(a[0])??100000+a[3])-(order.get(b[0])??100000+b[3]));
+        let cursor=0;const result={};
+        entries.forEach(([key,item])=>{if(item.name){if(cursor<named.length){const e=named[cursor++];result[e[1]]=e[2];}}else result[key]=item;});
+        while(cursor<named.length){const e=named[cursor++];result[e[1]]=e[2];}
+        return result;
+    };
+    const safeTemplate = value => {
+        const expanded=String(value||'').replace(/\{(?:番号|fanHao|bango|xiaxian|buwei|one|xiao)\}/g,'TEST123');
+        if(/[{}]/.test(expanded))return false;
+        try{const url=new URL(expanded);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password;}catch(_){return false;}
+    };
+    const safeColor = value => !value||/^(#[0-9a-f]{3,8}|[a-z]{1,20}|rgba?\(\s*[\d.% ,]+\))$/i.test(value);
+    function openSiteManager(){
+        const old=document.getElementById('onejav-site-manager');if(old){old.remove();return;}if(!document.body)return;
+        const settings=readSettings(),jav=new JAV('ABC-123',false),root=document.createElement('div');
+        root.id='onejav-site-manager';
+        const style=document.createElement('style');
+        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
+        root.appendChild(style);
+        const panel=document.createElement('div');panel.className='panel';
+        const header=document.createElement('header'),title=document.createElement('h2');title.textContent='OneJAVOneWeb · 站点管理';
+        const close=document.createElement('button');close.textContent='关闭';close.dataset.action='close';header.append(title,close);
+        const nav=document.createElement('nav'),tab1=document.createElement('button'),tab2=document.createElement('button');
+        tab1.textContent='站点管理';tab1.dataset.tab='sites';tab2.textContent='分类管理';tab2.dataset.tab='categories';nav.append(tab1,tab2);
+        const main=document.createElement('main'),footer=document.createElement('footer');
+        footer.textContent='配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。';
+        panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
+        const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
+        const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
+        const renderSites=(q='',filter='')=>{
+            main.replaceChildren();const toolbar=el('div','toolbar'),search=el('input');search.type='search';search.name='site-search';search.placeholder='搜索站点名称、网址或说明';search.value=q;
+            const select=el('select');select.name='site-filter';const all=el('option','','全部分类');all.value='';select.appendChild(all);
+            cats().forEach(c=>{const o=el('option','',c.name);o.value=c.id;select.appendChild(o);});select.value=filter;
+            const add=el('button primary','','新增站点');add.dataset.action='add-site';toolbar.append(search,select,add);main.appendChild(toolbar);
+            const list=el('div','list'),allSites=sites(),shown=allSites.filter(s=>(!filter||s.categoryId===filter)&&(!q||(s.name+' '+s.urlTemplate+' '+s.description).toLowerCase().includes(q.toLowerCase())));
+            main.appendChild(el('div','meta','共 '+allSites.length+' 个站点，当前显示 '+shown.length+' 个。'));
+            shown.forEach(site=>{
+                const row=el('article','row'),info=el('div'),name=el('div','name',site.name+' · '+(site.deleted?'已删除':site.disabled?'已停用':'启用中'));
+                info.append(name,el('div','meta',categoryName(site.categoryId,settings)+' · '+site.urlTemplate),el('div','meta',site.description));
+                const actions=el('div','actions');
+                [['move-up','↑'],['move-down','↓'],['edit-site','编辑'],['toggle-site',site.disabled?'启用':'停用'],['delete-site',site.deleted?'恢复':'删除']].forEach(([action,label])=>{const b=el('button',action==='delete-site'?'danger':'',label);b.dataset.action=action;b.dataset.id=site.id;actions.appendChild(b);});
+                row.append(info,actions);list.appendChild(row);
+            });
+            if(!shown.length)list.appendChild(el('div','meta','没有符合条件的站点'));main.appendChild(list);
+            tab1.classList.add('active');tab2.classList.remove('active');
+        };
+        const renderCategories=()=>{
+            main.replaceChildren();const toolbar=el('div','toolbar'),input=el('input');input.name='new-category';input.placeholder='输入新分类名称';
+            const add=el('button primary','','新增分类');add.dataset.action='add-category';toolbar.append(input,add);main.append(toolbar);
+            main.appendChild(el('div','meta','分类下仍有站点时不能删除，请先将站点调整到其他分类。'));
+            cats().forEach(c=>{
+                const row=el('div','categoryrow'),box=el('div'),name=el('input');name.value=c.name;name.dataset.categoryName=c.id;
+                const count=sites().filter(s=>s.categoryId===c.id&&!s.deleted).length;box.append(name,el('div','meta',count+' 个站点 · '+(c.builtin?'内置分类':'自定义分类')));
+                const rename=el('button','','保存名称');rename.dataset.action='rename-category';rename.dataset.id=c.id;
+                const remove=el('button danger','','删除');remove.dataset.action='delete-category';remove.dataset.id=c.id;remove.disabled=count>0;
+                row.append(box,rename,remove);main.appendChild(row);
+            });
+            tab1.classList.remove('active');tab2.classList.add('active');
+        };
+        const editor=id=>{
+            const site=id?sites().find(s=>s.id===id):null,cover=el('div','formcover'),form=el('form','formbox');
+            form.appendChild(el('h3','',site?'编辑站点':'新增自定义站点'));
+            const field=(label,key,value,type='text',hint='')=>{
+                const wrap=el('div','field');wrap.appendChild(el('label','',label));
+                const input=type==='textarea'?el('textarea'):el('input');if(type==='textarea')input.rows=3;else input.type=type;
+                input.name=key;input.value=value||'';input.required=key==='name'||key==='urlTemplate';wrap.append(input);
+                if(hint)wrap.appendChild(el('small','meta',hint));form.appendChild(wrap);
+            };
+            field('站点名称','name',site?.name||'');
+            field('网址模板','urlTemplate',site?.urlTemplate||'https://example.com/search/{番号}','text','支持 {番号}、{fanHao}、{bango}、{xiaxian}、{buwei}、{one}、{xiao}。');
+            field('说明','description',site?.description||'','textarea');
+            const wrap=el('div','field');wrap.appendChild(el('label','','所属分类'));const select=el('select');select.name='categoryId';
+            cats().forEach(c=>{const o=el('option','',c.name);o.value=c.id;select.appendChild(o);});if(site)select.value=site.categoryId;wrap.append(select);form.append(wrap);
+            field('文字颜色','color',site?.color||'#000000');field('背景颜色','bgcolor',site?.bgcolor||'');
+            const actions=el('div','formactions'),cancel=el('button','','取消'),submit=el('button primary','','保存');cancel.type='button';cancel.dataset.action='cancel-editor';submit.type='submit';actions.append(cancel,submit);form.append(actions);cover.appendChild(form);panel.appendChild(cover);
+            form.addEventListener('submit',event=>{
+                event.preventDefault();const v=new FormData(form),next={name:String(v.get('name')||'').trim(),urlTemplate:String(v.get('urlTemplate')||'').trim(),
+                    description:String(v.get('description')||'').trim(),categoryId:String(v.get('categoryId')||''),color:String(v.get('color')||'').trim()||'#000000',bgcolor:String(v.get('bgcolor')||'').trim()};
+                if(!next.name){alert('请填写站点名称');return;}if(!safeTemplate(next.urlTemplate)){alert('网址模板无效，仅允许 http/https 并检查占位符');return;}
+                if(!safeColor(next.color)||!safeColor(next.bgcolor)){alert('颜色格式无效');return;}if(!cats().some(c=>c.id===next.categoryId)){alert('请选择有效分类');return;}
+                if(site?.builtin){settings.overrides[site.key]={...(settings.overrides[site.key]||{}),...next};settings.deleted=settings.deleted.filter(k=>k!==site.key);}
+                else if(site){const target=settings.custom.find(x=>x.id===site.id);if(target)Object.assign(target,{...next,enabled:!site.disabled});}
+                else settings.custom.push({id:'custom_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),...next,enabled:true});
+                save();
+            });
+        };
+        root.addEventListener('click',event=>{
+            const b=event.target.closest('button');if(!b)return;const a=b.dataset.action,id=b.dataset.id;
+            if(b.dataset.tab){b.dataset.tab==='sites'?renderSites():renderCategories();return;}
+            if(a==='close'){root.remove();return;}if(a==='add-site'){editor(null);return;}if(a==='cancel-editor'){b.closest('.formcover')?.remove();return;}if(a==='edit-site'){editor(id);return;}
+            if(a==='toggle-site'||a==='delete-site'){
+                const site=sites().find(s=>s.id===id);if(!site)return;
+                if(a==='toggle-site'){if(site.builtin)settings.disabled=site.disabled?settings.disabled.filter(k=>k!==site.key):[...settings.disabled,site.key];else{const x=settings.custom.find(v=>v.id===id);if(x)x.enabled=!x.enabled;}}
+                else if(site.builtin)settings.deleted=site.deleted?settings.deleted.filter(k=>k!==site.key):[...settings.deleted,site.key];
+                else{settings.custom=settings.custom.filter(x=>x.id!==id);settings.siteOrder=settings.siteOrder.filter(x=>x!==id);}save();return;
+            }
+            if(a==='move-up'||a==='move-down'){const ids=sites().map(s=>s.id),i=ids.indexOf(id),j=i+(a==='move-up'?-1:1);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];settings.siteOrder=ids;save();return;}
+            if(a==='add-category'){const name=(main.querySelector('[name="new-category"]')?.value||'').trim();if(!name){alert('请填写分类名称');return;}if(cats().some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('分类名称已存在');return;}settings.customCategories.push({id:'customcat_'+Date.now().toString(36),name});save();return;}
+            if(a==='rename-category'){const input=Array.from(main.querySelectorAll('[data-category-name]')).find(x=>x.dataset.categoryName===id),name=(input?.value||'').trim();if(!name){alert('分类名称不能为空');return;}if(cats().some(c=>c.id!==id&&c.name.toLowerCase()===name.toLowerCase())){alert('分类名称已存在');return;}if(id.startsWith('builtin:'))settings.categoryNames[id]=name;else{const c=settings.customCategories.find(x=>x.id===id);if(c)c.name=name;}save();return;}
+            if(a==='delete-category'){if(sites().some(s=>s.categoryId===id&&!s.deleted)){alert('请先将该分类下的站点调整到其他分类');return;}if(id.startsWith('builtin:'))settings.deletedCategories.push(id);else settings.customCategories=settings.customCategories.filter(x=>x.id!==id);delete settings.categoryNames[id];save();}
+        });
+        root.addEventListener('input',event=>{
+            if(event.target.name==='site-search'||event.target.name==='site-filter'){
+                const q=main.querySelector('[name="site-search"]')?.value||'',f=main.querySelector('[name="site-filter"]')?.value||'',name=event.target.name,pos=event.target.selectionStart;
+                renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null)next.setSelectionRange(pos,pos);}
+            }
+        });
+        root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
+        renderSites();
+    }
     document.addEventListener('mouseover', event => {
         const trigger = event.target.closest?.('.jav-preview-trigger');
         if (!trigger) return;
@@ -233,7 +399,7 @@
     });
     /* Basic */
     class JAV {
-        constructor(i) {
+        constructor(i, applySettings = true) {
             [this.bango, this.fanHao, this.xiaxian, this.buwei, this.one, this.xiao] = (() => {
                 const input = String(i ?? '').trim();
                 const o = input.replace(/\s+/g, '-');
@@ -1329,6 +1495,7 @@
                 delete this.data[e].origin;
                 delete this.data[e].uri;
             }
+            if (applySettings) this.data = applySiteSettings(this.data, this);
         }
         create_table() {
             const rows = 12;
@@ -1344,7 +1511,7 @@
             }
             tableEntries.forEach(([, item], index) => {
                 if (index % rows === 0) htmlTbody += '<tbody><tr>';
-                htmlTbody += `<td style="background-color:${escapeHTML(item.bgcolor)};"><a target="_blank" rel="noopener noreferrer" title="${escapeHTML(item.zhushi)}" style="color:${escapeHTML(item.color)}" href="${escapeHTML(item.url)}">${item.name}</a></td>`;
+                htmlTbody += `<td style="background-color:${escapeHTML(item.bgcolor)};"><a target="_blank" rel="noopener noreferrer" title="${escapeHTML(item.zhushi)}" style="color:${escapeHTML(item.color)}" href="${escapeHTML(item.url)}">${item.plainName ? escapeHTML(item.name) : item.name}</a></td>`;
                 if ((index + 1) % rows === 0) htmlTbody += '</tr></tbody>';
             });
             htmlTable += htmlTbody;
