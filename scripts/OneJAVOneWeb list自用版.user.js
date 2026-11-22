@@ -278,11 +278,11 @@
             const o=settings.overrides[key]||{},next={...item,categoryId:o.categoryId||cat};
             if(o.name!==undefined){next.name=o.name;next.plainName=true;}
             if(o.description!==undefined)next.zhushi=o.description;
-            if(o.urlTemplate!==undefined)next.url=expandTemplate(o.urlTemplate,jav);
-            ['color','bgcolor'].forEach(k=>{if(o[k]!==undefined)next[k]=o[k];});
+            if(o.urlTemplate!==undefined&&safeTemplate(o.urlTemplate))next.url=expandTemplate(o.urlTemplate,jav);
+            ['color','bgcolor'].forEach(k=>{if(o[k]!==undefined&&safeColor(o[k]))next[k]=o[k];});
             named.push(['builtin:'+key,key,next,index]);
         });
-        settings.custom.forEach((item,index)=>{if(item.enabled)named.push([item.id,item.id,{name:item.name,plainName:true,custom:true,zhushi:item.description||'',url:expandTemplate(item.urlTemplate,jav),color:item.color||'#000000',bgcolor:item.bgcolor||'',categoryId:item.categoryId},entries.length+index]);});
+        settings.custom.forEach((item,index)=>{if(item.enabled&&safeTemplate(item.urlTemplate))named.push([item.id,item.id,{name:item.name,plainName:true,custom:true,zhushi:item.description||'',url:expandTemplate(item.urlTemplate,jav),color:safeColor(item.color)?item.color:'#000000',bgcolor:safeColor(item.bgcolor)?item.bgcolor:'',categoryId:item.categoryId},entries.length+index]);});
         const order=new Map(settings.siteOrder.map((id,index)=>[id,index]));
         named.sort((a,b)=>(order.get(a[0])??100000+a[3])-(order.get(b[0])??100000+b[3]));
         let cursor=0;const result={};
