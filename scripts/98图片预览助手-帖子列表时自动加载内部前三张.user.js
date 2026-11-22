@@ -414,7 +414,7 @@ const tools = {
     getAuthorList: () => {
         try {
             const value=JSON.parse(GM_getValue("author_list")||"[]");
-            return Array.isArray(value)?value.filter(user=>user&&/^\\d+$/.test(String(user.id))&&Number.isFinite(Number(user.date))):[];
+            return Array.isArray(value)?value.filter(user=>user&&/^\d+$/.test(String(user.id))&&Number.isFinite(Number(user.date))):[];
         } catch(error){return [];}
     },
     getRemovedIds: () => {
@@ -423,7 +423,7 @@ const tools = {
     },
     add_removed_id: (thread_id) => {
         var max_length = tools.getNumberSetting("max_hide_history",0,5000,500)
-        var removed_ids = GM_getValue("removed_ids").split(",")
+        var removed_ids = tools.getRemovedIds();
         if (max_length == 0) {
             GM_setValue("removed_ids", "")
             return ;
@@ -432,12 +432,12 @@ const tools = {
             removed_ids.push(thread_id);
         }
         if (removed_ids.length > max_length) {
-            removed_ids = removed_ids.slice(0 - max_length)
+            removed_ids = removed_ids.slice(-max_length)
         }
         GM_setValue("removed_ids", removed_ids.join(","))
     },
     add_user_id: (userid, userName) => {
-        var arr = JSON.parse(GM_getValue("author_list"))
+        var arr = tools.getAuthorList();
         if (arr.findIndex((user) => user["id"] == userid) < 0) {
             arr.push({
                 "id":userid,
@@ -482,19 +482,19 @@ const GM_script = {
         GM_script.set_default_value("hideorgray", "gray");
         GM_script.set_default_value("author_control", 0);
         GM_script.set_default_value("author_list", "[]");
-        var max_length = parseInt(GM_getValue("max_hide_history"));
+        var max_length = tools.getNumberSetting("max_hide_history",0,5000,500);
         if (max_length == 0) {
             GM_setValue("removed_ids", "");
         } else {
-            var removed_ids = GM_getValue("removed_ids").split(",");
+            var removed_ids = tools.getRemovedIds();
             if (removed_ids.length > max_length) {
                 removed_ids = removed_ids.slice(0 - max_length);
                 GM_setValue("removed_ids", removed_ids.join(","));
             }
         }
-        var now = parseInt(+new Date()/1000)
-        var arr = JSON.parse(GM_getValue("author_list"))
-        var newarr = arr.filter(user => (now - user["date"]) < 60*60*24*7 )
+        var now = Math.floor(Date.now() / 1000)
+        var arr = tools.getAuthorList();
+        var newarr = arr.filter(user => (now - Number(user.date)) < 60*60*24*7)
         GM_setValue("author_list", JSON.stringify(newarr))
     },
     set_default_value: (key, value) => {
