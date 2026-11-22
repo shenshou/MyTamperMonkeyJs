@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         R34 Video Watch Archive Downloader _ ZH (aria2 RPC)
+// @name         R34 Video Watch Archive Downloader _ ZH (aria2 RPC)维护版
 // @namespace    https://github.com/noguimc/Rule34video-Downloader
 // @license      MIT
-// @version      4.8-aria2
+// @version      4.9-aria2
 // @description  Rule34video视频批量下载，观看视频自动归档下载。支持同步下载简介、Tag等作品元信息。支持浏览器直接下载、链接导出、YT-DLP下载命令导出、aria2 RPC推送。
 // @author       GitRuozhi
 // @match        https://rule34video.com/*
@@ -13,7 +13,10 @@
 // @grant        GM_deleteValue
 // @grant        GM_addValueChangeListener
 // @connect      rule34video.com
-// @connect      *
+// @connect      127.0.0.1
+// @connect      localhost
+// @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/R34%20Video%20Watch%20Archive%20Downloader%20_%20ZH%20(aria2%20RPC)%E7%BB%B4%E6%8A%A4%E7%89%88.user.js
+// @updateURL    https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/R34%20Video%20Watch%20Archive%20Downloader%20_%20ZH%20(aria2%20RPC)%E7%BB%B4%E6%8A%A4%E7%89%88.user.js
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -34,11 +37,11 @@
     PAGE_WAIT_MS: 12000,
     WATCHED_PAGE_DELAY_MS: 1000,
     WATCHED_CLICK_VALID_MS: 20000,
-    WATCHED_DUPLICATE_MS: 1500,
-    ROUTE_POLL_MS: 500,
+    ROUTE_POLL_MS: 2000,
+    PAGE_CHANGE_POLL_MS: 1000,
     RETRY_LIMIT: 1,
     MEDIA_EXTENSIONS: ['.mp4', '.webm', '.m4v', '.mov'],
-    ARIA2_RPC_DEFAULT: 'http://localhost:6800/jsonrpc',
+    ARIA2_RPC_DEFAULT: 'http://127.0.0.1:16800/jsonrpc',
     ARIA2_TOKEN_DEFAULT: '',
     ARIA2_DIR_DEFAULT: '',
   };
@@ -271,9 +274,6 @@
     #${PANEL_ID} .r34v-panel-button {
       min-width: 86px;
     }
-    #${PANEL_ID} .r34v-main-button {
-      min-width: 86px;
-    }
     #${PANEL_ID} .r34v-advanced {
       display: none;
     }
@@ -433,12 +433,12 @@
           </div>
           <div class="r34v-row">
             <label>RPC地址
-              <input id="r34v-rpc-url" class="r34v-rpc-url" type="text" placeholder="http://localhost:6800/jsonrpc">
+              <input id="r34v-rpc-url" class="r34v-rpc-url" type="text" placeholder="http://127.0.0.1:16800/jsonrpc">
             </label>
           </div>
           <div class="r34v-row">
             <label>令牌
-              <input id="r34v-rpc-token" class="r34v-rpc-token" type="text" placeholder="可选">
+              <input id="r34v-rpc-token" class="r34v-rpc-token" type="password" autocomplete="off" placeholder="可选">
             </label>
             <label>保存目录
               <input id="r34v-save-dir" class="r34v-save-dir" type="text" placeholder="留空使用默认">
@@ -733,10 +733,6 @@
       const itemKey = watchedItemKey(normalized);
       const now = Date.now();
 
-      if (itemKey && itemKey === watchedPage.lastItemKey && now - watchedPage.lastHandledAt < CONFIG.WATCHED_DUPLICATE_MS) {
-        return;
-      }
-
       if (itemKey && itemKey === watchedPage.lastItemKey) {
         return;
       }
@@ -945,6 +941,14 @@
   }
 
   async function clickNextAndContinue(link) {
+    if (!isSameOriginLink(link)) {
+      addLog('分页链接不是本站地址，已阻止自动跳转。');
+      state.collection.active = false;
+      state.collection.stopped = true;
+      persistState();
+      updateUi('采集已停止：分页链接安全校验未通过。');
+      return;
+    }
     const oldSignature = pageSignature();
     const oldHref = location.href;
     link.click();
@@ -1427,7 +1431,8 @@
   function findNextPageLink(doc) {
     const paginationRoots = Array.from(doc.querySelectorAll('[id*="pagination"], .pagination, .page, .paging'));
     const roots = paginationRoots.length ? paginationRoots : [doc];
-    const links = roots.flatMap((root) => Array.from(root.querySelectorAll('a[href]')));
+    const links = roots.flatMap((root) => Array.from(root.querySelectorAll('a[href]')))
+      .filter((link) => isSameOriginLink(link));
     const currentNumber = currentPageNumber(doc) || state.stats.currentPage;
 
     const numeric = links
@@ -1437,18 +1442,19 @@
     if (numeric) return numeric.link;
 
     const relNext = doc.querySelector('a[rel="next"][href]');
-    if (relNext) return relNext;
+    if (relNext && isSameOriginLink(relNext)) return relNext;
 
     return links.find((link) => /^(next|>|next\s*>|older|下一页|下页)$/i.test(normalizeWhitespace(link.textContent))) || null;
   }
 
   function findFirstPageLink(doc) {
     const relFirst = doc.querySelector('a[rel="first"][href]');
-    if (relFirst) return relFirst;
+    if (relFirst && isSameOriginLink(relFirst)) return relFirst;
 
     const paginationRoots = Array.from(doc.querySelectorAll('[id*="pagination"], .pagination, .page, .paging'));
     const roots = paginationRoots.length ? paginationRoots : [doc];
-    const links = roots.flatMap((root) => Array.from(root.querySelectorAll('a[href]')));
+    const links = roots.flatMap((root) => Array.from(root.querySelectorAll('a[href]')))
+      .filter((link) => isSameOriginLink(link));
 
     const numeric = links
       .map((link) => ({ link, num: Number(normalizeWhitespace(link.textContent)) }))
@@ -1457,6 +1463,11 @@
     if (numeric) return numeric.link;
 
     return links.find((link) => /^(first|<<|<\s*<|首页|第一页)$/i.test(normalizeWhitespace(link.textContent))) || null;
+  }
+
+  function isSameOriginLink(link) {
+    const url = safeUrl(link && link.getAttribute ? link.getAttribute('href') : '', location.href);
+    return Boolean(url && url.origin === location.origin);
   }
 
   function currentPageNumber(doc) {
@@ -1628,10 +1639,12 @@
   function waitForPageChange(oldSignature, oldHref) {
     return new Promise((resolve) => {
       let done = false;
+      let checkTimer = 0;
       const finish = (value) => {
         if (done) return;
         done = true;
         observer.disconnect();
+        clearTimeout(checkTimer);
         clearInterval(interval);
         clearTimeout(timeout);
         resolve(value);
@@ -1639,12 +1652,16 @@
 
       const changed = () => location.href !== oldHref || pageSignature() !== oldSignature;
       const observer = new MutationObserver(() => {
-        if (changed()) finish(true);
+        if (checkTimer) return;
+        checkTimer = setTimeout(() => {
+          checkTimer = 0;
+          if (changed()) finish(true);
+        }, 80);
       });
       observer.observe(document.body, { childList: true, subtree: true });
       const interval = setInterval(() => {
         if (changed()) finish(true);
-      }, 250);
+      }, CONFIG.PAGE_CHANGE_POLL_MS);
       const timeout = setTimeout(() => finish(changed()), CONFIG.PAGE_WAIT_MS);
     });
   }
@@ -1696,8 +1713,13 @@
       return;
     }
 
-    const rpcUrl = state.settings.rpcUrl || CONFIG.ARIA2_RPC_DEFAULT;
-    const token = state.settings.rpcToken;
+    const rpcUrl = normalizeLocalRpcUrl(state.settings.rpcUrl || CONFIG.ARIA2_RPC_DEFAULT);
+    if (!rpcUrl) {
+      addLog('aria2 RPC 地址无效：仅允许本机 HTTP 地址（localhost 或 127.0.0.1）及 /jsonrpc 路径。');
+      updateUi();
+      return;
+    }
+    const token = String(state.settings.rpcToken || '').trim();
     const dir = state.settings.saveDir;
     let succeeded = 0;
     let failed = 0;
@@ -1719,9 +1741,8 @@
         out: task.filename   // 强制指定文件名，即使服务器忽略参数也能正确命名
       };
       if (dir) options.dir = dir;
-      if (token) options['token'] = token;
 
-      const params = token ? [token, [downloadUrl], options] : [[downloadUrl], options];
+      const params = token ? [`token:${token}`, [downloadUrl], options] : [[downloadUrl], options];
       const payload = {
         jsonrpc: '2.0',
         id: task.postId || Date.now() + Math.random(),
@@ -2515,10 +2536,23 @@
     return new DOMParser().parseFromString(html, 'text/html');
   }
 
+  function normalizeLocalRpcUrl(value) {
+    try {
+      const url = new URL(String(value || '').trim());
+      const hostname = url.hostname.toLowerCase();
+      if (url.protocol !== 'http:') return '';
+      if (hostname !== '127.0.0.1' && hostname !== 'localhost') return '';
+      if (url.username || url.password || url.pathname !== '/jsonrpc' || url.search || url.hash) return '';
+      return url.href;
+    } catch (_) {
+      return '';
+    }
+  }
+
   function isVideoPage(url) {
     try {
       const parsed = new URL(url, location.href);
-      return /^\/video\/\d+\//i.test(parsed.pathname);
+      return parsed.origin === location.origin && /^\/video\/\d+\//i.test(parsed.pathname);
     } catch (_) {
       return false;
     }
