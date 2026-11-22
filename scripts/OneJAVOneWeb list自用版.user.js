@@ -374,12 +374,12 @@
             if(a==='move-up'||a==='move-down'){const ids=sites().map(s=>s.id),i=ids.indexOf(id),j=i+(a==='move-up'?-1:1);if(i<0||j<0||j>=ids.length)return;[ids[i],ids[j]]=[ids[j],ids[i]];settings.siteOrder=ids;save();return;}
             if(a==='add-category'){const name=(main.querySelector('[name="new-category"]')?.value||'').trim();if(!name){alert('请填写分类名称');return;}if(cats().some(c=>c.name.toLowerCase()===name.toLowerCase())){alert('分类名称已存在');return;}settings.customCategories.push({id:'customcat_'+Date.now().toString(36),name});save();return;}
             if(a==='rename-category'){const input=Array.from(main.querySelectorAll('[data-category-name]')).find(x=>x.dataset.categoryName===id),name=(input?.value||'').trim();if(!name){alert('分类名称不能为空');return;}if(cats().some(c=>c.id!==id&&c.name.toLowerCase()===name.toLowerCase())){alert('分类名称已存在');return;}if(id.startsWith('builtin:'))settings.categoryNames[id]=name;else{const c=settings.customCategories.find(x=>x.id===id);if(c)c.name=name;}save();return;}
-            if(a==='delete-category'){if(sites().some(s=>s.categoryId===id&&!s.deleted)){alert('请先将该分类下的站点调整到其他分类');return;}if(id.startsWith('builtin:'))settings.deletedCategories.push(id);else settings.customCategories=settings.customCategories.filter(x=>x.id!==id);delete settings.categoryNames[id];save();}
+            if(a==='delete-category'){if(sites().some(s=>s.categoryId===id)){alert('请先将该分类下的站点调整到其他分类');return;}if(id.startsWith('builtin:'))settings.deletedCategories.push(id);else settings.customCategories=settings.customCategories.filter(x=>x.id!==id);delete settings.categoryNames[id];save();}
         });
         root.addEventListener('input',event=>{
             if(event.target.name==='site-search'||event.target.name==='site-filter'){
-                const q=main.querySelector('[name="site-search"]')?.value||'',f=main.querySelector('[name="site-filter"]')?.value||'',name=event.target.name,pos=event.target.selectionStart;
-                renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null)next.setSelectionRange(pos,pos);}
+                const q=main.querySelector('[name="site-search"]')?.value||'',f=main.querySelector('[name="site-filter"]')?.value||'',name=event.target.name,pos=name==='site-search'?event.target.selectionStart:null;
+                renderSites(q,f);const next=main.querySelector('[name="'+name+'"]');if(next){next.focus();if(pos!==null&&typeof next.setSelectionRange==='function')next.setSelectionRange(pos,pos);}
             }
         });
         root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
