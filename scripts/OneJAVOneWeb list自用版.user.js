@@ -246,54 +246,47 @@
             })();
 
             this.data = {
-                车牌信息: { zhushi: '车牌信息类', name: '车牌', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                车牌信息: { zhushi: '车牌信息类', name: '车牌', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 javlibarary: {
                     zhushi: 'JavLibrary 是一个线上日本成人影片图书馆。',
                     name: 'JAVLibrary', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.u65w.com/favicon.ico',
                     origin: 'https://www.javlibrary.com',
                     uri: `/cn/vl_searchbyid.php?keyword=${this.fanHao}`
                 },
                 freejavbt: {
                     zhushi: 'JAV目錄大全| Free JAV BT，這是世界上最齊全的AV資料庫，成人影片資料庫及磁鏈分享',
                     name: 'FreeJavBt<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://freejavbt.com/assets/images/logo.png',
                     origin: 'https://freejavbt.com',
                     uri: `/search?wd=${this.fanHao}`
                 },
                 javbus: {
                     zhushi: 'JavBus - AV磁力連結分享 - 日本成人影片資料庫',
                     name: 'JavBus', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.javbus.com/favicon.ico',
                     origin: 'https://www.javbus.com',
                     uri: `/${this.fanHao}`
                 },
                 javdb: {
                     zhushi: 'JavDB 成人影片數據庫',
                     name: 'JavDB<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://javdb008.com/favicon.ico',
                     origin: 'https://javdb008.com',
                     uri: `/search?q=${this.xiaxian}`
                 },
                 jav321: {
                     zhushi: 'Free JAV Torrents',
                     name: 'JAV321', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://www.jav321.com/favicon.ico',
                     origin: 'https://www.jav321.com',
                     uri: `/?bango=${this.fanHao}`
                 },
                 mgstage: {
                     zhushi: 'mgstage',
                     name: 'mgstage', bgcolor: '', color: 'red',
-                    ico: 'https://www.mgstage.com/favicon.ico',
                     origin: 'https://www.mgstage.com',
                     uri: `/search/cSearch.php?search_word=${this.fanHao}`
                 },
-                // 此战代码错误 暂时取消 hdouban: {zhushi: 'hdouban',name: 'hdouban直<sup>fc2</sup>',bgcolor: '',color: 'green',ico: 'https://byym21.com/favicon.ico', origin: 'https://byym21.com', uri: `/search?keywords=${this.fanHao}&ty=movie&page=1&pageSize=12`},
+                // 此战代码错误 暂时取消 hdouban: {zhushi: 'hdouban',name: 'hdouban直<sup>fc2</sup>',bgcolor: '',color: 'green', origin: 'https://byym21.com', uri: `/search?keywords=${this.fanHao}&ty=movie&page=1&pageSize=12`},
                 javplace: {
                     zhushi: '磁力站点',
                     name: 'javplace', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://jav.place/logo.png',
                     origin: 'https://jav.place',
                     uri: `/video/${this.fanHao}`
                 },
@@ -301,7 +294,6 @@
                 javbooks: {
                     zhushi: 'javbooks',
                     name: 'javbooks', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://jbk009.com/logo.png',
                     origin: 'https://jbk009.com',
                     uri: `/serch_censored.htm?skey=${this.fanHao}`
                 },
@@ -309,85 +301,74 @@
                 javland: {
                     zhushi: '磁力站点',
                     name: 'javland', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://jav4.land/favicon.ico',
                     origin: 'https://jav4.land',
                     uri: `/tw/id_search.php?keys=${this.fanHao}`
                 },
                 javmenu: {
                     zhushi: 'javmenu 在线全片 片花 种子下载',
                     name: 'javmenu<sup>fc2</sup><sub>∞</sub>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://javmenu.com/assets/images/logo.png',
                     origin: 'https://javmenu.com',
                     uri: `/zh/search?wd=${this.bango}`
                 },
                 javhoo: {
                     zhushi: 'javhoo  - 日本成人影片資料庫',
                     name: 'javhoo<sup>fc2</sup><sub>∞</sub>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.javhoo.org/favicon.ico',
                     origin: 'https://www.javhoo.org',
                     uri: `/search/${this.fanHao}`
                 },
-                演员信息: { zhushi: '演员信息类，打开后自行在地址栏修改想要搜的演员', name: '演员', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                演员信息: { zhushi: '演员信息类，打开后自行在地址栏修改想要搜的演员', name: '演员', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 Xslist: {
                     zhushi: 'Xslist.org - 健康的宅男偶像專題網站',
                     name: 'Xslist <sub>∞</sub>', bgcolor: '', color: 'red',
-                    ico: 'https://xslist.org/favicon.ico',
                     origin: 'https://xslist.org',
                     uri: `/search?query=${this.fanHao}&lg=tw`
                 },
                 wikipedia: {
                     zhushi: 'wikipedia维基百科',
                     name: 'wikipedia', bgcolor: '', color: 'red',
-                    ico: 'https://zh.m.wikipedia.org/favicon.ico',
                     origin: 'https://zh.m.wikipedia.org',
                     uri: `/zh-cn/%E4%B8%89%E4%B8%8A%E6%82%A0%E4%BA%9A`
                 },
                 airav: {
                     zhushi: 'airav 中文信息 预览10分钟',
                     name: 'airav', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://airav.fun/LOGO.ico',
                     origin: 'https://airav.fun',
                     uri: `/cn/searchresults.aspx?Search=%E4%B8%89%E4%B8%8A%E6%82%A0%E4%BA%9A`
                 },
                 msin: {
                     zhushi: 'msin 演员搜索 请修改地址栏后面的演员名',
                     name: 'msin演员', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://db.msin.jp/favicon.ico',
                     origin: 'https://db.msin.jp',
                     uri: `/jp.search/actress?str=%E6%B3%A2%E5%A4%9A%E9%87%8E%E7%B5%90%E8%A1%A3`
                 },
                 msin2: {
                     zhushi: 'msin 番号搜索',
                     name: 'msin番号', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://db.msin.jp/favicon.ico',
                     origin: 'https://db.msin.jp',
                     uri: `/jp.search/movie?str=${this.fanHao}`
                 },
                 sougouwiki: {
                     zhushi: 'sougouwiki 番号演员搜索',
                     name: 'sougouwiki', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'http://sougouwiki.com/favicon.ico',
                     origin: 'http://sougouwiki.com',
                     uri: `/search?keywords=${this.fanHao}`
                 },
-                第二排8: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                第二排9: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                第二排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                演员第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                演员第一排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                磁力种子: { zhushi: '磁力种子类', name: '磁力', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                第二排8: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                第二排9: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                第二排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                演员第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                演员第一排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                磁力种子: { zhushi: '磁力种子类', name: '磁力', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 // https://tellme.pw/btsow
                 btsow: {
                     zhushi: 'btsow磁力链搜索。',
                     name: 'btsow', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://btsow.motorcycles/app/bts/View/img/favicon.ico',
                     origin: 'https://btsow.motorcycles',
                     uri: `/search/${this.fanHao}`
                 },
                 onejav: {
                     zhushi: 'Free JAV Torrents种子站',
                     name: 'OneJAV<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://onejav.com/static/img/onejav.5468a5a7d373.png',
                     origin: 'https://onejav.com',
                     uri: `/search/${this.bango}`
                 },
@@ -395,7 +376,6 @@
                 avmoo: {
                     zhushi: 'AVMOO',
                     name: 'AVMOO', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://avmoo.cfd/app/jav/View/img/favicon.ico',
                     origin: 'https://avmoo.cfd',
                     uri: `/cn/search/${this.fanHao}`
                 },
@@ -403,7 +383,6 @@
                 AVSOX: {
                     zhushi: 'AVSOX',
                     name: 'AVSOX<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://avsox.click/app/javu/View/img/favicon.ico',
                     origin: 'https://avsox.click',
                     uri: `/cn/search/${this.fanHao}`
                 },
@@ -411,14 +390,12 @@
                 skrbtdo: {
                     zhushi: '磁力站点',
                     name: 'skrbtdo', bgcolor: '', color: 'green',
-                    ico: 'https://skrbtka.top/favicon.ico',
                     origin: 'https://skrbtka.top',
                     uri: `/search?keyword=${this.fanHao}`
                 },
                 sukebei: {
                     zhushi: '磁力站点',
                     name: 'sukebei', bgcolor: '', color: 'red',
-                    ico: 'https://sukebei.nyaa.si/favicon.ico',
                     origin: 'https://sukebei.nyaa.si',
                     uri: `/?f=0&c=0_0&q=${this.fanHao}`
                 },
@@ -426,7 +403,6 @@
                 tokyotosho: {
                     zhushi: '磁力站点',
                     name: 'tokyotosho', bgcolor: '', color: 'green',
-                    ico: 'https://www.tokyotosho.info/favicon.ico',
                     origin: 'https://www.tokyotosho.info',
                     uri: `/search.php?terms=${this.fanHao}`
                 },
@@ -434,99 +410,85 @@
                 kitty: {
                     zhushi: '磁力站点',
                     name: 'kitty', bgcolor: '', color: 'red',
-                    ico: 'https://www.torrentkitty.cam/favicon.ico',
                     origin: 'https://www.torrentkitty.cam',
                     uri: `/search/${this.fanHao}`
                 },
                 btdig: {
                     zhushi: '磁力站点',
                     name: 'btdig', bgcolor: '', color: 'red',
-                    ico: 'http://en.btdig.com/resources/icons/icon.png',
                     origin: 'http://en.btdig.com',
                     uri: `/search?q=${this.fanHao}`
                 },
                 idope: {
                     zhushi: '磁力站点',
                     name: 'idope', bgcolor: '', color: 'red',
-                    ico: 'https://idope.se/favicon.ico',
                     origin: 'https://idope.se',
                     uri: `/torrent-list/${this.fanHao}/`
                 },
                 u9a9: {
                     zhushi: '磁力站点',
                     name: 'u9a9', bgcolor: '', color: 'red',
-                    ico: 'https://u9a9.com/favicon.ico',
                     origin: 'https://u9a9.com',
                     uri: `/?type=2&search=${this.fanHao}`
                 },
-                磁力第二排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                磁力第二排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 avmans: {
                     zhushi: '磁力站点 由于站点有的加-有的不加，可自行尝试',
                     name: 'avmans<sup>fc2</sup><sub>∞</sub>', bgcolor: '', color: 'green',
-                    ico: 'https://gbsj.xyz/favicon.ico',
                     origin: 'https://gbsj.xyz',
                     uri: `/Single/${this.bango}`
                 },
                 yesjav: {
                     zhushi: '磁力站点',
                     name: 'yesjav', bgcolor: '', color: 'red',
-                    ico: 'http://www.yesjav.info/favicon.ico',
                     origin: 'http://www.yesjav.info',
                     uri: `/search.asp?q=${this.fanHao}&`
                 },
                 jav141: {
                     zhushi: '磁力种子',
                     name: '141jav', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.141jav.com/static/img/141jav.5468a5a7d373.png',
                     origin: 'https://www.141jav.com',
                     uri: `/torrent/${this.bango}`
                 },
                 ppv141: {
                     zhushi: '磁力种子',
                     name: '141ppv<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.141ppv.com/static/img/141jav.5468a5a7d373.png',
                     origin: 'https://www.141ppv.com',
                     uri: `/torrent/${this.bango}`
                 },
                 zhongzisou: {
                     zhushi: '种子搜',
                     name: 'ZhongZiSou', bgcolor: '', color: 'green',
-                    ico: 'https://www.zhongziso.com/favicon.ico',
                     origin: 'https://www.zhongziso.com',
                     uri: `/list/${this.fanHao}/1`
                 },
                 anidex: {
                     zhushi: '磁力种子',
                     name: 'anidex', bgcolor: '', color: 'green',
-                    ico: 'https://anidex.info/favicon.ico',
                     origin: 'https://anidex.info',
                     uri: `/?q=${this.fanHao}`
                 },
                 javjunkies: {
                     zhushi: '磁力种子',
                     name: 'javjunkies', bgcolor: '', color: 'green',
-                    ico: 'http://javjunkies.org/favicon.ico',
                     origin: 'http://javjunkies.org',
                     uri: `/main/search/${this.bango}`
                 },
                 projectjav: {
                     zhushi: '磁力种子',
                     name: 'projectjav<sup>fc2</sup><sub>∞</sub>', bgcolor: '', color: 'green',
-                    ico: 'https://projectjav.com/favicon.ico',
                     origin: 'https://projectjav.com',
                     uri: `/?searchTerm=${this.fanHao}`
                 },
                 nextjav: {
                     zhushi: '磁力种子',
                     name: 'nextjav', bgcolor: '', color: 'green',
-                    ico: 'https://nextjav.com/media/favicon.ico',
                     origin: 'https://nextjav.com',
                     uri: `/torrent/detail/${this.fanHao}`
                 },
                 ijavtorrent: {
                     zhushi: 'ijavtorrent 磁力种子 大缩略图',
                     name: 'ijavtorrent', bgcolor: '', color: 'green',
-                    ico: 'https://ijavtorrent.com/ijavtorrentfavicons/favicon-16x16.png',
                     origin: 'https://ijavtorrent.com',
                     uri: `/?searchTerm=${this.fanHao}`
                 },
@@ -534,16 +496,14 @@
                 jg0: {
                     zhushi: 'jg0 磁力种子 大缩略图',
                     name: 'jg0', bgcolor: '', color: 'green',
-                    ico: 'https://jg0.net/favicon.ico',
                     origin: 'https://jg0.net',
                     uri: `/av_info/zh/?i=${this.buwei}&is=${this.fanHao}`
                 },
-                磁力第三排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                磁力第三排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 // https://search.torrends.to/ADN-322
                 torrends: {
                     zhushi: 'torrends。',
                     name: 'torrends', bgcolor: '', color: 'green',
-                    ico: 'https://search.torrends.to/favicon.ico',
                     origin: 'https://search.torrends.to',
                     uri: `/${this.fanHao}`
                 },
@@ -551,7 +511,6 @@
                 btmet: {
                     zhushi: 'btmet。',
                     name: 'btmet', bgcolor: '', color: 'green',
-                    ico: 'https://www.btmet.com/favicon.ico',
                     origin: 'https://www.btmet.com',
                     uri: `/search.php?q=${this.fanHao}&o=0&l=&c=1`
                 },
@@ -560,7 +519,6 @@
                 BT1024: {
                     zhushi: '磁力搜索。',
                     name: '1024bt', bgcolor: '', color: 'green',
-                    ico: 'https://1024185.xyz/favicon.ico',
                     origin: 'https://1024185.xyz',
                     uri: `/main-search-kw-${this.fanHao}-1.html`
                 },
@@ -569,7 +527,6 @@
                 clmmm: {
                     zhushi: '磁力妹妹。',
                     name: 'clmmm', bgcolor: '', color: 'green',
-                    ico: 'https://clmma60.buzz/favicon.ico',
                     origin: 'https://clmma60.buzz',
                     uri: `/search-${this.fanHao}-0-0-1.html`
                 },
@@ -577,7 +534,6 @@
                 u3c3: {
                     zhushi: 'u3c3。',
                     name: 'u3c3', bgcolor: '', color: 'green',
-                    ico: 'https://u3c3.site/favicon.ico',
                     origin: 'https://u3c3.site',
                     uri: `/?search2=fjeofakansriji&search=${this.fanHao}`
                 },
@@ -585,7 +541,6 @@
                 souka: {
                     zhushi: 'souka。',
                     name: 'souka', bgcolor: '', color: 'green',
-                    ico: 'https://tw.souka.me/favicon.ico',
                     origin: 'https://tw.souka.me',
                     uri: `/q/no=${this.fanHao}`
                 },
@@ -593,7 +548,6 @@
                 sehuatang: {
                     zhushi: 'sehuatang 高清中文字幕 ,98堂[原色花堂]。',
                     name: 'sehuatang', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.sehuatang.net/favicon.ico',
                     origin: 'https://www.sehuatang.net',
                     uri: `/search.php?mod=forum&srchtype=title&srhfid=&srhlocality=forum::index&srchtxt=${this.fanHao}&searchsubmit=true`
                 },
@@ -601,7 +555,6 @@
                 cilido: {
                     zhushi: '磁力多 bt113.com。',
                     name: 'duo6', bgcolor: '', color: 'green',
-                    ico: 'https://i.loli.net/2021/04/24/ViPGBY8jyD4Z2Ns.png',
                     origin: 'https://om.cilido.top',
                     uri: `/search-${this.fanHao}-rel-1.html`
                 },
@@ -609,17 +562,16 @@
                 wuqianra: {
                     zhushi: '吴签磁力 右侧有封面图',
                     name: 'wuqianra', bgcolor: '', color: 'green',
-                    ico: 'https://wuqianhu.top/favicon.ico',
                     origin: 'https://wuqianhu.top',
                     uri: `/search?keyword=${this.fanHao}`
                 },
-                磁力第三排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                磁力第三排12: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                宣传片: { zhushi: '宣传片类', name: '片花', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/441120-javbus-javdb-library-trailer', uri: `` },
+                磁力第三排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                磁力第三排12: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                宣传片: { zhushi: '宣传片类', name: '片花', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/441120-javbus-javdb-library-trailer', uri: `` },
                 //xrmoo: {
                 //zhushi: '闲人吧DMM视频预览系统。',
                 //name: 'xrmoo',bgcolor: '',color: 'green',
-                //ico: 'http://dmm.xrmoo.com/favicon.ico',
+                //
                 //origin: 'http://dmm.xrmoo.com',
                 //uri: `/sindex.php?searchstr=${this.fanHao}`
                 //},
@@ -627,56 +579,48 @@
                 faleno: {
                     zhushi: 'faleno 发行商为faleno的车牌预览',
                     name: 'faleno<sup>发</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://faleno.jp/LOGO.ico',
                     origin: 'https://faleno.jp',
                     uri: `/top/works/${this.bango}/`
                 },
                 airav2: {
                     zhushi: 'airav简介及10分钟预览',
                     name: 'airav简介10', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://airav.fun/LOGO.ico',
                     origin: 'https://airav.fun',
                     uri: `/cn/searchresults.aspx?Search=${this.fanHao}&Type=0`
                 },
                 airavwiki: {
                     zhushi: 'airav.wiki简介及10分钟预览',
                     name: 'airavwiki', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://www.airav.wiki/static/favicon.ico?v=1',
                     origin: 'https://www.airav.wiki',
                     uri: `/video/${this.fanHao}	`
                 },
                 xhamster: {
                     zhushi: 'xhamster',
                     name: 'xhamster', bgcolor: '', color: 'green',
-                    ico: 'https://static-lvlt.xhcdn.com/xh-desktop/images/favicon/favicon.ico?1',
                     origin: 'https://zh.xhamster.com',
                     uri: `/search/${this.fanHao}	`
                 },
                 paycalling: {
                     zhushi: 'paycalling 预览片花',
                     name: 'paycalling', bgcolor: '', color: 'green',
-                    ico: 'https://paycalling.com/static/icon/logo.png',
                     origin: 'https://paycalling.com',
                     uri: `/web/search?page=1&keyWord=${this.fanHao}	`
                 },
                 r18: {
                     zhushi: 'The Largest Japanese Porn Site',
                     name: 'r18', bgcolor: '', color: 'red',
-                    ico: 'https://www.r18.com/assets/image/my/logo-dmm-01.png',
                     origin: 'https://www.r18.com',
                     uri: `/common/search/searchword=${this.fanHao}/`
                 },
                 dmm: {
                     zhushi: 'dmm片花',
                     name: 'dmm<sup>日.代</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://www.dmm.co.jp/favicon.ico',
                     origin: 'https://www.dmm.co.jp',
                     uri: `/digital/videoa/-/detail/=/cid=${this.buwei}/`
                 },
                 avpreview: {
                     zhushi: 'avpreview 预览片花',
                     name: 'avpreview', bgcolor: '', color: 'green',
-                    ico: 'https://avpreview.com/avpreviewfavicon.ico',
                     origin: 'https://avpreview.com',
                     uri: `/zh/video/${this.buwei}	`
                 },
@@ -684,7 +628,6 @@
                 maxjav: {
                     zhushi: 'maxjav',
                     name: 'maxjav', bgcolor: '', color: 'green',
-                    ico: 'https://maxjav.com/favicon.ico',
                     origin: 'https://maxjav.com',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -692,7 +635,6 @@
                 jav9999: {
                     zhushi: 'jav9999',
                     name: 'jav9999', bgcolor: '', color: 'green',
-                    ico: 'https://jav9999.com/static/images/icon.ico',
                     origin: 'https://jav9999.com',
                     uri: `/search?q=${this.fanHao}`
                 },
@@ -700,390 +642,335 @@
                 javspyl: {
                     zhushi: 'javspyl推荐片花',
                     name: 'javspyl', bgcolor: '', color: 'green',
-                    ico: '',
                     origin: 'https://javspyl.tk',
                     uri: `/${this.fanHao}`
                 },
-                在线观看: { zhushi: '在线观看类', name: '在线', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线观看: { zhushi: '在线观看类', name: '在线', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 mmtv: {
                     zhushi: '在线观看下载等 适合搜索骑兵和fc2',
                     name: '7mmtv', bgcolor: '#FAFAD2', color: '#cb000d',
-                    ico: 'https://7mmtv.sx/favicon.ico',
                     origin: 'https://7mmtv.sx',
                     uri: `/zh/censored_search/all/${this.fanHao}/1.html`
                 },
                 javmovs: {
                     zhushi: '在线观看全片Japanese Porn Streaming | JAV Stream | JAV HD Online',
                     name: 'JAVMOVS', bgcolor: '', color: 'green',
-                    ico: 'https://javmovs.com/favicon.ico',
                     origin: 'https://javmovs.com',
                     uri: `/${this.fanHao}`
                 },
                 jable: {
                     zhushi: 'Jable.TV | 免費高清AV在線看',
                     name: 'Jable<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://assets-cdn.jable.tv/assets/icon/favicon.ico',
                     origin: 'https://jable.tv',
                     uri: `/search/${this.fanHao}/`
                 },
                 javdoe: {
                     zhushi: '在线观看全片JavDisk javdoe - Free JAV Streaming - Japanese Porn Online Full HD',
                     name: 'javdoe<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javdoe.to/favicon-32x32.png',
                     origin: 'https://javdoe.to',
                     uri: `/search/movie/${this.fanHao}`
                 },
                 javfree: {
                     zhushi: '在线观看全片JAV Free Online - JAVFree.SH - Japanese Porn Sex Streaming',
                     name: 'Javfree直<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javfree.sh/favicon.ico',
                     origin: 'https://javfree.sh',
                     uri: `/search/movie/${this.fanHao}`
                 },
                 javfinder: {
                     zhushi: '在线观看全片JAV Free Online - javfinder - Japanese Porn Sex Streaming',
                     name: 'javfinder<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javfinder.li/favicon.ico',
                     origin: 'https://javfinder.li',
                     uri: `/search/movie/${this.fanHao}`
                 },
                 hpjav: {
                     zhushi: '在线观看全片 無料AV, エロ動画, AVフリー, 素人の高画質アダルト動画, HPJAV 老片',
                     name: 'HPJAV<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://hpjav.tv/wp-content/themes/dist/image/HP.ico',
                     origin: 'https://hpjav.tv',
                     uri: `/tw/?s=${this.fanHao}`
                 },
                 javhdporn: {
                     zhushi: 'Free JAV HD Videos, Japanese Porn Streaming Online - JAV HD Porn',
                     name: 'JAVHDPorn<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://img.pornfhd.com/favicon.ico',
                     origin: 'https://www2.javhdporn.net',
                     uri: `/video/${this.fanHao}/`
                 },
                 javfun: {
                     zhushi: 'DownLoad JAV HD Free, Jav porn, Watch the best uncensored JAPANESE porn videos in FULL HD quality!',
                     name: 'JAVFUN<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://www9.javfun.me/favicon.ico',
                     origin: 'https://www9.javfun.me',
                     uri: `/search/${this.fanHao}`
                 },
                 bejav: {
                     zhushi: 'BEJAV is a website watch JAV video HD for free without any account registration, Free Jav Streaming and Download the latest JAVHD, Japanese Porn, Asian Sex Videos ,Hot JAV Online, free porn japanese, Stream Adult Video japanese. Start watching Now',
                     name: 'BEJAV<sup>fc2</sup><sub>∞</sub>', bgcolor: '', color: 'red',
-                    ico: 'https://bejav.net/wp-content/themes/bejav/favicon.ico',
                     origin: 'https://bejav.net',
                     uri: `/search/${this.fanHao}`
                 },
                 javhd: {
                     zhushi: '在线观看全片',
                     name: 'JAVHD', bgcolor: '', color: 'red',
-                    ico: 'https://javhd.today/favicon.ico',
                     origin: 'https://javhd.today',
                     uri: `/search/video/?s=${this.fanHao}`
                 },
-                在线第二排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第二排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 supjav: {
                     zhushi: 'Watch Free Jav Online, Japanese Porn HD Streaming Online',
                     name: 'SUPJAV<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://supjav.com/favicon.ico',
                     origin: 'https://supjav.com',
                     uri: `/zh/?s=${this.fanHao}`
                 },
                 svjav: {
                     zhushi: 'JAV HD streaming, free download JAV, Japanese porn tube',
                     name: 'SVJAV <sub>∞</sub>', bgcolor: '', color: 'red',
-                    ico: 'https://svjav.com/wp-content/themes/svjav/favicon.ico',
                     origin: 'https://svjav.com',
                     uri: `/search/${this.fanHao}/`
                 },
                 fbjav: {
                     zhushi: 'JAV Online, Free Japanese adult video, Porn Streaming, Asian Sex Videos',
                     name: 'FBJAV', bgcolor: '', color: 'red',
-                    ico: 'https://fbjav.com/favicon.ico',
                     origin: 'https://fbjav.com',
                     uri: `/${this.fanHao}/`
                 },
                 javhhh: {
                     zhushi: 'JAV Online, Free Japanese adult video, Porn Streaming, Asian Sex Videos',
                     name: 'JAVHHH<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javhhh.com/template/javhhh/images/favicon.ico',
                     origin: 'https://javhhh.com',
                     uri: `/video/${this.fanHao}/`
                 },
                 kissjav: {
                     zhushi: 'Asian Porn Movies, Jav Tube Porn, Korean Bj, Korean Porn, Amateur Porn',
                     name: 'KISSJAV<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://kissjav.lifavicon.ico',
                     origin: 'https://kissjav.li',
                     uri: `/search/video/?s=${this.fanHao}`
                 },
                 javdragon: {
                     zhushi: 'Watch Free JAV Japanese Porn and Asian XX Videos at JavDragon - Watch Japanese Porn XXX videos in amazing 720p HD! Exclusive JAV videos with hot Asian girls',
                     name: 'JavDragon', bgcolor: '', color: 'red',
-                    ico: 'https://javdragon.com/favicon.ico',
                     origin: 'https://javdragon.com',
                     uri: `/${this.bango}/`
                 },
                 javsky: {
                     zhushi: 'Watch Free Jav HD Porn Streaming Online',
                     name: 'JAVSKY直<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javsky.tv/favicon.ico',
                     origin: 'https://javsky.tv',
                     uri: `/search/movie/${this.fanHao}`
                 },
                 javbel: {
                     zhushi: 'Japanese Porn Videos, Asian Porn Tube, Japan Sex Movies',
                     name: 'JAVBEL', bgcolor: '', color: 'green',
-                    ico: 'https://javbel.com/favicon.png',
                     origin: 'https://javbel.com',
                     uri: `/search.php?q=${this.fanHao}`
                 },
                 javmix: {
                     zhushi: '高画質で長時間の無料エロ動画',
                     name: 'Javmix<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javmix.tv/wp-content/themes/javmix/images/icon.ico',
                     origin: 'https://javmix.tv',
                     uri: `/video/${this.fanHao}/`
                 },
                 avdrive: {
                     zhushi: 'av-Drive [1080p Porn Videos] [Google Drive]',
                     name: 'av-Drive', bgcolor: '', color: 'red',
-                    ico: 'https://av-drive.blogspot.com/favicon.ico',
                     origin: 'https://av-drive.blogspot.com',
                     uri: `/search?q=${this.fanHao}`
                 },
                 javfor: {
                     zhushi: 'Japanese Adult Video (JAV), Full Length XXX Movies, Watch Free Porn Videos 网站仅支持站内搜索 无法获取搜索地址',
                     name: 'JAV-FOR', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://jav-for.me/templates/e-hentai/images/favicon.png',
                     origin: 'https://jav-for.me',
                     uri: `/?do=search&subaction=search&story=${this.fanHao}`
                 },
-                在线第三排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第三排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 ggjav: {
                     zhushi: '最も完全な無料オンライン日本のAV、HD JAV、アダルト映画',
                     name: 'GGJAV<sup>fc2</sup><sub>∞</sub>', bgcolor: '', color: 'red',
-                    ico: 'https://ggjav.com/resources/icons/icon.png',
                     origin: 'https://ggjav.com',
                     uri: `/ja/main/search?string=${this.fanHao}`
                 },
                 bestjavporn: {
                     zhushi: '在线观看',
                     name: 'bestjavporn<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://img.bestjavporn.net/favicon.ico',
                     origin: 'https://www3.bestjavporn.com',
                     uri: `/search/${this.fanHao}/`
                 },
                 javcl: {
                     zhushi: 'Free Jav Streaming Online Free Porn Full HD',
                     name: 'JAVCL', bgcolor: '', color: 'green',
-                    ico: 'https://javcl.com/wp-content/themes/javcl/images/ico.png',
                     origin: 'https://javcl.com',
                     uri: `/search/${this.fanHao}/`
                 },
                 sextb: {
                     zhushi: 'Free JAV HD and XXX sex videos on the Japanese Porn',
                     name: 'SEXTB<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://sextb.net/favicon.ico',
                     origin: 'https://sextb.net',
                     uri: `/search/${this.fanHao}`
                 },
                 avgle: {
                     zhushi: '無修正エロ動画ファンにAVGLEが贈る、人気AV女優や可愛い素人の高画質独占配信アダルト動画・免費成人影片、日本AV、無碼高清視頻播放',
                     name: 'avgle<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://avgle.com/favicon.ico',
                     origin: 'https://avgle.com',
                     uri: `/search/videos?search_query=${this.fanHao}&search_type=videos	`
                 },
                 netflav: {
                     zhushi: 'Netflav 集結琳瑯滿目的精彩日本成人影片，只有在這才找得到，全部精心製作。',
                     name: 'netflav<sup>fc2</sup><sub>∞</sub>', bgcolor: '', color: 'red',
-                    ico: 'https://netflav.com/static/assets/favicon.ico',
                     origin: 'https://netflav.com',
                     uri: `/search?type=title&keyword=${this.fanHao}`
                 },
                 missav: {
                     zhushi: '在线观看 大缩略图 无码流出',
                     name: 'missav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://missav.com/favicon.ico',
                     origin: 'https://missav.com',
                     uri: `/cn/search/${this.fanHao}/`
                 },
                 javguru: {
                     zhushi: '在线观看',
                     name: 'javguru<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://cdn.javsts.com/wp-content/uploads/2016/09/favicon.ico',
                     origin: 'https://jav.guru',
                     uri: `/?s=${this.fanHao}`
                 },
                 javmost: {
                     zhushi: '在线观看',
                     name: 'javmost<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://javmost.cx/favicon.ico',
                     origin: 'https://www.javmost.cx',  // https://www.javmost.xyz/
                     uri: `/search/${this.fanHao}/`
                 },
                 av01: {
                     zhushi: '在线观看',
                     name: 'av01<sup>fc2荐</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://www.av01.tv/favicon.ico',
                     origin: 'https://www.av01.tv',
                     uri: `/search/videos?search_query=${this.fanHao}`
                 },
                 paipancon: {
                     zhushi: '在线观看',
                     name: 'paipancon<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://paipancon.com/favicon.ico',
                     origin: 'https://paipancon.com',
                     uri: `/search/${this.fanHao}`
                 },
-                在线第四排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第四排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 javfc2: {
                     zhushi: '在线观看',
                     name: 'javfc2<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javfc2.net/favicon.ico',
                     origin: 'https://javfc2.net',
                     uri: `/?s=${this.fanHao}`
                 },
                 javchill: {
                     zhushi: '在线观看',
                     name: 'javchill', bgcolor: '', color: 'red',
-                    ico: 'https://javchill.com/frontend/image/favicon.png',
                     origin: 'https://javchill.com',
                     uri: `/search?search=${this.fanHao}`
                 },
                 watchjav: {
                     zhushi: '在线观看',
                     name: 'watchjav', bgcolor: '', color: 'green',
-                    ico: 'https://watchjav.site/favicon.ico',
                     origin: 'https://watchjav.site',
                     uri: `/search?q=${this.fanHao}`
                 },
                 thisav: {
                     zhushi: 'thisav在线观看',
                     name: 'thisav', bgcolor: '', color: 'green',
-                    ico: 'https://www.thisav.com/favicon.ico',
                     origin: 'https://www.thisav.com',
                     uri: `/channel/${this.fanHao}`
                 },
                 youavhub: {
                     zhushi: 'youavhub 在线观看',
                     name: 'youavhub', bgcolor: '', color: 'red',
-                    ico: 'https://youavhub.com/upload/site/20211104-1/d52f7e0836b763e70493a97efe577015.png',
                     origin: 'https://youavhub.com',
                     uri: `/index.php/vod/search.html?wd=${this.fanHao}`
                 },
                 eporner: {
                     zhushi: 'eporner 在线观看',
                     name: 'eporner', bgcolor: '', color: 'red',
-                    ico: 'https://static-sg-cdn.eporner.com/favicon.png',
                     origin: 'https://www.eporner.com',
                     uri: `/search/${this.fanHao}/`
                 },
                 javseen: {
                     zhushi: 'javseen 在线观看',
                     name: 'javseen<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://javseen.tv/favicon-32x32.png',
                     origin: 'https://javseen.tv',
                     uri: `/search/video/?s=${this.fanHao}`
                 },
                 av18pro: {
                     zhushi: '18av 在线观看',
                     name: '18avPro<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://18av.pro/template/18av/static/images/icon_32.ico',
                     origin: 'https://18av.pro',
                     uri: `/v/?wd=${this.fanHao}`
                 },
                 javopen: {
                     zhushi: 'javopen 在线观看',
                     name: 'javopen<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://javopen.co/wp-content/uploads/2020/01/logo1.png',
                     origin: 'https://javopen.co',
                     uri: `/?s=${this.fanHao}`
                 },
                 javhub: {
                     zhushi: 'javhub 在线观看 老片',
                     name: 'javhub', bgcolor: '', color: 'red',
-                    ico: 'https://ja.javhub.net/favicon.ico',
                     origin: 'https://ja.javhub.net',
                     uri: `/search/${this.fanHao}`
                 },
                 highporn: {
                     zhushi: 'highporn 在线观看',
                     name: 'highporn <sub>∞</sub>', bgcolor: '', color: 'green',
-                    ico: 'https://highporn.net/favicon.ico',
                     origin: 'https://highporn.net',
                     uri: `/search/videos?search_query=${this.fanHao}`
                 },
-                在线第五排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第五排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 japanhub: {
                     zhushi: 'japanhub 在线观看',
                     name: 'japanhub', bgcolor: '', color: 'green',
-                    ico: 'https://japanhub.net/favicon.ico',
                     origin: 'https://japanhub.net',
                     uri: `/search/videos?search_query=${this.fanHao}`
                 },
                 goodav17: {
                     zhushi: 'goodav17 在线观看',
                     name: 'goodav17<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'http://goodav17.com/static/icon.ico',
                     origin: 'http://goodav17.com',
                     uri: `/search/${this.fanHao}/1/`
                 },
                 av1688: {
                     zhushi: 'av1688 在线观看',
                     name: 'av1688<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://av1688.cc/wp-content/uploads/2020/05/logo2.png',
                     origin: 'https://av1688.cc',
                     uri: `/?s=${this.fanHao}`
                 },
                 share920: {
                     zhushi: '920share 在线观看',
                     name: '920share<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://920share.com/wp-content/uploads/920.png',
                     origin: 'https://920share.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 avbebe: {
                     zhushi: 'avbebe 在线观看',
                     name: 'avbebe<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://avbebe.com/avbebe-favicon.ico',
                     origin: 'https://avbebe.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 avpanda: {
                     zhushi: 'avpanda 在线观看',
                     name: 'avpanda<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://avpanda.cc/wp-content/uploads/2020/08/avpandass.png',
                     origin: 'https://avpanda.cc',
                     uri: `/?s=${this.fanHao}`
                 },
                 ccavb: {
                     zhushi: 'ccavb 在线观看',
                     name: 'ccavb<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://ccavb.tv/favicon.svg',
                     origin: 'https://ccavb.tv',
                     uri: `/video/${this.fanHao}`
                 },
                 cowmm: {
                     zhushi: 'cowmm 在线观看',
                     name: 'cowmm<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://cowmm.com/wp-content/uploads/2020/02/favicons.ico',
                     origin: 'https://cowmm.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 iijav: {
                     zhushi: 'iijav 在线观看',
                     name: 'iijav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://iijav.com/wp-content/themes/modown/static/img/logo.png',
                     origin: 'https://iijav.com',
                     uri: `/?s=${this.fanHao}/`
                 },
                 jav01: {
                     zhushi: 'jav01 在线观看',
                     name: 'jav01<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://jav01.cc/wp-content/uploads/2020/06/37c721bc4c659a8868b378b9478aaee4_resized.png',
                     origin: 'https://jav01.cc',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1091,78 +978,67 @@
                 ixxx: {
                     zhushi: 'ixxx 在线搜索观看',
                     name: 'ixxx', bgcolor: '', color: 'red',
-                    ico: '',
                     origin: 'https://www.ixxx.com',
                     uri: `/zh/search/${this.fanHao}`
                 },
-                在线第六排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第六排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 javcc: {
                     zhushi: 'javcc 在线观看',
                     name: 'javcc<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://javcc.com/favicon.ico',
                     origin: 'https://javcc.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 javfull: {
                     zhushi: 'javfull 在线观看',
                     name: 'javfull', bgcolor: '', color: 'red',
-                    ico: 'https://javfull.net/wp-content/themes/javfullv2/icon/ico.png',
                     origin: 'https://javfull.net',
                     uri: `/${this.fanHao}/`
                 },
                 javsup: {
                     zhushi: 'javsup 在线观看',
                     name: 'javsup<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://javsup.com/wp-content/uploads/2022/05/letter-j.png',
                     origin: 'https://javsup.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 macjav: {
                     zhushi: 'macjav 在线观看',
                     name: 'macjav<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://macjav.com/wp-content/uploads/2022/05/macs.png',
                     origin: 'https://macjav.com',
                     uri: `/?s=${this.fanHao}/`
                 },
                 theav: {
                     zhushi: 'theav 在线观看',
                     name: 'theav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://theav.xyz/static/favicon.ico?aaff',
                     origin: 'https://theav.xyz',
                     uri: `/search/${this.fanHao}`
                 },
                 tktube: {
                     zhushi: 'tktube 在线观看',
                     name: 'tktube<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://tktube.com/favicon.ico',
                     origin: 'https://tktube.com',
                     uri: `/search/${this.fanHao}/`
                 },
                 upjav: {
                     zhushi: 'upjav 在线观看',
                     name: 'upjav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://upjav.cc/wp-content/uploads/2020/10/favicon-32x32-1.png',
                     origin: 'https://upjav.cc',
                     uri: `/?s=${this.fanHao}`
                 },
                 jav223: {
                     zhushi: 'jav223 在线观看',
                     name: 'jav223<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://upload.cc/i1/2021/01/01/BsdRfA.png',
                     origin: 'https://www.jav223.com',
                     uri: `/?m=video_search*${this.fanHao}*1`
                 },
                 youav: {
                     zhushi: 'youav 在线观看',
                     name: 'youav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://www.youav.com/images/favicons/favicon-16x16.png',
                     origin: 'https://www.youav.com',
                     uri: `/search/videos/${this.fanHao}`
                 },
                 njav: {
                     zhushi: 'njav 在线观看',
                     name: 'njav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://static.njav.tv/assets/site/images/favicon.png?v=1',
                     origin: 'https://njav.tv',
                     uri: `/zh/search?keyword=${this.fanHao}`
                 },
@@ -1170,22 +1046,19 @@
                 javdove: {
                     zhushi: 'javdove 在线观看【多结果无跳】',
                     name: 'javdove<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://javdove2.space/favicon.ico',
                     origin: 'https://javdove2.space',
                     uri: `/search/videos?search_query=${this.fanHao}`
                 },
-                在线第七排0: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第七排0: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 huangboav: {
                     zhushi: 'huangboav FC2及亚洲视讯 无日本AV【结果乱无跳】',
                     name: 'huangboav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://huangboav.com/favicon.ico',
                     origin: 'https://huangboav.com',
                     uri: `/?s=${this.fanHao}`
                 },
                 buzzav: {
                     zhushi: 'buzzav 在线观看【结果乱无跳】',
                     name: 'buzzav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://www.buzzav.com/images/favicons/favicon-16x16.png',
                     origin: 'https://www.buzzav.com',
                     uri: `/search/videos/${this.fanHao}`
                 },
@@ -1193,7 +1066,6 @@
                 av18: {
                     zhushi: '18av 在线观看',
                     name: '18av<sup>fc2</sup><sub>∞</sub>', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://maa1830.com/favicon.ico',
                     origin: 'https://maa1830.com',
                     uri: `/zh/fc_search/all/${this.fanHao}/1.html`
                 },
@@ -1202,7 +1074,6 @@
                 javleak: {
                     zhushi: 'javleak 在线观看',
                     name: 'javleak', bgcolor: '', color: 'red',
-                    ico: 'https://javleak.com/wp-content/uploads/2019/05/favicon-1.png',
                     origin: 'https://javleak.com',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1210,7 +1081,6 @@
                 pornbraze: {
                     zhushi: 'pornbraze 在线观看',
                     name: 'pornbraze', bgcolor: '', color: 'red',
-                    ico: 'https://pornbraze.com/16x16.png',
                     origin: 'https://pornbraze.com',
                     uri: `/search/video/?s=${this.fanHao}`
                 },
@@ -1218,7 +1088,6 @@
                 watchjavonline: {
                     zhushi: 'watchjavonline 在线观看',
                     name: 'watchjavOL', bgcolor: '', color: 'red',
-                    ico: 'https://watchjavonline.com/wp-content/uploads/2020/09/wjoicon-110x110.png',
                     origin: 'https://watchjavonline.com',
                     uri: `/${this.fanHao}/`
                 },
@@ -1226,7 +1095,6 @@
                 javbangers: {
                     zhushi: 'javbangers 在线观看',
                     name: 'javbangers<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://www.javbangers.com/favicon.png',
                     origin: 'https://www.javbangers.com',
                     uri: `/search/${this.fanHao}/`
                 },
@@ -1234,7 +1102,6 @@
                 vjav: {
                     zhushi: 'vjav 在线观看',
                     name: 'vjav', bgcolor: '', color: 'red',
-                    ico: 'https://vjav.com/static/images/favicons/favicon-16x16.png',
                     origin: 'https://vjav.com',
                     uri: `/search/1/?s=${this.fanHao}`
                 },
@@ -1243,29 +1110,25 @@
                 javcv: {
                     zhushi: 'javcv推荐片花',
                     name: 'javcv', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://javcv.com/images/favicon.png',
                     origin: 'https://javcv.com',
                     uri: `/search?category=dvd_code&q=${this.fanHao}`
                 },
                 javabc: {
                     zhushi: ' Watch Free Japanese Porn Movies Online HD',
                     name: 'javabc', bgcolor: '', color: 'green',
-                    ico: 'https://javabc.com/wp-content/uploads/2018/11/icon.png',
                     origin: 'https://javabc.com',  //SEXTOP
                     uri: `/search/${this.fanHao}`
                 },
                 japteenx: {
                     zhushi: 'japteenx 在线观看 FC2',
                     name: 'japteenx<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://www.japteenx.com/android-icon-36x36.png',
                     origin: 'https://www.japteenx.com',
                     uri: `/search/videos?search_query=${this.fanHao}`
                 },
-                在线第八排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                在线第八排1: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 porn78: {
                     zhushi: 'porn78 在线观看【多结果无跳】',
                     name: 'porn78<sup>fc2</sup>', bgcolor: '', color: 'green',
-                    ico: 'https://porn78.info/img/favicon.ico?v=3',
                     origin: 'https://porn78.info',
                     uri: `/zh/video/index?search=${this.fanHao}`
                 },
@@ -1275,7 +1138,6 @@
                 porntw: {
                     zhushi: 'porntw 在线观看',
                     name: 'porntw', bgcolor: '', color: 'red',
-                    ico: 'https://www.porntw.com/images/website/3.webp?1639658234',
                     origin: 'https://www.porntw.com',
                     uri: `/?q=${this.fanHao}`
                 },
@@ -1283,7 +1145,6 @@
                 jav777: {
                     zhushi: 'jav777 在线观看',
                     name: 'jav777', bgcolor: '', color: 'red',
-                    ico: '',
                     origin: 'https://www.jav777.xyz',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1291,7 +1152,6 @@
                 avple: {
                     zhushi: 'avple 在线观看',
                     name: 'avple<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: '',
                     origin: 'https://avple.tv',
                     uri: `/search?key=${this.fanHao}&page=1&sort=date`
                 },
@@ -1301,7 +1161,6 @@
                 mmav: {
                     zhushi: 'mmav 在线观看',
                     name: 'mmav', bgcolor: '', color: 'red',
-                    ico: 'https://www.mmav.me/favicon.ico',
                     origin: 'https://www.mmav.me',
                     uri: `/search/?keyword=${this.fanHao}`
                 },
@@ -1310,7 +1169,6 @@
                 avhbo: {
                     zhushi: 'avhbo 在线观看',
                     name: 'avhbo', bgcolor: '', color: 'red',
-                    ico: 'https://avhbo.com/wp-content/themes/chillcum/assets/play.png',
                     origin: 'https://avhbo.com',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1318,7 +1176,6 @@
                 thtmod7: {
                     zhushi: 'thtmod7 桃花堂在线观看',
                     name: 'thtmod7', bgcolor: '', color: 'red',
-                    ico: 'https://thtmod7.com/favicon.ico',
                     origin: 'https://thtmod7.com',
                     uri: `/index.php/vodsearch/-------------.html?wd=${this.fanHao}`
                 },
@@ -1326,7 +1183,6 @@
                 taiav: {
                     zhushi: 'taiav 在线观看',
                     name: 'taiav', bgcolor: '', color: 'red',
-                    ico: 'https://taiav.com/favicon.ico',
                     origin: 'https://taiav.com',
                     uri: `/cn/search?q=${this.fanHao}`
                 },
@@ -1336,7 +1192,6 @@
                 hayav: {
                     zhushi: 'hayav 在线观看',
                     name: 'hayav', bgcolor: '', color: 'red',
-                    ico: 'https://imgs.hayav.com/images/2020/09/favicon.ico',
                     origin: 'https://hayav.com',
                     uri: `/search/${this.fanHao}`
                 },
@@ -1346,7 +1201,6 @@
                 micmicdoll: {
                     zhushi: 'micmicdoll 在线搜索观看',
                     name: 'micmicdoll', bgcolor: '', color: 'red',
-                    ico: '',
                     origin: 'https://www.micmicdoll.com',
                     uri: `/search?q=${this.fanHao}`
                 },
@@ -1354,85 +1208,74 @@
                 jav19: {
                     zhushi: 'jav19 在线搜索观看',
                     name: 'jav19', bgcolor: '', color: 'red',
-                    ico: '',
                     origin: 'https://www.jav19.com',
                     uri: `/v/?wd=${this.fanHao}`
                 },
-                资讯: { zhushi: '中文简介 资讯等', name: '资讯', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯: { zhushi: '中文简介 资讯等', name: '资讯', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 uuribao: {
                     zhushi: '番号 相关资讯类',
                     name: 'uuribao', bgcolor: '', color: 'red',
-                    ico: 'https://uuribao.net/wp-content/uploads/2021/10/848357745020e39-150x150.jpg',
                     origin: 'https://uuribao.net',
                     uri: `/archives/tag/${this.fanHao}/`
                 },
                 uuribao2: {
                     zhushi: '演员 相关资讯类 请自行修改演员',
                     name: 'uuribao演员', bgcolor: '', color: 'red',
-                    ico: 'https://uuribao.net/wp-content/uploads/2021/10/848357745020e39-150x150.jpg',
                     origin: 'https://uuribao.net',
                     uri: `/archives/tag/%E4%B8%89%E4%B8%8A%E6%82%A0%E4%BA%9A/`
                 },
                 sex9: {
                     zhushi: '9sex 中文简介',
                     name: '9sex', bgcolor: '#FAFAD2', color: 'green',
-                    ico: 'https://9sex.tv/static/icon/logo.png',
                     origin: 'https://9sex.tv',
                     uri: `/web/search?page=1&keyWord=${this.fanHao}`
                 },
                 xcity: {
                     zhushi: 'xcity ',
                     name: 'xcity', bgcolor: '', color: 'green',
-                    ico: 'https://faws.xcity.jp/image/parts/favicon/android-chrome-36x36.png',
                     origin: 'https://xcity.jp',
                     uri: `/result_published/?genre=%2Fresult_published%2F&q=${this.bango}&sg=avod&num=30`
                 },
                 fc2ppv: {
                     zhushi: 'fc2ppv ',
                     name: 'fc2ppv', bgcolor: '', color: 'green',
-                    ico: 'https://fc2ppv.org/storage/1.jpg',
                     origin: 'https://fc2ppv.org',
                     uri: `/search?q=${this.fanHao}`
                 },
-                资讯第一排6: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                资讯第一排7: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                资讯第一排8: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                资讯第一排9: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                资讯第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                资讯第一排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
-                大缩略图: { zhushi: '大缩略图', name: '缩图', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排6: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排7: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排8: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排9: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                资讯第一排11: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                大缩略图: { zhushi: '大缩略图', name: '缩图', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
                 javstore: {
                     zhushi: 'utimate free download solution, free download jav, jav free, free japanese av, free download av',
                     name: 'javstore<sup>fc2</sup>', bgcolor: '#FAFAD2', color: 'red',
-                    ico: 'https://javstore.net/upload/setting/zzzzzzz.png',
                     origin: 'https://javstore.net',
                     uri: `/search/${this.fanHao}.html`
                 },
                 memojav: {
                     zhushi: '在线观看 大缩略图  推荐',
                     name: 'memojav', bgcolor: '', color: 'green',
-                    ico: 'https://memojav.com/favicon.ico',
                     origin: 'https://memojav.com',
                     uri: `/video/${this.fanHao}`
                 },
                 blogjav: {
                     zhushi: 'Jav Exclusively For You! Most Updated Daily!',
                     name: 'blogjav', bgcolor: '', color: 'green',
-                    ico: 'https://blogjav.net/favicon.ico',
                     origin: 'https://blogjav.net',
                     uri: `/?s=${this.fanHao}`
                 },
                 javbest: {
                     zhushi: 'Javbest free update',
                     name: 'javbest', bgcolor: '', color: 'green',
-                    ico: 'https://javbest.net/favicon.ico',
                     origin: 'https://javbest.net',
                     uri: `/?s=${this.fanHao}`
                 },
                 maddawgjav: {
                     zhushi: 'maddawgjav free update',
                     name: 'maddawgjav', bgcolor: '', color: 'green',
-                    ico: 'https://maddawgjav.net/favicon.ico',
                     origin: 'https://maddawgjav.net',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1440,7 +1283,6 @@
                 t2jav: {
                     zhushi: 't2jav',
                     name: 't2jav<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://2.bp.blogspot.com/-IOSaes1Y1i0/VuJ9CYgYIqI/AAAAAAAAUBU/Ofq2SM_OYPEP1OYg8Reo1C5ucPZOswkFg/s1600/favicon.ico',
                     origin: 'http://t2jav.com',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1448,7 +1290,6 @@
                 xplanet: {
                     zhushi: '3xplanet',
                     name: '3xplanet<sup>fc2</sup>', bgcolor: '', color: 'red',
-                    ico: 'https://3xplanet.com/wp-content/uploads/2022/09/3xfavicon.png',
                     origin: 'https://3xplanet.com',
                     uri: `/?s=${this.fanHao}`
                 },
@@ -1456,11 +1297,10 @@
                 javscreens: {
                     zhushi: 'javscreens',
                     name: 'javscreens', bgcolor: '', color: 'red',
-                    ico: 'http://javscreens.com/favicon.ico',
                     origin: 'http://javscreens.com',
                     uri: `/${this.one}/${this.xiao}.html`
                 },
-                大缩略图第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', ico: '', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
+                大缩略图第一排10: { zhushi: '', name: '', bgcolor: '', color: '#00a2e8', origin: 'https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list', uri: `` },
 
             };
             for (let e in this.data) {
@@ -1469,7 +1309,7 @@
                 delete this.data[e].uri;
             }
         }
-        create_table(position = 0) {
+        create_table() {
             const rows = 12;
             const htmlTable = `<div class="movieav" fr-fix-stroke="true"><table class="jav_table" width="100%" border="1" cellspacing="0">`;
             let htmlTbody = '';
@@ -1478,10 +1318,10 @@
             if (remainder) {
                 const paddingCount = rows - remainder;
                 for (let index = 0; index < paddingCount; index++) {
-                    tableEntries.push([`temp_${index}`, { zhushi: '', name: '', color: '#ffffff', bgcolor: '', ico: '', url: '#' }]);
+                    tableEntries.push([`temp_${index}`, { zhushi: '', name: '', color: '#ffffff', bgcolor: '', url: '#' }]);
                 }
             }
-            tableEntries.forEach(([key, item], index) => {
+            tableEntries.forEach(([, item], index) => {
                 if (index % rows === 0) htmlTbody += '<tbody><tr>';
                 htmlTbody += `<td style="background-color:${escapeHTML(item.bgcolor)};"><a target="_blank" rel="noopener noreferrer" title="${escapeHTML(item.zhushi)}" style="color:${escapeHTML(item.color)}" href="${escapeHTML(item.url)}">${item.name}</a></td>`;
                 if ((index + 1) % rows === 0) htmlTbody += '</tr></tbody>';
