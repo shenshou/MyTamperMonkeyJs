@@ -223,11 +223,20 @@
     const SITE_MANAGER_KEY = 'onejav_site_manager_v1';
     const CATEGORY_MARKERS = ['车牌信息', '演员信息', '磁力种子', '宣传片', '在线观看', '资讯', '大缩略图'];
     const ensureSettings = value => {
-        value.overrides ||= {}; value.deleted ||= []; value.disabled ||= []; value.custom ||= [];
-        value.customCategories ||= []; value.categoryNames ||= {}; value.deletedCategories ||= []; value.siteOrder ||= [];
+        if (!value || typeof value !== 'object' || Array.isArray(value)) value = {};
+        if (!value.overrides || typeof value.overrides !== 'object' || Array.isArray(value.overrides)) value.overrides = {};
+        ['deleted', 'disabled', 'deletedCategories', 'siteOrder'].forEach(key => {
+            if (!Array.isArray(value[key])) value[key] = [];
+            else value[key] = value[key].filter(item => typeof item === 'string');
+        });
+        if (!Array.isArray(value.custom)) value.custom = [];
+        value.custom = value.custom.filter(item => item && typeof item === 'object' && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.urlTemplate === 'string');
+        if (!Array.isArray(value.customCategories)) value.customCategories = [];
+        value.customCategories = value.customCategories.filter(item => item && typeof item.id === 'string' && typeof item.name === 'string');
+        if (!value.categoryNames || typeof value.categoryNames !== 'object' || Array.isArray(value.categoryNames)) value.categoryNames = {};
         return value;
     };
-    const readSettings = () => ensureSettings(GM_getValue(SITE_MANAGER_KEY, {}) || {});
+    const readSettings = () => ensureSettings(GM_getValue(SITE_MANAGER_KEY, {}));
     const saveSettings = value => GM_setValue(SITE_MANAGER_KEY, value);
     const categoriesFor = settings => CATEGORY_MARKERS.map(name => ({id:'builtin:'+name,name:settings.categoryNames['builtin:'+name]||name,builtin:true}))
         .concat(settings.customCategories.map(item=>({id:item.id,name:item.name,builtin:false})))
