@@ -307,13 +307,13 @@ const userspace = {
 
             if (GM_getValue("switch_autoload") == 1 || isonekeyload == 1) {
                 if ($tr.find(":contains('求片问答悬赏区')").length == 0 && $("#"+info_id).length == 0) {
-                    if (GM_getValue("load_thread_delayed") == 0) {
+                    if (tools.getNumberSetting("load_thread_delayed",0,5000,500) === 0) {
                         userspace.load_thread_info($tr, info_id)
                     } else {
                         count++;
                         setTimeout(() => {
                             userspace.load_thread_info($tr, info_id)
-                        }, GM_getValue("load_thread_delayed") * count)
+                        }, tools.getNumberSetting("load_thread_delayed",0,5000,500) * count)
                     }
                 }
             }
