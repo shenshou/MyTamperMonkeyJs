@@ -1097,6 +1097,7 @@
     updateUi(`Resolving ${task.postUrl}`);
 
     try {
+      if (!isVideoPage(task.postUrl)) throw new Error('视频页面地址不是本站有效的视频链接');
       const html = normalizeUrl(task.postUrl) === normalizeUrl(location.href)
         ? document.documentElement.outerHTML
         : await requestText(task.postUrl);
@@ -2329,6 +2330,9 @@
     merged.downloadMetadata = Boolean(merged.downloadMetadata);
     merged.advancedOpen = Boolean(merged.advancedOpen);
     merged.rpcUrl = String(merged.rpcUrl || CONFIG.ARIA2_RPC_DEFAULT);
+    if (merged.rpcUrl === 'http://localhost:6800/jsonrpc') {
+      merged.rpcUrl = CONFIG.ARIA2_RPC_DEFAULT;
+    }
     merged.rpcToken = String(merged.rpcToken || '');
     merged.saveDir = String(merged.saveDir || '');
     if (!Object.values(EXPORT_MODE).includes(merged.exportMode)) merged.exportMode = DEFAULT_SETTINGS.exportMode;
