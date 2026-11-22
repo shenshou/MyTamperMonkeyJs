@@ -2,8 +2,8 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.8
-// @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图等
+// @version      2026.1122.9
+// @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯及可选缩略图预览等
 // @author       匿名
 // @license      GPL
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAACXBIWXMAAAAAAAAAAQCEeRdzAAAC1klEQVR4nK1V/U+NYRg+/4kxHylUxsx8bD4yH7PxAxmzMfO9qemkcyo5NX1wyEhD6WSpOSXmGG1+UBZJ0rA5FErIGbIoSowu9/1e7znvOfNbvNuznef+uO7rvp/reY4N9f7VWFLQjbh0YHrG6JbmKoZg2ZBQEEB0Kh3xowTUNVkwBMtmoMc6gakOc6Uhgq3+jkljTNCmMVNkxadbMWqTfBti9gEOL/D4NdDaCTS/AFYeAaaZBZYeApqeA2tPEESTL9wFqu8RUGOWHQYedAEpVQI4yQ5U3kHEt70MxhjihNXFFtqKbsCIVabtAdq02MQUYE8F9/k+AdSA5VLBc4vGknpg9gG2sDgPGPpB+/WHnFOUnQz123wGGJsMHK3jfuMpAdQZaOX1J2nc6WGSzm3TaYu1v4ctqi+zhjbXJWBMEnC1DRj+CSw4aALqHLeUMCj5vLQr+yhhk3sF+PUb6JAWv34HFuaSZWIRYytuAxP2Ak+l2LN3xjgswK2lfwNebgUCfUBpA30bigk4NxvoHwIa24FZWcC3YaC2xWBvAW47awFqkp6yVm7qkGKmL6OGhfRkH3UDXR+BdSbbrFojj4DKaIfHAtSZzs8BBqTNm09EDpX0nWvkDHV5m8UvLN3X6DNlZQHuKrcAx8tcEiVgZCRSTtqiHpay1ANRf9sr4EO/KMNlaJSyUUZJppZ2l1MKTi/32raKfVDk8+YTZ6YERCKhr8HPsQk5m1xqXp8yU4c6k3HJbE+/FW5Kw9dm7RVwkWj0yyBtx+o4BgNQgXoH6Ah8pqg14X4nT3JONqVRWBem01Qy7emjTfUaYhhsTb88H4NnZALdvSLmt7x+0WEqcFZzRAr48j1ZzssJPR42I9lexcpq1Nugz9iqQrmSbj4Gup+5H1hzXBi7GKOFEvLlhhVbr44BGGsyMClbT5SDWgzuNSn8ydKluWoLe+oiH9h/WdHBB/Y//wX8ASlYtkPZ5uteAAAAAElFTkSuQmCC
@@ -207,6 +207,7 @@
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
     let autoJumpEnabled = GM_getValue('auto_jump', true);
+    let previewEnabled = GM_getValue('onejav_preview_enabled', false) === true;
     GM_registerMenuCommand('综合管理面板', openSiteManager);
     const hostnameLabels = location.hostname.toLowerCase().split('.');
     const hasHostnameLabel = label => {
@@ -310,7 +311,10 @@
         const jumpLabel=el('label','jump-setting');jumpLabel.htmlFor='onejav-auto-jump';
         const jumpToggle=el('input');jumpToggle.type='checkbox';jumpToggle.id='onejav-auto-jump';jumpToggle.checked=autoJumpEnabled;
         jumpLabel.append(jumpToggle,el('span','','自动跳转（唯一结果时自动进入详情页）'));
-        footer.append(note,jumpLabel);
+        const previewLabel=el('label','jump-setting');previewLabel.htmlFor='onejav-preview-enabled';
+        const previewToggle=el('input');previewToggle.type='checkbox';previewToggle.id='onejav-preview-enabled';previewToggle.checked=previewEnabled;
+        previewLabel.append(previewToggle,el('span','','点击加载缩略图预览（默认关闭）'));
+        footer.append(note,jumpLabel,previewLabel);
         panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
         const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
         const renderSites=(q='',filter='')=>{
@@ -399,22 +403,34 @@
         });
         root.addEventListener('change',event=>{
             if(event.target.id==='onejav-auto-jump'){autoJumpEnabled=event.target.checked;GM_setValue('auto_jump',autoJumpEnabled);return;}
+            if(event.target.id==='onejav-preview-enabled'){
+                previewEnabled=event.target.checked;GM_setValue('onejav_preview_enabled',previewEnabled);
+                document.querySelectorAll('.jav-preview-trigger').forEach(button=>{button.style.display=previewEnabled?'inline-block':'none';});
+                if(!previewEnabled)document.querySelectorAll('.jav-preview-image').forEach(image=>{image.style.display='none';});
+                return;
+            }
             if(event.target.name==='site-filter'){const q=main.querySelector('[name="site-search"]')?.value||'',f=event.target.value||'';renderSites(q,f);}
         });
         root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});
         renderSites();
     }
-    document.addEventListener('mouseover', event => {
-        const trigger = event.target.closest?.('.jav-preview-trigger');
-        if (!trigger) return;
-        const preview = trigger.closest('.movieav')?.querySelector('.jav-preview-image');
-        if (preview) {
-            if (!preview.hasAttribute('src')) preview.src = preview.dataset.src;
-            preview.style.display = 'block';
-        }
-    });
     document.addEventListener('click', event => {
-        if (event.target.matches?.('.jav-preview-image')) event.target.style.display = 'none';
+        const trigger = event.target.closest?.('.jav-preview-trigger');
+        if (trigger) {
+            event.preventDefault();
+            if (!previewEnabled) return;
+            const preview = trigger.closest('.movieav')?.querySelector('.jav-preview-image');
+            if (!preview) return;
+            if (preview.style.display === 'none' || !preview.style.display) {
+                if (!preview.hasAttribute('src')) preview.src = preview.dataset.src;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+            return;
+        }
+        const previewImage = event.target.closest?.('.jav-preview-image');
+        if (previewImage) previewImage.style.display = 'none';
     });
     document.addEventListener('click', event => {
         const trigger = event.target.closest?.('.jav-site-manager-trigger');
@@ -1539,7 +1555,7 @@
             });
             htmlTable += htmlTbody;
 
-            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><a class="jav-preview-trigger" style="padding-left:5px;" href="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" target="_blank" rel="noopener noreferrer"><b><font color="green">查看 大缩略图</font></b></a><button type="button" class="jav-site-manager-trigger" style="margin-left:8px;padding:2px 8px;">综合管理</button><img class="jav-preview-image" data-src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none" alt="大缩略图预览">&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
+            htmlTable += `<tbody><tr><td colspan="${rows}" align="left"><button type="button" class="jav-preview-trigger" style="padding:2px 8px;display:${previewEnabled?'inline-block':'none'};">查看缩略图</button><button type="button" class="jav-site-manager-trigger" style="margin-left:8px;padding:2px 8px;">综合管理</button><img class="jav-preview-image" data-src="https://image.memojav.com/image/screenshot/${escapeHTML(this.fanHao)}.jpg" style="display:none;max-width:min(900px,90vw);max-height:75vh;object-fit:contain;cursor:pointer;" alt="缩略图预览">&nbsp;&nbsp;<span style="font-size:9px;font-family:MingLiU;">车牌信息、演员信息、磁力种子、片花、在线观看、资讯、大缩略图&nbsp;&nbsp;<font color="green">绿色</font>:免番羽&nbsp;&nbsp;<font color="red">红色</font>:需番羽&nbsp;&nbsp;直：请直连Direct&nbsp;&nbsp;演员请自行修改</span></td></tr></tbody>`;
             // 从别的脚本看到一些 ¹⁸⁺ 图库，分享下 不想看到可以在下行前面添加注释符 //
             htmlTable += `<tbody><tr><td colspan="${rows}">图库¹⁸⁺:<a href="https://www.micmicidol.com/" style="padding:2px;">mic写真集</a><a href="https://www.wndfx.com/">Wndfx</a><a href="https://hentai-img.com/" style="padding:2px;">Hentai</a><a href="https://zh.hentai-cosplays.com/" style="padding:2px;">Cosplay</a><a href="https://zh.porn-images-xxx.com/" style="padding:2px;">Porn</a><a href="http://www.xiuren.org/" style="padding:2px;">Xiuren</a><a href="https://everia.club/" style="padding:2px;">Everia</a><a href="https://nsfwx.pics" style="padding:2px;">Nsfwpicx</a><a href="https://asiantolick.com" style="padding:2px;">Asian</a><a href="https://xchina.co" style="padding:2px;">小黄书</a><a href="https://jjgirls.com/" style="padding:2px;">Heyzo</a><a href="https://www.photos18.com/" style="padding:2px;">色圖</a><a href="https://mm.tvv.tw/" style="padding:2px;">tvv</a><br><a href="https://www.pornpics.com/" style="padding:2px;">Porn Pics</a><a href="https://idol.gravureprincess.date/" style="padding:2px;">Idol</a><a href="https://hotgirl.asia/" style="padding:2px;">HOTGIRL</a><a href="https://buondua.com/" style="padding:2px;">Buon Dua</a><a href="https://www.ilovexs.com/" style="padding:2px;">NongMo</a><a href="https://nudecosplaygirls.com/" style="padding:2px;">NUDECOSPLAY</a><a href="https://nudebird.biz/" style="padding:2px;">NudeBird</a><a href="https://goddess247.com/" style="padding:2px;">Goddess247</a><a href="https://tw.goddesssite.com/" style="padding:2px;">Kiss Goddess</a><a href="https://girlygirlpic.com/" style="padding:2px;">girlpic</a></td></tr></tbody>`;
             htmlTable += `</table></div>`;
