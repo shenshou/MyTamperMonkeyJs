@@ -742,7 +742,9 @@ const GM_script = {
             $form.find("#img_max_height").val(GM_getValue("img_max_height"));
             $form.find("#img_max_width").val(GM_getValue("img_max_width"));
             $form.find("#img_max_count").val(GM_getValue("img_max_count"));
-            $form.find("input[id='"+GM_getValue("hideorgray")+"']").attr('checked', 'true');
+            const savedHideMode = GM_getValue("hideorgray");
+            const safeHideMode = ["hide", "gray"].includes(savedHideMode) ? savedHideMode : "gray";
+            $form.find("#" + safeHideMode).prop("checked", true);
 
             $config_madel.appendTo($("body"));
             $config_madel.css('visibility', 'visible');
