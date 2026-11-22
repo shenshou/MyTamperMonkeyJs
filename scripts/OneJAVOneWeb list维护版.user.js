@@ -2,7 +2,7 @@
 // @name         OneJAVOneWeb list
 // @name:zh-CN   OneJAVOneWeb list维护版
 // @namespace    https://greasyfork.org/zh-CN/scripts/449158-onejavoneweb-list
-// @version      2026.1122.13
+// @version      2026.1122.14
 // @description  一个插件畅览N个JAV网站，涵盖车牌信息、演员信息、磁力种子、片花、在线观看、资讯及可选缩略图预览等
 // @author       匿名
 // @license      GPL
@@ -206,7 +206,6 @@
     const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, character => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     })[character]);
-    let autoJumpEnabled = GM_getValue('auto_jump', true);
     let previewEnabled = GM_getValue('onejav_preview_enabled', false) === true;
     const GALLERY_MANAGER_KEY = 'onejav_gallery_manager_v1';
     const GALLERY_DEFAULTS = [
@@ -358,7 +357,7 @@
         const settings=readSettings(),jav=new JAV('ABC-123',false),root=document.createElement('div');
         root.id='onejav-site-manager';
         const style=document.createElement('style');
-        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px;flex-wrap:wrap}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}#onejav-site-manager .jump-setting{display:flex;align-items:center;gap:7px;color:#222;white-space:nowrap}#onejav-site-manager .jump-setting input{min-width:auto}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
+        style.textContent='#onejav-site-manager{position:fixed;inset:0;z-index:2147483647;background:#0009;display:flex;align-items:center;justify-content:center;padding:14px;font:14px/1.5 system-ui,sans-serif;color:#222}#onejav-site-manager *{box-sizing:border-box}#onejav-site-manager .panel{background:#fff;width:min(1050px,100%);height:min(820px,94vh);border-radius:12px;display:flex;flex-direction:column;overflow:hidden}#onejav-site-manager header,#onejav-site-manager nav,#onejav-site-manager footer{padding:12px 18px;border-bottom:1px solid #ddd}#onejav-site-manager header{display:flex;justify-content:space-between;align-items:center}#onejav-site-manager h2{margin:0;font-size:19px}#onejav-site-manager main{padding:15px 18px;overflow:auto;flex:1}#onejav-site-manager button,#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{font:inherit}#onejav-site-manager button{padding:7px 10px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer}#onejav-site-manager .primary{background:#2563eb;color:white;border-color:#2563eb}#onejav-site-manager .danger{color:#b91c1c}#onejav-site-manager nav{display:flex;gap:8px;flex-wrap:wrap}#onejav-site-manager .active{background:#eff6ff;border-color:#93c5fd}#onejav-site-manager input,#onejav-site-manager select,#onejav-site-manager textarea{padding:8px;border:1px solid #ccc;border-radius:7px;min-width:0}#onejav-site-manager .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}#onejav-site-manager .toolbar input{flex:1;min-width:180px}#onejav-site-manager .meta{font-size:12px;color:#666;overflow-wrap:anywhere}#onejav-site-manager .list{display:flex;flex-direction:column;gap:8px;margin-top:12px}#onejav-site-manager .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid #ddd;border-radius:8px;padding:10px}#onejav-site-manager .name{font-weight:650}#onejav-site-manager .actions{display:flex;gap:5px;flex-wrap:wrap}#onejav-site-manager .formcover{position:absolute;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:14px}#onejav-site-manager .formbox{background:white;width:min(600px,100%);max-height:92%;overflow:auto;padding:18px;border-radius:10px}#onejav-site-manager .field{display:flex;flex-direction:column;gap:5px;margin:10px 0}#onejav-site-manager .formactions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}#onejav-site-manager .categoryrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:9px 0;border-bottom:1px solid #ddd}#onejav-site-manager footer{border-top:1px solid #ddd;border-bottom:0;color:#666;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}@media(max-width:650px){#onejav-site-manager{padding:0}#onejav-site-manager .panel{height:100%;border-radius:0}#onejav-site-manager .row{grid-template-columns:1fr}#onejav-site-manager .categoryrow{grid-template-columns:1fr auto}}';
         root.appendChild(style);
         const panel=document.createElement('div');panel.className='panel';
         const header=document.createElement('header'),title=document.createElement('h2');title.textContent='OneJAVOneWeb · 综合管理面板';
@@ -368,16 +367,13 @@
         const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
         const main=document.createElement('main'),footer=document.createElement('footer');
         const note=el('span','','配置保存在本机用户脚本存储中，不会改写内置默认数据。自定义站点仅作为普通链接，不会自动获得特殊站点适配能力。');
-        const jumpLabel=el('label','jump-setting');jumpLabel.htmlFor='onejav-auto-jump';
-        const jumpToggle=el('input');jumpToggle.type='checkbox';jumpToggle.id='onejav-auto-jump';jumpToggle.checked=autoJumpEnabled;
-        jumpLabel.append(jumpToggle,el('span','','自动点击（部分站点自动进入内容页）'));
         const previewLabel=el('label','jump-setting');previewLabel.htmlFor='onejav-preview-enabled';
         const previewToggle=el('input');previewToggle.type='checkbox';previewToggle.id='onejav-preview-enabled';previewToggle.checked=previewEnabled;
         previewLabel.append(previewToggle,el('span','','点击加载缩略图预览（默认关闭）'));
         const galleryLabel=el('label','jump-setting');galleryLabel.htmlFor='onejav-gallery-enabled';
         const galleryToggle=el('input');galleryToggle.type='checkbox';galleryToggle.id='onejav-gallery-enabled';galleryToggle.checked=gallerySettings.enabled;
         galleryLabel.append(galleryToggle,el('span','','显示图库¹⁸⁺链接'));
-        footer.append(note,jumpLabel,previewLabel,galleryLabel);
+        footer.append(note,previewLabel,galleryLabel);
         panel.append(header,nav,main,footer);root.appendChild(panel);document.body.appendChild(root);
         const sites=()=>getManagedSites(jav.data,jav,settings),cats=()=>categoriesFor(settings),save=()=>{saveSettings(settings);location.reload();};
         const renderSites=(q='',filter='')=>{
@@ -518,7 +514,6 @@
             }
         });
         root.addEventListener('change',event=>{
-            if(event.target.id==='onejav-auto-jump'){autoJumpEnabled=event.target.checked;GM_setValue('auto_jump',autoJumpEnabled);return;}
             if(event.target.id==='onejav-preview-enabled'){
                 previewEnabled=event.target.checked;GM_setValue('onejav_preview_enabled',previewEnabled);
                 document.querySelectorAll('.jav-preview-trigger').forEach(button=>{button.style.display=previewEnabled?'inline-block':'none';});
@@ -1919,11 +1914,9 @@
             const searchParams = new URLSearchParams(location.search);
             const searchBango = searchParams.get('bango');
             const searchInput = $('body > div:nth-child(2) > div > nav > div > form:nth-child(2) > div > input')[0];
-            const searchButton = $('body > div:nth-child(2) > div > nav > div > form:nth-child(2) > div > span > button')[0];
-            if (searchBango && searchInput && searchButton) {
+            if (searchBango && searchInput) {
+                // 仅预填番号，搜索由用户手动提交。
                 searchInput.value = searchBango;
-                searchButton.click();
-                window.close();
             }
         })();
     }
@@ -2051,20 +2044,6 @@
     /* javmenu */
     if (null != location.hostname.match(/javmenu/i)) {
         $('#app > div > div.page-content > div:nth-child(2) > div > div > div > div:nth-child(1) > div').remove();
-    }
-    const wait = 500;
-    if (autoJumpEnabled) {
-        if (hasHostnameLabel('af101')) { setTimeout(() => document.querySelector("body > section > div > div:nth-child(3) > ul > li:nth-child(1) > header > h3 > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('avman')) { setTimeout(() => document.querySelector("body > main > section:nth-child(3) > div > div.row.row-cols-1.row-cols-sm-1.row-cols-md-2.row-cols-lg-2.g-4.text-center > div > div > div > h2 > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('bejav')) { setTimeout(() => document.querySelector("#main > div.widget.col-md-9 > div.widget-body > div > div.thumb > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('fc2ppv')) { setTimeout(() => document.querySelector("#pjx-container > div.row > div.col-md-10.content_md > div > section:nth-child(2) > div.row > div > div > div.c-cntCard-110-f_thumb > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('ggjav')) { setTimeout(() => document.querySelector("body > div:nth-child(8) > div > div.columns.large-3.medium-6.small-12.item.float-left > div.item_title > a")?.click(), wait + 3500); }
-        if (hasHostnameLabel('highporn')) { setTimeout(() => document.querySelector("#wrapper > div:nth-child(2) > div.row > div > div > div > div > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('javmenu')) { setTimeout(() => document.querySelector("#app > div > div.page-content > div:nth-child(2) > div > div > div > div:nth-child(2) > div > div > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('netflav')) { setTimeout(() => document.querySelector("#main_segment > div > div > div.video_grid_container > div.grid_root.grid_wide > div > a:nth-child(1)")?.click(), wait + 500); }
-        if (hasHostnameLabel('projectjav')) { setTimeout(() => document.querySelector("body > main > div.container-fluid > div.row.movie-list.mb-2 > div:nth-child(1) > div.name > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('svjav')) { setTimeout(() => document.querySelector("#main > div > div.widget-body > div > div.thumb > a")?.click(), wait + 500); }
-        if (hasHostnameLabel('xslist')) { setTimeout(() => document.querySelector("body > ul > li > h3 > a")?.click(), wait + 500); }
     }
 
 })();
