@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         2048-预览（安全优化版）
-// @version      1.8.45.28
+// @version      1.8.45.29
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs/2048PreView-Safe
 // @author       shenshou
 // @description  2048核基地·预览图片·自动签到·搜索过滤·关键词过滤·列表附件预览
@@ -3046,10 +3046,7 @@
         }
         static isSignedTodayHtml(html) {
             const doc = (new DOMParser).parseFromString(html, "text/html"), tacTd = doc.querySelector("td.tac") || doc.querySelector('td[class*="tac"]'), tacText = tacTd?.textContent?.replace(/\s+/g, " ").trim() || "";
-            const signed = /今天已签到|今日已签到/.test(tacText) || /今天已签到|今日已签到/.test(html);
-            const unsigned = /今天未签到|今日未签到/.test(tacText) || /今天未签到|今日未签到/.test(html);
-            if (signed === unsigned) return null;
-            return signed;
+            return !tacText.includes("今天未签到") && !tacText.includes("今日未签到") && (!(!tacText.includes("今天已签到") && !tacText.includes("今日已签到")) || !html.includes("今天未签到") && !html.includes("今日未签到") && (html.includes("今天已签到") || html.includes("今日已签到")));
         }
         static parseCheckInStatsFromTac(doc, html, signedToday) {
             const tacTd = doc.querySelector("td.tac") || doc.querySelector('td[class*="tac"]'), tacHtml = tacTd?.innerHTML || "", tacText = tacTd?.textContent || "", totalMatch = tacHtml.match(/您累计已签到[：:]\s*<b>(\d+)<\/b>\s*天/) || tacText.match(/您累计已签到[：:]\s*(\d+)\s*天/) || html.match(/您累计已签到[：:]\s*<b>(\d+)<\/b>\s*天/), monthMatch = tacHtml.match(/您本月已累计签到[：:]\s*<b>(\d+)<\/b>\s*天/) || tacText.match(/您本月已累计签到[：:]\s*(\d+)\s*天/) || html.match(/您本月已累计签到[：:]\s*<b>(\d+)<\/b>\s*天/), timeMatch = tacHtml.match(/上次签到[：:]\s*<font[^>]*>(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})<\/font>/) || tacText.match(/上次签到[：:]\s*(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/) || html.match(/上次签到[：:]\s*<font[^>]*>(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})<\/font>/);
