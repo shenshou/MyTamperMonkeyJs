@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         LTX 批量番号存在性检测
 // @namespace    https://github.com/shenshou/MyTamperMonkeyJs
-// @version      1.2.1
+// @version      1.2.2
 // @description  在 LTX 官方网站内批量检测番号、获取资源链接，并可精简 ed2k 文件名。
 // @match        https://ltxlib.dpdns.org/*
 // @downloadURL  https://raw.githubusercontent.com/shenshou/MyTamperMonkeyJs/main/scripts/ltx-batch-checker.user.js
@@ -44,10 +44,29 @@
   function responseAad(sessionId, requestId, method, pathname, status, encoding) {
     return encoder.encode(JSON.stringify([RESPONSE_CONTEXT, sessionId, requestId, method.toUpperCase(), pathname, status, encoding]))
   }
-  function createHttpError(response, detail, payload) {
-    const error = new Error('LTX 接口返回 HTTP ' + response.status + (detail ? ' · ' + detail.slice(0, 180) : ''))
+  function getErrorPayloadReason(payload) {
+    const reason = payload?.reason ?? payload?.error?.reason
+    return typeof reason === 'string' && reason ? reason : undefined
+  }
+  function getErrorPayloadDetail(payload) {
+    const candidates = [
+      payload?.message,
+      payload?.detail,
+      payload?.error_description,
+      typeof payload?.error === 'string' ? payload.error : payload?.error?.message,
+      payload?.description,
+    ]
+    return candidates.find(value => typeof value === 'string' && value.trim())?.trim() || ''
+  }
+  function createHttpError(response, detail = '', payload = null) {
+    const reason = getErrorPayloadReason(payload)
+    const payloadDetail = getErrorPayloadDetail(payload)
+    const messageDetail = payloadDetail || (typeof detail === 'string' ? detail.trim() : '') || ''
+    const reasonLabel = reason ? ' [' + reason + ']' : ''
+    const detailLabel = messageDetail && messageDetail !== reason ? ' · ' + messageDetail.slice(0, 180) : ''
+    const error = new Error('LTX 接口返回 HTTP ' + response.status + reasonLabel + detailLabel)
     error.status = response.status
-    error.reason = payload?.reason
+    error.reason = reason
     error.retryAfter = response.headers.get('retry-after')
     return error
   }
@@ -122,7 +141,18 @@
       const stream = new Blob([plaintext]).stream().pipeThrough(new DecompressionStream('gzip'))
       decoded = await new Response(stream).arrayBuffer()
     }
-    return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(decoded))
+    const decodedText = new TextDecoder('utf-8', { fatal: true }).decode(decoded)
+    let payload
+    try {
+      payload = JSON.parse(decodedText)
+    } catch {
+      if (!response.ok) throw createHttpError(response, decodedText)
+      throw new Error('LTX 加密响应正文不是有效 JSON')
+    }
+    // 加密错误响应也必须先解密：HTTP 状态码参与 AES-GCM AAD，不能跳过解密。
+    // 解密后再检查状态，才能提取服务端 reason 并触发现有的定向重试逻辑。
+    if (!response.ok) throw createHttpError(response, '', payload)
+    return payload
   }
 
   async function refreshCatalogue(signal) {
