@@ -124,7 +124,9 @@
                         if(scs){
                             for(let i=0;i<scs.length;i++){
                                 let sc=scs[i];
-                                if(!ml.querySelector("li[data-script-id='"+sc.dataset.scriptId+"']")){
+                                var scriptId=sc.dataset.scriptId;
+                                var alreadyMerged=scriptId&&Array.from(ml.querySelectorAll("li[data-script-id]")).some(item=>item.dataset.scriptId===scriptId);
+                                if(!alreadyMerged){
                                     //addScore(sc);
                                     var safeSc=sanitizeRemoteScript(sc);
                             if(safeSc){
