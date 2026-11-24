@@ -184,35 +184,36 @@
             p.innerHTML="<b>Filter RegExp</b><button id='ok' style='margin-left: 20px;'>Save</button><button id='reset' style='margin-left: 20px;'>Reset</button>";
             var okBtn=p.querySelector("#ok");
             var resetBtn=p.querySelector("#reset");
-            var filterTextarea=document.createElement("pre");
-            var prettifyScript=document.createElement("script");
-            prettifyScript.src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.js?skin=sons-of-obsidian";
-            document.head.appendChild(prettifyScript);
-            var prettifyStyle=document.createElement("link");
-            prettifyStyle.rel="stylesheet";
-            prettifyStyle.href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css";
-            document.head.appendChild(prettifyStyle);
-            filterTextarea.contentEditable="true";
-            filterTextarea.className="prettyprint lang-js";
-            filterTextarea.style.whiteSpace="pre-wrap";
-            filterTextarea.style.overflowWrap="break-word";
+            var filterTextarea=document.createElement("textarea");
+            var filterStatus=document.createElement("span");
+            filterTextarea.className="gf-filter-editor";
+            filterTextarea.spellcheck=false;
+            filterTextarea.value=bullshit;
+            filterTextarea.style.display="block";
+            filterTextarea.style.boxSizing="border-box";
+            filterTextarea.style.minHeight="220px";
+            filterTextarea.style.whiteSpace="pre";
+            filterTextarea.style.overflow="auto";
             filterTextarea.style.width="100%";
-            filterTextarea.innerHTML=bullshit;
+            filterStatus.setAttribute("role","status");
+            filterStatus.style.display="block";
+            filterStatus.style.marginTop="6px";
             var additionalInfo=document.querySelector("#additional-info");
             p.appendChild(filterTextarea);
-            additionalInfo.insertBefore(p,additionalInfo.firstChild);
-            prettifyScript.onload=()=>{PR.prettyPrint();};
+            p.appendChild(filterStatus);
+            if(additionalInfo)additionalInfo.insertBefore(p,additionalInfo.firstChild);
             okBtn.onclick=()=>{
-                _bullshit=filterTextarea.innerText;
-                storage.setItem("GeasyforkBullshit", _bullshit);
-                alert("Saved");
-                //_GM_notification("Saved");
+                _bullshit=filterTextarea.value;
+                try{new RegExp(_bullshit,"i");}
+                catch(e){filterStatus.textContent="Invalid regular expression: "+e.message;filterStatus.style.color="#b00020";return;}
+                storage.setItem("GeasyforkBullshit",_bullshit);
+                filterStatus.textContent="Saved. Reload the page to apply the updated filter.";
+                filterStatus.style.color="green";
             };
             resetBtn.onclick=()=>{
-                storage.setItem("GeasyforkBullshit", bullshit_o);
-                alert("Reset over");
+                storage.setItem("GeasyforkBullshit",bullshit_o);
+                filterStatus.textContent="Default rules restored. Reloading…";
                 location.reload();
-                //_GM_notification("Reset over");
             };
         }
         initFilter();
@@ -235,8 +236,7 @@
             if(!scriptAnchor)return;
             var scriptHref=scriptAnchor.href;
             let version=script.dataset.scriptVersion;
-            let format=script.dataset.scriptLanguage;
-            let cssAtag=script.dataset.scriptLanguage=="js"?"":`<a class="install-link" data-install-format="css" data-ping-url href="${scriptHref.replace(/\.org\/.*\/scripts\//,".org/scripts/")}/code/script.user.css">Install as user style</a>`;
+            var hasCssInstall=script.dataset.scriptLanguage!=="js";
             var versionLabel=document.createElement("strong");
             versionLabel.textContent="Ver."+version;
             description.appendChild(versionLabel);
@@ -257,7 +257,7 @@
             statusText.className="install-status-text";
             statusText.setAttribute("role","status");
             installArea.append(installLink,checkInfo,statusText);
-            if(cssAtag){
+            if(hasCssInstall){
                 var cssLink=document.createElement("a");
                 cssLink.className="install-link";
                 cssLink.dataset.installFormat="css";
