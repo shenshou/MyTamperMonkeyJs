@@ -313,14 +313,22 @@
                 _GM_xmlhttpRequest({
                     method:"GET",
                     url:scriptHref.replace(/(.*)-.*/,"$1.json"),
+                    timeout:15000,
                     onload:function(result){
                         if(result.status<200||result.status>=300){statusText.textContent="Status query failed (HTTP "+result.status+")";return;}
                         var data;
                         try{data=JSON.parse(result.responseText);}catch(e){statusText.textContent="Status query failed: invalid metadata";return;}
                         if(!data||!data.name||!data.namespace){statusText.textContent="Status query failed: incomplete metadata";return;}
                         var done=false;
+                        var managerTimer=setTimeout(function(){
+                            if(done)return;
+                            done=true;
+                            statusText.textContent="Status query failed: userscript manager did not respond.";
+                        },8000);
                         var setInfo=function(info){
-                            if(done)return;done=true;
+                            if(done)return;
+                            done=true;
+                            clearTimeout(managerTimer);
                             if(!info||typeof info.installed!=="boolean"){statusText.textContent="Status query failed: invalid manager response";return;}
                             if(!info.installed){installLink.textContent="Install version "+version;statusText.textContent="Not installed";return;}
                             var comparison=compareVersions(info.version,version);
@@ -332,9 +340,13 @@
                             var apiResult;
                             if(manager===window.external.Tampermonkey)apiResult=manager.isInstalled(data.name,data.namespace,setInfo);
                             else apiResult=manager.isInstalled(data.name,data.namespace);
-                            if(apiResult&&typeof apiResult.then==="function")apiResult.then(setInfo).catch(()=>{statusText.textContent="Status query failed: manager error";});
+                            if(apiResult&&typeof apiResult.then==="function")apiResult.then(setInfo).catch(()=>{
+                                if(done)return;done=true;clearTimeout(managerTimer);statusText.textContent="Status query failed: manager error";
+                            });
                             else if(apiResult&&typeof apiResult==="object")setInfo(apiResult);
-                        }catch(e){statusText.textContent="Status query failed: manager error";}
+                        }catch(e){
+                            if(!done){done=true;clearTimeout(managerTimer);statusText.textContent="Status query failed: manager error";}
+                        }
                     },
                     onerror:()=>{statusText.textContent="Status query failed: network error";},
                     ontimeout:()=>{statusText.textContent="Status query failed: timeout";}
