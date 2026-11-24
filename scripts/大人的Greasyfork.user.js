@@ -169,9 +169,14 @@
         ratingSpan.appendChild(goodRating);
         ratingSpan.appendChild(okRating);
         ratingSpan.appendChild(badRating);
-        document.querySelector("#script-list-sort ul>li:nth-child(1)").appendChild(dailyInstalls);
-        document.querySelector("#script-list-sort ul>li:nth-child(2)").appendChild(totalInstalls);
-        document.querySelector("#script-list-sort ul>li:nth-child(3)").appendChild(ratingSpan);
+        var ratingSortItems=document.querySelectorAll("#script-list-sort ul>li");
+        if(ratingSortItems.length>=3){
+            ratingSortItems[0].appendChild(dailyInstalls);
+            ratingSortItems[1].appendChild(totalInstalls);
+            ratingSortItems[2].appendChild(ratingSpan);
+        }else{
+            console.warn("Unable to add user rating totals: expected sort controls were not found.");
+        }
         ratingSpan.style.display=totalInstalls.style.display=dailyInstalls.style.display="none";
         goodRating.innerHTML=okRating.innerHTML=badRating.innerHTML=totalInstalls.innerHTML=dailyInstalls.innerHTML="0";
     }
@@ -241,6 +246,7 @@
             versionLabel.textContent="Ver."+version;
             description.appendChild(versionLabel);
             var installArea=document.createElement("div");
+            installArea.id="install-area";
             installArea.className="list-install-area";
             var installLink=document.createElement("a");
             installLink.className="install-link";
@@ -267,6 +273,25 @@
                 installArea.appendChild(cssLink);
             }
             description.appendChild(installArea);
+            var jsModal=document.createElement("div");
+            jsModal.id="installation-instructions-modal-js";
+            jsModal.setAttribute("aria-hidden","true");
+            var jsModalContent=document.createElement("p");
+            jsModalContent.className="installation-instructions-modal-content-bypass";
+            var jsModalLink=document.createElement("a");
+            jsModalLink.href="#";
+            jsModalContent.appendChild(jsModalLink);
+            jsModal.appendChild(jsModalContent);
+            var cssModal=document.createElement("div");
+            cssModal.id="installation-instructions-modal-css";
+            cssModal.setAttribute("aria-hidden","true");
+            var cssModalContent=document.createElement("p");
+            cssModalContent.className="installation-instructions-modal-content-bypass";
+            var cssModalLink=document.createElement("a");
+            cssModalLink.href="#";
+            cssModalContent.appendChild(cssModalLink);
+            cssModal.appendChild(cssModalContent);
+            description.append(jsModal,cssModal);
             installArea=description.querySelector(".list-install-area");
             checkInfo=installArea.querySelector(".install-help-link");
             script.onmouseenter=e=>{
@@ -421,7 +446,8 @@
                 var option = {
                     'childList': true
                 };
-                observer.observe(document.querySelector("body>.width-constraint .sidebarred-main-content"), option);
+                var mainContent=document.querySelector("body>.width-constraint .sidebarred-main-content");
+                if(mainContent)observer.observe(mainContent, option);
                 var scriptList=document.querySelector("#browse-script-list,#user-script-list,ol.script-list");
                 if(scriptList)observer.observe(scriptList, option);
                 var scripts=document.querySelectorAll('ol.script-list>li');
